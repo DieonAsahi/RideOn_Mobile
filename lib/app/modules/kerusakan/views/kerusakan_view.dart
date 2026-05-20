@@ -1,0 +1,454 @@
+import 'package:flutter/material.dart';
+
+import 'package:get/get.dart';
+
+import '../controllers/kerusakan_controller.dart';
+
+class KerusakanView extends GetView<KerusakanController> {
+  const KerusakanView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Obx(() {
+          double progress = controller.step.value / 5;
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
+
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+
+              children: [
+
+                const Center(
+                  child: Text(
+                    "Cek Kerusakan",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+
+                  children: [
+                    Text(
+                      "Langkah ${controller.step.value} dari 5",
+                      style: const TextStyle(fontSize: 12, color: Colors.black),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+
+                LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 5,
+                  backgroundColor: Colors.grey.shade300,
+                  valueColor: const AlwaysStoppedAnimation(Color(0xFF006BFF)),
+                ),
+
+                const SizedBox(height: 40),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: _buildStepContent(controller.step.value),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 42,
+
+                          child: ElevatedButton(
+                            onPressed: controller.prevStep,
+
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey.shade300,
+
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+
+                            child: Text(
+                              controller.step.value == 1 ? "Batal" : "Kembali",
+
+                              style: const TextStyle(color: Colors.black),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      Expanded(
+                        child: SizedBox(
+                          height: 42,
+
+                          child: ElevatedButton(
+                            onPressed: controller.nextStep,
+
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF006BFF),
+
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+
+                            child: Text(
+                              controller.step.value == 5 ? "Periksa" : "Lanjut",
+
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildStepContent(int step) {
+    switch (step) {
+      case 1:
+        return _stepMesin();
+
+      case 2:
+        return _stepKelistrikan();
+
+      case 3:
+        return _stepTransmisi();
+
+      case 4:
+        return _stepRem();
+
+      case 5:
+        return _stepPenggunaan();
+
+      default:
+        return const Center(child: Text("Step berikutnya..."));
+    }
+  }
+
+  Widget _stepMesin() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+
+      children: [
+        const Center(
+          child: Text(
+            "Mesin & Performa",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
+
+        const SizedBox(height: 25),
+
+        const Text(
+          "Pilih sesuai keluhan yang Anda rasakan ketika berkendara",
+          style: TextStyle(fontSize: 14),
+        ),
+
+        const SizedBox(height: 20),
+
+        ...[
+          "Motor sulit dinyalakan",
+          "Tarikan terasa berat",
+          "Mesin cepat panas",
+          "Suara mesin kasar",
+          "Motor sering mati mendadak",
+          "Asap knalpot keluar berlebihan",
+          "Konsumsi bensin lebih boros",
+          "Motor terasa bergetar",
+        ].map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 14),
+
+            child: Row(
+              children: [
+                Icon(
+                  Icons.radio_button_unchecked,
+                  size: 18,
+                  color: Colors.grey.shade600,
+                ),
+
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: Text(item, style: const TextStyle(fontSize: 14)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _stepKelistrikan() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+
+      children: [
+        const Center(
+          child: Text(
+            "Kelistrikan",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
+
+        const SizedBox(height: 25),
+
+        const Text(
+          "Pilih sesuai keluhan yang Anda rasakan ketika berkendara",
+          style: TextStyle(fontSize: 14),
+        ),
+
+        const SizedBox(height: 20),
+
+        ...[
+          "Starter tidak berfungsi",
+          "Lampu indikator mesin terus menyala",
+          "Lampu motor redup",
+          "Klakson lemah",
+          "Indikator speedometer tidak normal",
+        ].map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 14),
+
+            child: Row(
+              children: [
+                Icon(
+                  Icons.radio_button_unchecked,
+                  size: 18,
+                  color: Colors.grey.shade600,
+                ),
+
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: Text(item, style: const TextStyle(fontSize: 14)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _stepTransmisi() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+
+      children: [
+        const Center(
+          child: Text(
+            "Transmisi",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
+
+        const SizedBox(height: 25),
+
+        const Text(
+          "Pilih sesuai keluhan yang Anda rasakan ketika berkendara",
+          style: TextStyle(fontSize: 14),
+        ),
+
+        const SizedBox(height: 20),
+
+        ...[
+          "RPM tinggi tapi laju lambat",
+          "Motor nyentak saat digas",
+          "Perpindahan gigi keras",
+          "Rantai sering kendur",
+        ].map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 14),
+
+            child: Row(
+              children: [
+                Icon(
+                  Icons.radio_button_unchecked,
+                  size: 18,
+                  color: Colors.grey.shade600,
+                ),
+
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: Text(item, style: const TextStyle(fontSize: 14)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _stepRem() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+
+      children: [
+        const Center(
+          child: Text(
+            "Pengereman dan Ban",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
+
+        const SizedBox(height: 25),
+
+        const Text(
+          "Pilih sesuai keluhan yang Anda rasakan ketika berkendara",
+          style: TextStyle(fontSize: 14),
+        ),
+
+        const SizedBox(height: 20),
+
+        ...[
+          "Rem kurang pakem",
+          "Rem berbunyi",
+          "Motor tidak stabil",
+          "Setang bergetar",
+        ].map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 14),
+
+            child: Row(
+              children: [
+                Icon(
+                  Icons.radio_button_unchecked,
+                  size: 18,
+                  color: Colors.grey.shade600,
+                ),
+
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: Text(item, style: const TextStyle(fontSize: 14)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _stepPenggunaan() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+
+      children: [
+        const Center(
+          child: Text(
+            "Riwayat Penggunaan",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
+
+        const SizedBox(height: 25),
+
+        const Text(
+          "Pilih kondisi sesuai dengan yang Anda alami",
+          style: TextStyle(fontSize: 14),
+        ),
+
+        const SizedBox(height: 15),
+
+        const Padding(
+          padding: EdgeInsets.only(left: 16),
+
+          child: Text(
+            "Intensitas Pemakaian",
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+        ),
+        const SizedBox(height: 15),
+
+        ...["Jarang dipakai", "Dipakai harian", "Rutin dipakai jarak jauh"].map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 14),
+
+            child: Row(
+              children: [
+                Icon(
+                  Icons.radio_button_unchecked,
+                  size: 18,
+                  color: Colors.grey.shade600,
+                ),
+
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: Text(item, style: const TextStyle(fontSize: 14)),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        const Padding(
+          padding: EdgeInsets.only(left: 16),
+          child: Text(
+            "Kondisi Jalan",
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+        ),
+
+        const SizedBox(height: 15),
+
+        ...[
+          "Jalan mulus",
+          "Jalan berlubang atau rusak",
+          "Sering melalui tanjakan dan turunan",
+        ].map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 14),
+
+            child: Row(
+              children: [
+                Icon(
+                  Icons.radio_button_unchecked,
+                  size: 18,
+                  color: Colors.grey.shade600,
+                ),
+
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: Text(item, style: const TextStyle(fontSize: 14)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
