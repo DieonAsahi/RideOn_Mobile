@@ -17,16 +17,10 @@ class DtlperformaView extends GetView<DtlperformaController> {
           padding: const EdgeInsets.all(20),
 
           child: Obx(() {
-            final data = controller.performa;
             final dates = controller.tanggal;
-
-            final dataCount = data.length;
-
-            const maxChartHeight = 210.0;
-            const bottomAreaHeight = 30.0;
-
-            final isFewData = dataCount < 8;
-
+            if (controller.isLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
             return SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,32 +61,30 @@ class DtlperformaView extends GetView<DtlperformaController> {
                             alignment: Alignment.center,
 
                             children: [
-                              CircularPercentIndicator(
-                                radius: 85,
-                                lineWidth: 18,
-                                percent: 0.89,
-
-                                animation: true,
-                                animationDuration: 1000,
-
-                                arcType: ArcType.HALF,
-                                circularStrokeCap: CircularStrokeCap.round,
-
-                                backgroundColor: Colors.transparent,
-
-                                arcBackgroundColor: Colors.grey.shade300,
-
-                                progressColor: Colors.green,
+                              Obx(
+                                () => CircularPercentIndicator(
+                                  radius: 85,
+                                  lineWidth: 18,
+                                  percent: controller.averagePerformance / 100,
+                                  animation: true,
+                                  animationDuration: 1000,
+                                  arcType: ArcType.HALF,
+                                  circularStrokeCap: CircularStrokeCap.round,
+                                  backgroundColor: Colors.transparent,
+                                  arcBackgroundColor: Colors.grey.shade300,
+                                  progressColor: Colors.green,
+                                ),
                               ),
 
-                              const Positioned(
-                                top: 78,
-
-                                child: Text(
-                                  "89%",
-                                  style: TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.bold,
+                              Obx(
+                                () => Positioned(
+                                  top: 78,
+                                  child: Text(
+                                    controller.performanceText,
+                                    style: const TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -102,9 +94,14 @@ class DtlperformaView extends GetView<DtlperformaController> {
 
                         const SizedBox(height: 5),
 
-                        const Text(
-                          "Kendaraan Anda dalam kondisi baik",
-                          style: TextStyle(fontSize: 12, color: Colors.black),
+                        Obx(
+                          () => Text(
+                            controller.performanceStatus,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -147,7 +144,8 @@ class DtlperformaView extends GetView<DtlperformaController> {
                   const SizedBox(height: 20),
 
                   SizedBox(
-                    height: maxChartHeight + bottomAreaHeight,
+                    height:
+                        controller.maxChartHeight + controller.bottomAreaHeight,
 
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -155,20 +153,24 @@ class DtlperformaView extends GetView<DtlperformaController> {
                       children: [
                         Padding(
                           padding: const EdgeInsets.only(bottom: 20),
-
                           child: SizedBox(
-                            height: maxChartHeight,
-
+                            height: controller.maxChartHeight,
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                              children: const [
-                                Text("100"),
-                                Text("80"),
-                                Text("60"),
-                                Text("40"),
-                                Text("20"),
-                                Text("0"),
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: const [
+                                      Text("100"),
+                                      Text("80"),
+                                      Text("60"),
+                                      Text("40"),
+                                      Text("20"),
+                                      Text("0"),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -178,10 +180,9 @@ class DtlperformaView extends GetView<DtlperformaController> {
 
                         Padding(
                           padding: const EdgeInsets.only(bottom: 20),
-
                           child: Container(
                             width: 1,
-                            height: maxChartHeight,
+                            height: controller.maxChartHeight,
                             color: Colors.grey,
                           ),
                         ),
@@ -192,99 +193,93 @@ class DtlperformaView extends GetView<DtlperformaController> {
                           child: LayoutBuilder(
                             builder: (context, constraints) {
                               double itemWidth = 35;
-
-                              double totalWidth = dataCount * itemWidth;
+                              double totalWidth =
+                                  controller.performa.length * itemWidth;
 
                               return SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
-
                                 child: SizedBox(
-                                  width: isFewData
+                                  width: controller.isFewData
                                       ? constraints.maxWidth
                                       : totalWidth,
-
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.end,
 
                                     children: [
                                       SizedBox(
-                                        height: maxChartHeight,
+                                        height: controller.maxChartHeight,
 
                                         child: Row(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.end,
 
-                                          children: List.generate(dataCount, (
-                                            index,
-                                          ) {
-                                            final value = data[index];
+                                          children: List.generate(
+                                            controller.performa.length,
+                                            (index) {
+                                              final value =
+                                                  controller.performa[index];
 
-                                            final barHeight =
-                                                (value / 100) * maxChartHeight;
+                                              final barHeight =
+                                                  (value / 100) *
+                                                  controller.maxChartHeight;
 
-                                            if (isFewData) {
-                                              return SizedBox(
-                                                width:
-                                                    constraints.maxWidth /
-                                                    dataCount,
+                                              if (controller.isFewData) {
+                                                return SizedBox(
+                                                  width:
+                                                      constraints.maxWidth /
+                                                      controller
+                                                          .performa
+                                                          .length,
 
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.end,
-
-                                                  children: [
-                                                    Container(
+                                                  child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      Container(
+                                                        width: 12,
+                                                        height: barHeight,
+                                                        decoration: BoxDecoration(
+                                                          color: const Color(
+                                                            0xFF006BFF,
+                                                          ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                10,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              } else {
+                                                return SizedBox(
+                                                  width: itemWidth,
+                                                  child: Align(
+                                                    alignment:
+                                                        Alignment.bottomCenter,
+                                                    child: Container(
                                                       width: 12,
-
                                                       height: barHeight,
-
                                                       decoration: BoxDecoration(
                                                         color: const Color(
                                                           0xFF006BFF,
                                                         ),
-
                                                         borderRadius:
                                                             BorderRadius.circular(
-                                                              20,
+                                                              10,
                                                             ),
                                                       ),
                                                     ),
-                                                  ],
-                                                ),
-                                              );
-                                            } else {
-                                              return SizedBox(
-                                                width: itemWidth,
-
-                                                child: Align(
-                                                  alignment:
-                                                      Alignment.bottomCenter,
-
-                                                  child: Container(
-                                                    width: 12,
-
-                                                    height: barHeight,
-
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(
-                                                        0xFF006BFF,
-                                                      ),
-
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            20,
-                                                          ),
-                                                    ),
                                                   ),
-                                                ),
-                                              );
-                                            }
-                                          }),
+                                                );
+                                              }
+                                            },
+                                          ),
                                         ),
                                       ),
 
                                       Container(
-                                        width: isFewData
+                                        width: controller.isFewData
                                             ? constraints.maxWidth
                                             : totalWidth,
 
@@ -294,43 +289,43 @@ class DtlperformaView extends GetView<DtlperformaController> {
 
                                       SizedBox(
                                         height: 20,
-
                                         child: Row(
-                                          children: List.generate(dataCount, (
-                                            index,
-                                          ) {
-                                            if (isFewData) {
-                                              return SizedBox(
-                                                width:
-                                                    constraints.maxWidth /
-                                                    dataCount,
-
-                                                child: Text(
-                                                  dates[index],
-
-                                                  textAlign: TextAlign.center,
-
-                                                  style: const TextStyle(
-                                                    fontSize: 10,
-                                                  ),
-                                                ),
-                                              );
-                                            } else {
-                                              return SizedBox(
-                                                width: itemWidth,
-
-                                                child: Text(
-                                                  dates[index],
-
-                                                  textAlign: TextAlign.center,
-
-                                                  style: const TextStyle(
-                                                    fontSize: 10,
-                                                  ),
-                                                ),
-                                              );
-                                            }
-                                          }),
+                                          children: [
+                                            ...List.generate(
+                                              controller.performa.length,
+                                              (index) {
+                                                if (controller.isFewData) {
+                                                  return SizedBox(
+                                                    width:
+                                                        constraints.maxWidth /
+                                                        controller
+                                                            .performa
+                                                            .length,
+                                                    child: Text(
+                                                      dates[index],
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: const TextStyle(
+                                                        fontSize: 10,
+                                                      ),
+                                                    ),
+                                                  );
+                                                } else {
+                                                  return SizedBox(
+                                                    width: itemWidth,
+                                                    child: Text(
+                                                      dates[index],
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: const TextStyle(
+                                                        fontSize: 10,
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],

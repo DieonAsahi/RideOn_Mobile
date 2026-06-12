@@ -23,17 +23,34 @@ class EmailverController extends GetxController {
     }
 
     try {
-      final url = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/resend-otp",
+      // ================= CHECK EMAIL =================
+      final checkUrl = Uri.parse(
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/check-email",
+      );
+
+      final checkResponse = await http.post(
+        checkUrl,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email}),
+      );
+
+      final checkData = jsonDecode(checkResponse.body);
+
+      // EMAIL TIDAK ADA
+      if (checkResponse.statusCode != 200) {
+        Get.snackbar("Error", checkData['error']);
+        return;
+      }
+
+      // ================= KIRIM OTP =================
+      final resendUrl = Uri.parse(
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/resend-otp",
       );
 
       final response = await http.post(
-        url,
+        resendUrl,
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": emailController.text.trim(),
-          "type": "email",
-        }),
+        body: jsonEncode({"email": email, "type": "email"}),
       );
 
       final data = jsonDecode(response.body);
@@ -41,11 +58,7 @@ class EmailverController extends GetxController {
       if (response.statusCode == 200) {
         Get.snackbar("Success", data['message']);
 
-        // pindah ke halaman OTP
-        Get.toNamed(
-          '/otpemail',
-          arguments: {"email": emailController.text.trim(), "from": fromPage},
-        );
+        Get.toNamed('/otpemail', arguments: {"email": email, "from": fromPage});
       } else {
         Get.snackbar("Error", data['error']);
       }

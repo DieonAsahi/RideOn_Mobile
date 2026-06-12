@@ -7,7 +7,8 @@ class OtpemailController extends GetxController {
   final otp = List.generate(6, (_) => ''.obs);
   final focusNodes = List.generate(6, (_) => FocusNode());
   final controllers = List.generate(6, (_) => TextEditingController());
-
+  var otpExpiredSeconds = 180.obs;
+  var isOtpExpired = false.obs;
   var isCooldown = false.obs;
   var secondsRemaining = 0.obs;
 
@@ -19,12 +20,28 @@ class OtpemailController extends GetxController {
   void onInit() {
     super.onInit();
     startCooldown(180);
+    startOtpExpiredTimer();
     clearOtp();
 
     if (Get.arguments != null) {
       email = Get.arguments['email'] ?? '';
       fromPage = Get.arguments['from'] ?? 'register';
     }
+  }
+
+  void startOtpExpiredTimer([int seconds = 180]) {
+    otpExpiredSeconds.value = seconds;
+    isOtpExpired.value = false;
+
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+
+      otpExpiredSeconds.value--;
+
+      return otpExpiredSeconds.value > 0;
+    }).then((_) {
+      isOtpExpired.value = true;
+    });
   }
 
   void startCooldown([int seconds = 180]) {
@@ -60,15 +77,20 @@ class OtpemailController extends GetxController {
       return;
     }
 
+    if (isOtpExpired.value) {
+      Get.snackbar("Error", "OTP sudah kadaluarsa");
+      return;
+    }
+
     String type = 'signup';
 
     if (fromPage == 'forgot' || fromPage == 'profile') {
-      type = "email";
+      type = "recovery";
     }
 
     try {
       final url = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/verify-otp",
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/verify-otp",
       );
 
       final response = await http.post(
@@ -85,11 +107,12 @@ class OtpemailController extends GetxController {
         if (fromPage == 'register') {
           Get.offAllNamed('/login');
         } else if (fromPage == 'forgot' || fromPage == 'profile') {
-          Get.toNamed(
+          Get.offNamed(
             '/changepass',
             arguments: {
               "access_token": data['session']['access_token'],
-
+              "refresh_token": data['session']['refresh_token'],
+              
               "from_profile": fromPage == 'profile',
             },
           );
@@ -117,7 +140,7 @@ class OtpemailController extends GetxController {
 
     try {
       final url = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/resend-otp",
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/resend-otp",
       );
 
       final response = await http.post(
@@ -132,7 +155,8 @@ class OtpemailController extends GetxController {
         Get.snackbar("Success", data['message']);
         clearOtp();
 
-        startCooldown(180); // 🔥 mulai cooldown
+        startCooldown(180);
+        startOtpExpiredTimer();
       } else {
         Get.snackbar("Error", data['error']);
       }

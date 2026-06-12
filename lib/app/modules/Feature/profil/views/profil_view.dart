@@ -127,7 +127,7 @@ class ProfilView extends GetView<ProfilController> {
 
                         ElevatedButton(
                           onPressed: () {
-                            Get.offNamed('/login');
+                            Get.offAllNamed('/login');
 
                             /// logout logic
                           },

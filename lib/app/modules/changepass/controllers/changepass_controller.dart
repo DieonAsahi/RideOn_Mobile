@@ -9,6 +9,7 @@ class ChangepassController extends GetxController {
   final confirmPassController = TextEditingController();
 
   String accessToken = '';
+  String refreshToken = '';
 
   @override
   void onInit() {
@@ -16,6 +17,7 @@ class ChangepassController extends GetxController {
 
     if (Get.arguments != null) {
       accessToken = Get.arguments['access_token'] ?? '';
+      refreshToken = Get.arguments['refresh_token'] ?? '';
     }
   }
 
@@ -37,7 +39,7 @@ class ChangepassController extends GetxController {
     }
     try {
       final url = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/update-password",
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/update-password",
       );
 
       final response = await http.post(
@@ -47,6 +49,7 @@ class ChangepassController extends GetxController {
 
         body: jsonEncode({
           "access_token": accessToken,
+          "refresh_token": refreshToken,
           "new_password": newPassController.text,
         }),
       );

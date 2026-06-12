@@ -44,6 +44,8 @@ import '../modules/rwtservis/bindings/rwtservis_binding.dart';
 import '../modules/rwtservis/views/rwtservis_view.dart';
 import '../modules/rwttambah/bindings/rwttambah_binding.dart';
 import '../modules/rwttambah/views/rwttambah_view.dart';
+import '../modules/updtodometer/bindings/updtodometer_binding.dart';
+import '../modules/updtodometer/views/updtodometer_view.dart';
 import '../modules/welcome/bindings/welcome_binding.dart';
 import '../modules/welcome/views/welcome_view.dart';
 
@@ -169,6 +171,11 @@ class AppPages {
       name: _Paths.DTLPERFORMA,
       page: () => const DtlperformaView(),
       binding: DtlperformaBinding(),
+    ),
+    GetPage(
+      name: _Paths.UPDTODOMETER,
+      page: () => const UpdtodometerView(),
+      binding: UpdtodometerBinding(),
     ),
   ];
 }

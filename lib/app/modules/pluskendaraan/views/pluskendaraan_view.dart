@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-
+import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
-
 import '../controllers/pluskendaraan_controller.dart';
+import 'package:camera/camera.dart';
 
 class PluskendaraanView extends GetView<PluskendaraanController> {
   const PluskendaraanView({super.key});
@@ -57,13 +57,13 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                 ),
 
                 if (!(controller.step.value == 7 &&
-                    controller.subStep.value == 1))
+                    controller.odometerStep.value == 1))
                   const SizedBox(height: 50),
 
                 Expanded(
                   child:
                       controller.step.value == 7 &&
-                          controller.subStep.value == 1
+                          controller.odometerStep.value == 1
                       ? _buildStepContent(controller.step.value)
                       : SingleChildScrollView(
                           physics: const BouncingScrollPhysics(),
@@ -107,7 +107,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
 
   Widget _step7() {
     return Obx(() {
-      switch (controller.subStep.value) {
+      switch (controller.odometerStep.value) {
         case 0:
           return _step7Main();
         case 1:
@@ -122,7 +122,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
 
   Widget _step5() {
     return Obx(() {
-      if (controller.subStep.value == 0) {
+      if (controller.imageStep.value == 0) {
         return _step5Upload();
       } else {
         return _step5Preview();
@@ -155,6 +155,9 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
+              value: controller.selectedBrand.value.isEmpty
+                  ? null
+                  : controller.selectedBrand.value,
               hint: const Text(
                 "Merek",
                 style: TextStyle(
@@ -164,12 +167,15 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                 ),
               ),
               isExpanded: true,
+
               items: [
                 "Honda",
                 "Yamaha",
                 "Suzuki",
               ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-              onChanged: (value) {},
+              onChanged: (value) {
+                controller.selectedBrand.value = value!;
+              },
             ),
           ),
         ),
@@ -202,6 +208,9 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
+              value: controller.selectedModel.value.isEmpty
+                  ? null
+                  : controller.selectedModel.value,
               hint: const Text(
                 "Model",
                 style: TextStyle(
@@ -216,7 +225,9 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                 "Beat",
                 "Supra X",
               ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-              onChanged: (value) {},
+              onChanged: (value) {
+                controller.selectedModel.value = value!;
+              },
             ),
           ),
         ),
@@ -247,8 +258,12 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey),
           ),
+
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
+              value: controller.selectedYear.value.isEmpty
+                  ? null
+                  : controller.selectedYear.value,
               hint: const Text(
                 "Tahun",
                 style: TextStyle(
@@ -263,7 +278,9 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                 "2025",
                 "2024",
               ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-              onChanged: (value) {},
+              onChanged: (value) {
+                controller.selectedYear.value = value!;
+              },
             ),
           ),
         ),
@@ -296,7 +313,8 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             border: Border.all(color: Colors.grey),
           ),
 
-          child: const TextField(
+          child: TextField(
+            controller: controller.platController,
             keyboardType: TextInputType.text,
             textCapitalization: TextCapitalization.characters,
 
@@ -341,21 +359,64 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
 
               const SizedBox(height: 20),
 
-              ElevatedButton(
-                onPressed: () {
-                  controller.subStep.value = 1;
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF006BFF),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+              Obx(() {
+                if (controller.isUploading.value) {
+                  return const CircularProgressIndicator();
+                }
+
+                return ElevatedButton(
+                  onPressed: () {
+                    Get.bottomSheet(
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                        ),
+                        child: Wrap(
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.camera_alt),
+                              title: const Text("Kamera"),
+                              onTap: () {
+                                Get.back();
+
+                                controller.pickVehicleImage(ImageSource.camera);
+                              },
+                            ),
+
+                            ListTile(
+                              leading: const Icon(Icons.photo),
+                              title: const Text("Galeri"),
+                              onTap: () {
+                                Get.back();
+
+                                controller.pickVehicleImage(
+                                  ImageSource.gallery,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF006BFF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
-                ),
-                child: const Text(
-                  "Unggah",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
+
+                  child: const Text(
+                    "Unggah",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                );
+              }),
             ],
           ),
         ),
@@ -385,10 +446,12 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                 border: Border.all(color: Colors.grey.shade400),
               ),
               child: ClipRRect(
-                child: Image.asset(
-                  "assets/images/motor.png",
-                  fit: BoxFit.cover,
-                ),
+                child: controller.selectedVehicleImage != null
+                    ? Image.file(
+                        controller.selectedVehicleImage!,
+                        fit: BoxFit.cover,
+                      )
+                    : const SizedBox(),
               ),
             ),
 
@@ -397,7 +460,9 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
               right: 10,
               child: GestureDetector(
                 onTap: () {
-                  controller.subStep.value = 0;
+                  controller.selectedVehicleImage = null;
+                  controller.vehicleImageUrl.value = '';
+                  controller.imageStep.value = 0;
                 },
                 child: Container(
                   padding: const EdgeInsets.all(5),
@@ -448,6 +513,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             children: [
               Expanded(
                 child: TextField(
+                  controller: controller.estimasiHarianController,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     hintText: "contoh : 15",
@@ -487,69 +553,87 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
   }
 
   Widget _step7Camera() {
-    return Stack(
-      children: [
-        Container(
-          color: Colors.black,
-          width: double.infinity,
-          height: double.infinity,
-        ),
+    return Obx(() {
+      if (!controller.isCameraInitialized.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-        Positioned(
-          top: 40,
-          left: 20,
-          child: GestureDetector(
-            onTap: () {
-              controller.subStep.value = 0;
-            },
-            child: const Icon(Icons.close, color: Colors.white, size: 30),
+      return Stack(
+        children: [
+          SizedBox.expand(child: CameraPreview(controller.cameraController!)),
+
+          // overlay gelap
+          IgnorePointer(
+            child: Container(color: Colors.black.withOpacity(0.35)),
           ),
-        ),
 
-        Center(
-          child: Container(
-            width: 250,
-            height: 100,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-          ),
-        ),
-
-        const Positioned(
-          bottom: 140,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: Text(
-              "Posisikan angka odometer sesuai kotak",
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ),
-
-        Positioned(
-          bottom: 40,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: GestureDetector(
-              onTap: () {
-                controller.subStep.value = 2;
-              },
-              child: Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 4),
-                ),
+          // kotak scanner
+          Center(
+            child: Container(
+              width: 280,
+              height: 100,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white, width: 3),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
-        ),
-      ],
-    );
+
+          Positioned(
+            top: 50,
+            left: 20,
+            child: GestureDetector(
+              onTap: () async {
+                await controller.disposeCamera();
+                controller.odometerStep.value = 0;
+              },
+              child: const Icon(Icons.close, color: Colors.white, size: 32),
+            ),
+          ),
+
+          const Positioned(
+            bottom: 140,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text(
+                "Posisikan odometer di dalam kotak",
+                style: TextStyle(color: Colors.white, fontSize: 14),
+              ),
+            ),
+          ),
+
+          Positioned(
+            bottom: 40,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: GestureDetector(
+                onTap: () async {
+                  if (controller.isLoading.value) return;
+
+                  await controller.captureAndScanOdometer();
+                },
+                child: Obx(() {
+                  if (controller.isLoading.value) {
+                    return const CircularProgressIndicator(color: Colors.white);
+                  }
+
+                  return Container(
+                    width: 75,
+                    height: 75,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 5),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+        ],
+      );
+    });
   }
 
   Widget _step7Result() {
@@ -721,7 +805,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
 
   Widget _buildButtonsDynamic() {
     final step = controller.step.value;
-    final sub = controller.subStep.value;
+    final sub = controller.odometerStep.value;
 
     if (step == 7 && sub == 0) {
       return Row(
@@ -747,8 +831,9 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             child: SizedBox(
               height: 40,
               child: ElevatedButton(
-                onPressed: () {
-                  controller.subStep.value = 1;
+                onPressed: () async {
+                  await controller.initCamera();
+                  controller.odometerStep.value = 1;
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF006BFF),
@@ -778,8 +863,9 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             child: SizedBox(
               height: 40,
               child: ElevatedButton(
-                onPressed: () {
-                  controller.subStep.value = 1;
+                onPressed: () async {
+                  await controller.initCamera();
+                  controller.odometerStep.value = 1;
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
                 child: const Text(
@@ -799,7 +885,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
               child: ElevatedButton(
                 onPressed: () {
                   controller.nextStep();
-                  controller.subStep.value = 0;
+                  controller.odometerStep.value = 0;
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF006BFF),
@@ -847,10 +933,23 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF006BFF),
                 ),
-                child: const Text(
-                  "Simpan",
-                  style: TextStyle(color: Colors.white),
-                ),
+                child: Obx(() {
+                  if (controller.isLoading.value) {
+                    return const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    );
+                  }
+
+                  return const Text(
+                    "Simpan",
+                    style: TextStyle(color: Colors.white),
+                  );
+                }),
               ),
             ),
           ),

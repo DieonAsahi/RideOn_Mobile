@@ -2,13 +2,44 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:get_storage/get_storage.dart';
 
 class LoginController extends GetxController {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final box = GetStorage();
 
-  void onLoginSuccess() {
-    Get.offNamed('/pluskendaraan', arguments: true);
+  Future<void> checkVehicle() async {
+    try {
+      final token = box.read("token");
+      print("TOKEN:");
+      print(token);
+
+      final response = await http.get(
+        Uri.parse(
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/my-vehicle",
+        ),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        final vehicle = jsonDecode(response.body);
+
+        box.write("vehicle_id", vehicle["id"]);
+
+        Get.offNamed('/mainscreen');
+      } else {
+        Get.offAllNamed('/pluskendaraan', arguments: true);
+      }
+    } catch (e) {
+      print(e);
+      Get.offAllNamed('/pluskendaraan', arguments: true);
+    }
   }
 
   void login() async {
@@ -22,7 +53,7 @@ class LoginController extends GetxController {
 
     try {
       final url = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/login",
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/login",
       );
 
       final response = await http.post(
@@ -37,13 +68,15 @@ class LoginController extends GetxController {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        
+        final token = data["session"]["access_token"];
+
+        box.write("token", token);
+
         Get.snackbar("Success", "Login berhasil");
 
-        // nanti kita bisa simpan user di sini
         print(data);
 
-        onLoginSuccess();
+        await checkVehicle();
       } else {
         Get.snackbar("Error", data['error'] ?? "Login gagal");
       }

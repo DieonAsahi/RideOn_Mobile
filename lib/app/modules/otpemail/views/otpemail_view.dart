@@ -77,7 +77,62 @@ class OtpemailView extends GetView<OtpemailController> {
                   }),
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 25),
+
+                Obx(() {
+                  final minutes = (controller.otpExpiredSeconds.value ~/ 60)
+                      .toString()
+                      .padLeft(2, '0');
+
+                  final seconds = (controller.otpExpiredSeconds.value % 60)
+                      .toString()
+                      .padLeft(2, '0');
+
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: controller.isOtpExpired.value
+                          ? Colors.red.shade100
+                          : Colors.yellow.shade100,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          controller.isOtpExpired.value
+                              ? Icons.error_outline
+                              : Icons.access_time,
+                          color: controller.isOtpExpired.value
+                              ? Colors.red
+                              : Colors.orange,
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        Expanded(
+                          child: Text(
+                            controller.isOtpExpired.value
+                                ? "OTP sudah kadaluarsa, silakan resend kode"
+                                : "OTP berlaku selama $minutes:$seconds",
+                            style: TextStyle(
+                              color: controller.isOtpExpired.value
+                                  ? Colors.red
+                                  : Colors.orange.shade800,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+
+                const SizedBox(height: 20),
 
                 Obx(
                   () => GestureDetector(
@@ -97,6 +152,7 @@ class OtpemailView extends GetView<OtpemailController> {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 100),
 
                 SizedBox(

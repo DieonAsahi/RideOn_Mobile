@@ -98,12 +98,14 @@ class HomeView extends GetView<HomeController> {
                           ),
                         ],
                       ),
-                      child: ClipRRect(
-                        child: Image.asset(
-                          'assets/images/motor.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                      child: Obx(() {
+                        return ClipRRect(
+                          child: Image.network(
+                            controller.vehicleImage.value,
+                            fit: BoxFit.cover,
+                          ),
+                        );
+                      }),
                     ),
 
                     const SizedBox(height: 30),
@@ -128,87 +130,53 @@ class HomeView extends GetView<HomeController> {
 
                     const SizedBox(height: 30),
 
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        int crossAxisCount = constraints.maxWidth > 700 ? 3 : 2;
+                    Obx(() {
+                      if (controller.isLoading.value) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                        return GridView.count(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          int crossAxisCount = constraints.maxWidth > 700
+                              ? 3
+                              : 2;
 
-                          crossAxisCount: crossAxisCount,
+                          return GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
 
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
+                            itemCount: controller.components.length,
 
-                          childAspectRatio: constraints.maxWidth > 700
-                              ? 0.82
-                              : 0.68,
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxisCount,
+                                  crossAxisSpacing: 10,
+                                  mainAxisSpacing: 10,
+                                  childAspectRatio: constraints.maxWidth > 700
+                                      ? 0.82
+                                      : 0.68,
+                                ),
 
-                          children: [
-                            FeatureCard(
-                              title: 'Oli Mesin',
-                              imagePath: 'assets/icons/Oli Mesin.png',
-                              currentKm: 4600,
-                              maxKm: 5000,
-                              currentDays: 30,
-                              maxDays: 60,
-                              onTap: () {},
-                            ),
+                            itemBuilder: (context, index) {
+                              final item = controller.components[index];
 
-                            FeatureCard(
-                              title: 'Oli Gardan',
-                              imagePath: 'assets/icons/Oli Gardan.png',
-                              currentKm: 4600,
-                              maxKm: 5000,
-                              currentDays: 30,
-                              maxDays: 60,
-                              onTap: () {},
-                            ),
+                              return FeatureCard(
+                                title: item.title,
+                                imagePath: item.imagePath,
 
-                            FeatureCard(
-                              title: 'CVT',
-                              imagePath: 'assets/icons/CVT.png',
-                              currentKm: 4600,
-                              maxKm: 5000,
-                              currentDays: 30,
-                              maxDays: 60,
-                              onTap: () {},
-                            ),
+                                currentKm: item.currentKm.toDouble(),
+                                maxKm: item.maxKm.toDouble(),
 
-                            FeatureCard(
-                              title: 'Busi',
-                              imagePath: 'assets/icons/Busi.png',
-                              currentKm: 4600,
-                              maxKm: 5000,
-                              currentDays: 30,
-                              maxDays: 60,
-                              onTap: () {},
-                            ),
+                                currentDays: item.currentDays.toDouble(),
+                                maxDays: item.maxDays.toDouble(),
 
-                            FeatureCard(
-                              title: 'Kampas Rem',
-                              imagePath: 'assets/icons/Kampas Rem.png',
-                              currentKm: 4600,
-                              maxKm: 5000,
-                              currentDays: 30,
-                              maxDays: 60,
-                              onTap: () {},
-                            ),
-
-                            FeatureCard(
-                              title: 'Filter Udara',
-                              imagePath: 'assets/icons/Filter Udara.png',
-                              currentKm: 4600,
-                              maxKm: 5000,
-                              currentDays: 30,
-                              maxDays: 60,
-                              onTap: () {},
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+                                onTap: () {},
+                              );
+                            },
+                          );
+                        },
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -242,9 +210,9 @@ class FeatureCard extends StatelessWidget {
   });
 
   Color getProgressColor(double progress) {
-    if (progress < 0.5) {
+    if (progress <= 0.3) {
       return Colors.red;
-    } else if (progress < 0.8) {
+    } else if (progress <= 0.6) {
       return Colors.orange;
     } else {
       return Colors.green;
@@ -255,8 +223,8 @@ class FeatureCard extends StatelessWidget {
   Widget build(BuildContext context) {
     const Color primaryColor = Color(0xFFA79277);
 
-    double kmProgress = currentKm / maxKm;
-    double dayProgress = currentDays / maxDays;
+    double kmProgress = (currentKm / maxKm).clamp(0.0, 1.0);
+    double dayProgress = (currentDays / maxDays).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -405,7 +373,7 @@ class OdometerCard extends GetView<HomeController> {
                       const SizedBox(width: 10),
                       Obx(
                         () => Text(
-                          "${controller.odometer.value.toStringAsFixed(0)} km",
+                          "${controller.odometer.value} km",
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -420,7 +388,16 @@ class OdometerCard extends GetView<HomeController> {
               const SizedBox(width: 10),
 
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () async {
+                  final result = await Get.toNamed(
+                    '/updtodometer',
+                    arguments: controller.vehicleId,
+                  );
+
+                  if (result == true) {
+                    controller.fetchHome();
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF006BFF),
                   padding: const EdgeInsets.symmetric(
@@ -458,7 +435,7 @@ class PerformaSection extends GetView<HomeController> {
       final dates = controller.tanggal;
 
       final dataCount = data.length;
-      const maxChartHeight = 150.0;
+      const maxChartHeight = 210.0;
       const bottomAreaHeight = 30.0;
 
       final isFewData = dataCount < 8;
@@ -502,20 +479,27 @@ class PerformaSection extends GetView<HomeController> {
                   child: SizedBox(
                     height: maxChartHeight,
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text("100", style: TextStyle(fontSize: 10)),
-                        Text("80", style: TextStyle(fontSize: 10)),
-                        Text("60", style: TextStyle(fontSize: 10)),
-                        Text("40", style: TextStyle(fontSize: 10)),
-                        Text("20", style: TextStyle(fontSize: 10)),
-                        Text("0", style: TextStyle(fontSize: 10)),
+                      children: [
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: const [
+                              Text("100"),
+                              Text("80"),
+                              Text("60"),
+                              Text("40"),
+                              Text("20"),
+                              Text("0"),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
 
                 const SizedBox(width: 5),
+
                 Padding(
                   padding: const EdgeInsets.only(bottom: 20),
                   child: Container(
@@ -531,11 +515,13 @@ class PerformaSection extends GetView<HomeController> {
                     builder: (context, constraints) {
                       double itemWidth = 30;
                       double totalWidth = dataCount * itemWidth;
+                      double chartWidth =
+                          (isFewData ? constraints.maxWidth : totalWidth) + 5;
 
                       return SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: SizedBox(
-                          width: isFewData ? constraints.maxWidth : totalWidth,
+                          width: chartWidth,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
@@ -556,7 +542,7 @@ class PerformaSection extends GetView<HomeController> {
                                               MainAxisAlignment.end,
                                           children: [
                                             Container(
-                                              width: 8,
+                                              width: 12,
                                               height: barHeight,
                                               decoration: BoxDecoration(
                                                 color: const Color(0xFF006BFF),
@@ -573,7 +559,7 @@ class PerformaSection extends GetView<HomeController> {
                                         child: Align(
                                           alignment: Alignment.bottomCenter,
                                           child: Container(
-                                            width: 6,
+                                            width: 12,
                                             height: barHeight,
                                             decoration: BoxDecoration(
                                               color: const Color(0xFF006BFF),
@@ -599,27 +585,34 @@ class PerformaSection extends GetView<HomeController> {
                               SizedBox(
                                 height: 20,
                                 child: Row(
-                                  children: List.generate(dataCount, (index) {
-                                    if (isFewData) {
-                                      return SizedBox(
-                                        width: constraints.maxWidth / dataCount,
-                                        child: Text(
-                                          dates[index],
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(fontSize: 10),
-                                        ),
-                                      );
-                                    } else {
-                                      return SizedBox(
-                                        width: itemWidth,
-                                        child: Text(
-                                          dates[index],
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(fontSize: 10),
-                                        ),
-                                      );
-                                    }
-                                  }),
+                                  children: [
+                                    ...List.generate(dataCount, (index) {
+                                      if (isFewData) {
+                                        return SizedBox(
+                                          width:
+                                              constraints.maxWidth / dataCount,
+                                          child: Text(
+                                            dates[index],
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        return SizedBox(
+                                          width: itemWidth,
+                                          child: Text(
+                                            dates[index],
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }),
+                                  ],
                                 ),
                               ),
                             ],
