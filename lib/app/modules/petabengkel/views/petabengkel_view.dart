@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../controllers/petabengkel_controller.dart';
 
 class PetabengkelView extends GetView<PetabengkelController> {
@@ -14,21 +15,47 @@ class PetabengkelView extends GetView<PetabengkelController> {
       body: Stack(
         children: [
           // MAP
-          SizedBox(
-            width: double.infinity,
-            height: double.infinity,
+          Obx(() {
+            if (controller.userLocation.value == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-            child: Image.asset(
-              "assets/images/map.png",
-              fit: BoxFit.cover,
-            ),
-          ),
+            return FlutterMap(
+              options: MapOptions(
+                initialCenter: controller.userLocation.value!,
+                initialZoom: 13,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'motocare.com.workshop_map',
+                ),
+
+                MarkerLayer(markers: controller.markers.toList()),
+
+                MarkerLayer(
+                  markers: [
+                    if (controller.userLocation.value != null)
+                      Marker(
+                        point: controller.userLocation.value!,
+                        width: 30,
+                        height: 30,
+                        child: Image.asset(
+                          "assets/icon/lokasi_saya.png",
+                          width: 30,
+                          height: 30,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          }),
 
           // SEARCH
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
               child: Row(
                 children: [
                   IconButton(
@@ -38,19 +65,29 @@ class PetabengkelView extends GetView<PetabengkelController> {
 
                   Expanded(
                     child: TextField(
+                      controller: controller.searchController,
+                      onChanged: controller.searchWorkshop,
+
                       decoration: InputDecoration(
                         hintText: "Cari bengkel...",
-
-                        prefixIcon: const Icon(Icons.search),
-
+                        suffixIcon: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: Center(
+                            child: Image.asset(
+                              "assets/icon/search.png",
+                              width: 20,
+                              height: 20,
+                            ),
+                          ),
+                        ),
                         filled: true,
                         fillColor: Colors.white,
-
-                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
-
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
-
                           borderSide: BorderSide.none,
                         ),
                       ),
@@ -62,322 +99,446 @@ class PetabengkelView extends GetView<PetabengkelController> {
           ),
 
           // BOTTOM SHEET
-          DraggableScrollableSheet(
-            initialChildSize: 0.23,
-            minChildSize: 0.23,
-            maxChildSize: 0.82,
+          Obx(() {
+            if (!controller.showBottomSheet.value) {
+              return const SizedBox();
+            }
 
-            builder: (context, scrollController) {
-              return Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+            return NotificationListener<DraggableScrollableNotification>(
+              onNotification: (notification) {
+                // jika ditarik hampir habis ke bawah
+                if (notification.extent <= 0.20) {
+                  controller.showBottomSheet.value = false;
+                }
 
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
-                  ),
-                ),
+                return true;
+              },
+              child: DraggableScrollableSheet(
+                initialChildSize: 0.23,
+                minChildSize: 0.20,
+                maxChildSize: 1.0,
+                snap: true,
+                snapSizes: const [0.23, 0.80, 1.0],
 
-                child: SingleChildScrollView(
-                  controller: scrollController,
+                builder: (context, scrollController) {
+                  return Container(
+                    // isi UI kamu tetap
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
 
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-
-                    children: [
-                      const SizedBox(height: 12),
-
-                      Center(
-                        child: Container(
-                          width: 50,
-                          height: 5,
-
-                          decoration: BoxDecoration(
-                            color: Colors.blue,
-
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        topRight: Radius.circular(30),
                       ),
+                    ),
 
-                      const SizedBox(height: 20),
+                    child: SingleChildScrollView(
+                      controller: scrollController,
 
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
 
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 12),
 
-                          children: [
-                            const Text(
-                              "Bengkel nada motor",
-                              style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
+                          Center(
+                            child: Container(
+                              width: 50,
+                              height: 5,
+
+                              decoration: BoxDecoration(
+                                color: Colors.blue,
+
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
+                          ),
 
-                            const SizedBox(height: 5),
+                          const SizedBox(height: 20),
 
-                            const Text(
-                              "Servis Motor 24 Jam",
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.black87,
-                              ),
-                            ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
 
-                            const SizedBox(height: 8),
+                            child: Obx(() {
+                              final workshop =
+                                  controller.selectedWorkshop.value;
 
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.star,
-                                  color: Colors.amber,
-                                  size: 18,
-                                ),
-
-                                const SizedBox(width: 4),
-
-                                const Text(
-                                  "5,0",
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-
-                                const SizedBox(width: 4),
-
-                                const Text("(21 Ulasan)"),
-
-                                const Spacer(),
-
-                                const Icon(
-                                  Icons.location_on_outlined,
-                                  size: 18,
-                                ),
-
-                                const SizedBox(width: 4),
-
-                                const Text(
-                                  "1,6 km dari lokasi anda",
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 18),
-
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(18),
-
-                              child: Image.asset(
-                                "assets/images/bengkel.png",
-                                height: 220,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-
-                              children: [
-                                const Icon(
-                                  Icons.location_on_outlined,
-                                  color: Colors.blue,
-                                ),
-
-                                const SizedBox(width: 10),
-
-                                Expanded(
-                                  child: const Text(
-                                    "Jl. Sunan Gn. Jati III, Limbangan Wetan, Kec. Brebes, Kabupaten Brebes, Jawa Tengah 52218",
-                                    style: TextStyle(height: 1.5),
+                              if (workshop == null) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(20),
+                                    child: Text("Pilih bengkel pada peta"),
                                   ),
-                                ),
-                              ],
-                            ),
+                                );
+                              }
 
-                            const SizedBox(height: 20),
+                              final openingHours = workshop.openingHours;
+                              final hoursList = openingHours.split('|');
 
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.access_time,
-                                  color: Colors.blue,
-                                ),
+                              final firstDay = hoursList.isNotEmpty
+                                  ? hoursList.first.trim()
+                                  : "-";
 
-                                const SizedBox(width: 10),
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
 
-                                const Text(
-                                  "Buka 24 Jam",
-                                  style: TextStyle(fontSize: 15),
-                                ),
-
-                                const SizedBox(width: 5),
-
-                                const Icon(Icons.keyboard_arrow_down),
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.phone_outlined,
-                                  color: Colors.blue,
-                                ),
-
-                                const SizedBox(width: 10),
-
-                                const Text(
-                                  "0877-8863-1358",
-                                  style: TextStyle(fontSize: 15),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 25),
-
-                            const Divider(),
-
-                            const SizedBox(height: 20),
-
-                            const Text(
-                              "Ringkasan Ulasan",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    children: List.generate(5, (index) {
-                                      int star = 5 - index;
-
-                                      return Padding(
-                                        padding: const EdgeInsets.only(
-                                          bottom: 8,
-                                        ),
-
-                                        child: Row(
-                                          children: [
-                                            Text("$star"),
-
-                                            const SizedBox(width: 8),
-
-                                            Expanded(
-                                              child: LinearProgressIndicator(
-                                                value: star == 5 ? 0.95 : 0.05,
-
-                                                minHeight: 6,
-
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-
-                                                backgroundColor:
-                                                    Colors.grey.shade200,
-
-                                                valueColor:
-                                                    const AlwaysStoppedAnimation(
-                                                      Colors.amber,
-                                                    ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    }),
-                                  ),
-                                ),
-
-                                const SizedBox(width: 20),
-
-                                Column(
-                                  children: const [
-                                    Text(
-                                      "5,0",
-                                      style: TextStyle(
-                                        fontSize: 48,
+                                children: [
+                                  Obx(
+                                    () => Text(
+                                      controller
+                                              .selectedWorkshop
+                                              .value
+                                              ?.title ??
+                                          "-",
+                                      style: const TextStyle(
+                                        fontSize: 26,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
+                                  ),
 
-                                    Row(
+                                  const SizedBox(height: 5),
+
+                                  Obx(
+                                    () => Text(
+                                      controller
+                                              .selectedWorkshop
+                                              .value
+                                              ?.category ??
+                                          "-",
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 8),
+
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.star,
+                                        color: Colors.amber,
+                                        size: 18,
+                                      ),
+
+                                      const SizedBox(width: 4),
+
+                                      Obx(
+                                        () => Text(
+                                          "${controller.selectedWorkshop.value?.rating ?? 0}",
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 4),
+
+                                      Obx(
+                                        () => Text(
+                                          "(${controller.selectedWorkshop.value?.reviewCount ?? 0} Ulasan)",
+                                        ),
+                                      ),
+
+                                      const Spacer(),
+
+                                      const Icon(
+                                        Icons.location_on_outlined,
+                                        size: 18,
+                                      ),
+
+                                      const SizedBox(width: 4),
+
+                                      Obx(
+                                        () => Text(
+                                          "${controller.selectedWorkshop.value?.distanceKm.toStringAsFixed(1) ?? '0.0'} km dari lokasi anda",
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 18),
+
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(18),
+                                    child: Obx(
+                                      () => Image.network(
+                                        controller
+                                                .selectedWorkshop
+                                                .value
+                                                ?.imageUrl ??
+                                            "",
+                                        height: 220,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 20),
+
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Image.asset(
+                                        "assets/icon/lokasi_bengkel.png",
+                                        width: 22,
+                                        height: 22,
+                                      ),
+
+                                      const SizedBox(width: 10),
+
+                                      Expanded(
+                                        child: Obx(
+                                          () => Text(
+                                            controller
+                                                    .selectedWorkshop
+                                                    .value
+                                                    ?.address ??
+                                                "-",
+                                            style: const TextStyle(height: 1.5),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 20),
+
+                                  Theme(
+                                    data: Theme.of(context).copyWith(
+                                      dividerColor: Colors.transparent,
+                                    ),
+                                    child: ExpansionTile(
+                                      tilePadding: EdgeInsets.zero,
+                                      childrenPadding: EdgeInsets.zero,
+                                      leading: Image.asset(
+                                        "assets/icon/jam.png",
+                                        width: 22,
+                                        height: 22,
+                                      ),
+                                      title: Text(
+                                        firstDay,
+                                        style: const TextStyle(fontSize: 15),
+                                      ),
                                       children: [
-                                        Icon(
-                                          Icons.star,
-                                          color: Colors.amber,
-                                          size: 18,
-                                        ),
-                                        Icon(
-                                          Icons.star,
-                                          color: Colors.amber,
-                                          size: 18,
-                                        ),
-                                        Icon(
-                                          Icons.star,
-                                          color: Colors.amber,
-                                          size: 18,
-                                        ),
-                                        Icon(
-                                          Icons.star,
-                                          color: Colors.amber,
-                                          size: 18,
-                                        ),
-                                        Icon(
-                                          Icons.star,
-                                          color: Colors.amber,
-                                          size: 18,
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 10,
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: hoursList.skip(1).map((
+                                              e,
+                                            ) {
+                                              return Padding(
+                                                padding: const EdgeInsets.only(
+                                                  bottom: 4,
+                                                ),
+                                                child: Text(
+                                                  e.trim(),
+                                                  style: const TextStyle(
+                                                    color: Colors.black,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ),
                                         ),
                                       ],
                                     ),
+                                  ),
 
-                                    SizedBox(height: 6),
+                                  const SizedBox(height: 20),
 
-                                    Text(
-                                      "21 ulasan",
-                                      style: TextStyle(
-                                        color: Colors.blue,
-                                        fontWeight: FontWeight.w600,
+                                  Row(
+                                    children: [
+                                      Image.asset(
+                                        "assets/icon/phone.png",
+                                        width: 22,
+                                        height: 22,
                                       ),
+
+                                      const SizedBox(width: 10),
+
+                                      Obx(() {
+                                        final phone =
+                                            controller
+                                                .selectedWorkshop
+                                                .value
+                                                ?.phone ??
+                                            '';
+
+                                        return Text(
+                                          phone.isEmpty ? '-' : phone,
+                                          style: const TextStyle(fontSize: 15),
+                                        );
+                                      }),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 25),
+
+                                  const Divider(),
+
+                                  const SizedBox(height: 20),
+
+                                  const Text(
+                                    "Ringkasan Ulasan",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                                  ),
 
-                            const SizedBox(height: 25),
+                                  const SizedBox(height: 20),
 
-                            _reviewItem(
-                              "“Service nya bagus, pelayanan memuaskan”",
-                            ),
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
 
-                            const SizedBox(height: 16),
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          children: List.generate(5, (index) {
+                                            int star = 5 - index;
 
-                            _reviewItem(
-                              "“Cepat tanggap solusi terbaik pas motor trouble tapi ngga ada bengkel di sekitar”",
-                            ),
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 8,
+                                              ),
 
-                            const SizedBox(height: 40),
-                          ],
-                        ),
+                                              child: Row(
+                                                children: [
+                                                  Text("$star"),
+
+                                                  const SizedBox(width: 8),
+
+                                                  Expanded(
+                                                    child: LinearProgressIndicator(
+                                                      value: star == 5
+                                                          ? 0.95
+                                                          : 0.05,
+
+                                                      minHeight: 6,
+
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+
+                                                      backgroundColor:
+                                                          Colors.grey.shade200,
+
+                                                      valueColor:
+                                                          const AlwaysStoppedAnimation(
+                                                            Colors.amber,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }),
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 20),
+
+                                      Column(
+                                        children: [
+                                          Obx(
+                                            () => Text(
+                                              controller
+                                                      .selectedWorkshop
+                                                      .value
+                                                      ?.rating
+                                                      .toStringAsFixed(1) ??
+                                                  "0.0",
+                                              style: const TextStyle(
+                                                fontSize: 48,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.star,
+                                                color: Colors.amber,
+                                                size: 18,
+                                              ),
+                                              Icon(
+                                                Icons.star,
+                                                color: Colors.amber,
+                                                size: 18,
+                                              ),
+                                              Icon(
+                                                Icons.star,
+                                                color: Colors.amber,
+                                                size: 18,
+                                              ),
+                                              Icon(
+                                                Icons.star,
+                                                color: Colors.amber,
+                                                size: 18,
+                                              ),
+                                              Icon(
+                                                Icons.star,
+                                                color: Colors.amber,
+                                                size: 18,
+                                              ),
+                                            ],
+                                          ),
+
+                                          SizedBox(height: 6),
+
+                                          Obx(
+                                            () => Text(
+                                              "${controller.selectedWorkshop.value?.reviewCount ?? 0} ulasan",
+                                              style: const TextStyle(
+                                                color: Colors.blue,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 25),
+
+                                  _reviewItem(
+                                    "“Service nya bagus, pelayanan memuaskan”",
+                                  ),
+
+                                  const SizedBox(height: 16),
+
+                                  _reviewItem(
+                                    "“Cepat tanggap solusi terbaik pas motor trouble tapi ngga ada bengkel di sekitar”",
+                                  ),
+
+                                  const SizedBox(height: 40),
+                                ],
+                              );
+                            }),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
+                    ),
+                  );
+                },
+              ),
+            );
+          }),
         ],
       ),
     );

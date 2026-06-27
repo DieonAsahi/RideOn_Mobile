@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
 
 class PluskendaraanController extends GetxController {
   var step = 1.obs;
@@ -313,19 +314,31 @@ class PluskendaraanController extends GetxController {
 
       try {
         data = jsonDecode(response.body);
+        print("DATA:");
+        print(data);
+
+        print("VEHICLE:");
+        print(data["vehicle"]);
       } catch (e) {
         Get.snackbar("Error", "Response bukan JSON");
         return;
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        print("MASUK SUCCESS");
+
         box.write("vehicle_id", data["vehicle"]["id"]);
         Get.snackbar("Berhasil", "Kendaraan berhasil ditambahkan");
 
         if (isFromLogin.value) {
           Get.offNamed('/mainscreen');
         } else {
-          Get.back();
+          print("GET BACK");
+          print("CAN BACK = ${Get.key.currentState?.canPop()}");
+
+          Get.find<KendaraanController>().getVehicles();
+
+          Get.offNamed('/mainscreen', arguments: 1);
         }
       } else {
         Get.snackbar(
@@ -450,7 +463,6 @@ class PluskendaraanController extends GetxController {
       await disposeCamera();
 
       Get.snackbar("Berhasil", "Odometer berhasil dibaca");
-
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {

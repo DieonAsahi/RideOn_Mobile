@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-
 import 'package:get/get.dart';
-
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -13,174 +11,222 @@ class HomeView extends GetView<HomeController> {
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Stack(
-                children: [
-                  Image.asset(
-                    'assets/images/kotak.png',
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: 175,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 5),
-                            const Text(
-                              "MotoCare",
-                              style: TextStyle(
-                                fontSize: 25,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.yellow,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Obx(
-                              () => Text(
-                                'Halo, ${controller.namaController.value}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await controller.fetchHome();
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                Stack(
+                  children: [
+                    Image.asset(
+                      'assets/images/kotak.png',
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: 175,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 5),
+                              const Text(
+                                "MotoCare",
+                                style: TextStyle(
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.yellow,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.notifications,
-                            color: Colors.white,
+                              const SizedBox(height: 5),
+                              Obx(
+                                () => Text(
+                                  'Halo, ${controller.namaController.value}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          onPressed: () {
-                            Get.toNamed('/notif');
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              Transform.translate(
-                offset: const Offset(0, -60),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: OdometerCard(),
-                ),
-              ),
-
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 300,
-                      height: 300,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.white.withOpacity(0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
+                          IconButton(
+                            icon: Image.asset(
+                              'assets/icon/notif.png',
+                              width: 24,
+                              height: 24,
+                            ),
+                            onPressed: () {
+                              Get.toNamed('/notif');
+                            },
                           ),
                         ],
                       ),
-                      child: Obx(() {
-                        return ClipRRect(
-                          child: Image.network(
-                            controller.vehicleImage.value,
-                            fit: BoxFit.cover,
-                          ),
-                        );
-                      }),
                     ),
-
-                    const SizedBox(height: 30),
-
-                    const PerformaSection(),
-
-                    const SizedBox(height: 30),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
-                          "Komponen",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    Obx(() {
-                      if (controller.isLoading.value) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      return LayoutBuilder(
-                        builder: (context, constraints) {
-                          int crossAxisCount = constraints.maxWidth > 700
-                              ? 3
-                              : 2;
-
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-
-                            itemCount: controller.components.length,
-
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: crossAxisCount,
-                                  crossAxisSpacing: 10,
-                                  mainAxisSpacing: 10,
-                                  childAspectRatio: constraints.maxWidth > 700
-                                      ? 0.82
-                                      : 0.68,
-                                ),
-
-                            itemBuilder: (context, index) {
-                              final item = controller.components[index];
-
-                              return FeatureCard(
-                                title: item.title,
-                                imagePath: item.imagePath,
-
-                                currentKm: item.currentKm.toDouble(),
-                                maxKm: item.maxKm.toDouble(),
-
-                                currentDays: item.currentDays.toDouble(),
-                                maxDays: item.maxDays.toDouble(),
-
-                                onTap: () {},
-                              );
-                            },
-                          );
-                        },
-                      );
-                    }),
                   ],
                 ),
-              ),
-            ],
+
+                Transform.translate(
+                  offset: const Offset(0, -60),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: OdometerCard(),
+                  ),
+                ),
+
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(30),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Obx(
+                            () => IconButton(
+                              onPressed: controller.isFirstVehicle
+                                  ? null
+                                  : controller.previousVehicle,
+                              icon: Image.asset(
+                                controller.isFirstVehicle
+                                    ? "assets/icon/prev_grey.png"
+                                    : "assets/icon/prev_blue.png",
+                                width: 40,
+                              ),
+                            ),
+                          ),
+
+                          Expanded(
+                            child: Container(
+                              height: 250,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Obx(
+                                () => ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Image.network(
+                                    controller.vehicleImage.value,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (context, child, progress) {
+                                      if (progress == null) return child;
+
+                                      return Container(
+                                        color: Colors.grey.shade200,
+                                        child: const Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          Obx(
+                            () => IconButton(
+                              onPressed: controller.isLastVehicle
+                                  ? null
+                                  : controller.nextVehicle,
+                              icon: Image.asset(
+                                controller.isLastVehicle
+                                    ? "assets/icon/next_grey.png"
+                                    : "assets/icon/next_blue.png",
+                                width: 40,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      const PerformaSection(),
+
+                      const SizedBox(height: 30),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: const [
+                          Text(
+                            "Komponen",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      Obx(() {
+                        if (controller.isLoading.value) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            int crossAxisCount = constraints.maxWidth > 700
+                                ? 3
+                                : 2;
+
+                            return GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+
+                              itemCount: controller.components.length,
+
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: crossAxisCount,
+                                    crossAxisSpacing: 10,
+                                    mainAxisSpacing: 10,
+                                    childAspectRatio: constraints.maxWidth > 700
+                                        ? 0.82
+                                        : 0.68,
+                                  ),
+
+                              itemBuilder: (context, index) {
+                                final item = controller.components[index];
+
+                                return FeatureCard(
+                                  title: item.title,
+                                  imagePath: item.imagePath,
+
+                                  currentKm: item.currentKm.toDouble(),
+                                  maxKm: item.maxKm.toDouble(),
+
+                                  currentDays: item.currentDays.toDouble(),
+                                  maxDays: item.maxDays.toDouble(),
+
+                                  onTap: () {},
+                                );
+                              },
+                            );
+                          },
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -212,7 +258,7 @@ class FeatureCard extends StatelessWidget {
   Color getProgressColor(double progress) {
     if (progress <= 0.3) {
       return Colors.red;
-    } else if (progress <= 0.6) {
+    } else if (progress <= 0.65) {
       return Colors.orange;
     } else {
       return Colors.green;
@@ -343,6 +389,7 @@ class OdometerCard extends GetView<HomeController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(width: 5),
           const Text(
             "Odometer",
             style: TextStyle(
@@ -369,17 +416,29 @@ class OdometerCard extends GetView<HomeController> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.speed, size: 30),
+                      Image.asset(
+                        'assets/icon/odometer.png',
+                        width: 30,
+                        height: 30,
+                      ),
                       const SizedBox(width: 10),
-                      Obx(
-                        () => Text(
+                      Obx(() {
+                        if (controller.isLoadingOdometer.value) {
+                          return const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          );
+                        }
+
+                        return Text(
                           "${controller.odometer.value} km",
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
-                        ),
-                      ),
+                        );
+                      }),
                     ],
                   ),
                 ),

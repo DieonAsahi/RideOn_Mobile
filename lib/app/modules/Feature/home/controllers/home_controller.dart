@@ -39,9 +39,11 @@ class VehicleComponent {
 
 class HomeController extends GetxController {
   final namaController = ''.obs;
-  late final String vehicleId;
+  late String vehicleId;
   final box = GetStorage();
   final vehicleImage = ''.obs;
+
+  var isLoadingOdometer = false.obs;
 
   var odometer = 0.obs;
 
@@ -51,11 +53,20 @@ class HomeController extends GetxController {
   var tanggal = <String>[].obs;
   var performa = <double>[].obs;
 
+  var currentVehicleIndex = 0.obs;
+  var vehicles = <dynamic>[].obs;
+
+  bool get isFirstVehicle => currentVehicleIndex.value == vehicles.length - 1;
+
+  bool get isLastVehicle => vehicles.isEmpty || currentVehicleIndex.value == 0;
+
   @override
   void onInit() {
     super.onInit();
 
     vehicleId = box.read("vehicle_id") ?? "";
+
+    getVehicles();
 
     if (vehicleId.isEmpty) {
       print("Vehicle ID kosong");
@@ -80,12 +91,62 @@ class HomeController extends GetxController {
       'Okt',
       'Nov',
       'Des',
-    ];  
+    ];
     return '${date.day} ${bulan[date.month]}';
+  }
+
+  void previousVehicle() {
+    if (currentVehicleIndex.value < vehicles.length - 1) {
+      currentVehicleIndex.value++;
+
+      final id = vehicles[currentVehicleIndex.value]["id"];
+      box.write("vehicle_id", id);
+      vehicleId = id;
+      fetchHome();
+    }
+  }
+
+  void nextVehicle() {
+    if (currentVehicleIndex.value > 0) {
+      currentVehicleIndex.value--;
+
+      final id = vehicles[currentVehicleIndex.value]["id"];
+      box.write("vehicle_id", id);
+      vehicleId = id;
+      fetchHome();
+    }
+  }
+
+  Future<void> getVehicles() async {
+    final token = box.read("token");
+
+    final response = await http.get(
+      Uri.parse(
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/my-vehicles",
+      ),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    final data = jsonDecode(response.body);
+    vehicles.value = data;
+
+    final selectedId = box.read("vehicle_id");
+
+    currentVehicleIndex.value = vehicles.indexWhere(
+      (e) => e["id"] == selectedId,
+    );
+
+    if (currentVehicleIndex.value < 0) {
+      currentVehicleIndex.value = 0;
+    }
   }
 
   Future<void> fetchHome() async {
     try {
+      isLoadingOdometer.value = true;
       isLoading.value = true;
       final token = box.read("token");
 
@@ -131,12 +192,15 @@ class HomeController extends GetxController {
           .map((e) => VehicleComponent.fromJson(e))
           .toList();
 
+      print("HOME VEHICLE ID = $vehicleId");
+      print("HOME ODOMETER = ${data['vehicle']['current_odometer']}");
       print("STATUS CODE: ${response.statusCode}");
       print("RESPONSE BODY:");
       print(response.body);
     } catch (e) {
       print(e);
     } finally {
+      isLoadingOdometer.value = false;
       isLoading.value = false;
     }
   }

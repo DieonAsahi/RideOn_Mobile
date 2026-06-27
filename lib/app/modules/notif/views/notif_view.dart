@@ -43,24 +43,43 @@ class NotifView extends GetView<NotifController> {
 
             /// LIST
             Expanded(
-              child: Obx(
-                () => ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                  physics: const BouncingScrollPhysics(),
+                if (controller.notifList.isEmpty) {
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      await controller.getNotifications();
+                    },
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const [
+                        SizedBox(height: 250),
+                        Center(child: Text("Belum ada notifikasi")),
+                      ],
+                    ),
+                  );
+                }
 
-                  itemCount: controller.notifList.length,
-
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 10),
-
-                  itemBuilder: (context, index) {
-                    final data = controller.notifList[index];
-
-                    return NotifCard(data: data);
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    await controller.getNotifications();
                   },
-                ),
-              ),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: controller.notifList.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final data = controller.notifList[index];
+                      return NotifCard(data: data);
+                    },
+                  ),
+                );
+              }),
             ),
           ],
         ),
@@ -81,6 +100,9 @@ class NotifCard extends StatelessWidget {
 
       case "Mendesak":
         return const Color(0xFFFF8A00);
+
+      case "Segera":
+        return const Color(0xFFFFC107);
 
       default:
         return const Color(0xFFFFC107);

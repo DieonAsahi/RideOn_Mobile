@@ -12,58 +12,80 @@ class KendaraanView extends GetView<KendaraanController> {
       backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF006BFF),
-        onPressed: () {
-          Get.toNamed('/pluskendaraan');
+        onPressed: () async {
+          final result = await Get.toNamed('/pluskendaraan');
+
+          print("RESULT = $result");
+
+          if (result == true) {
+            await controller.getVehicles();
+          }
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 30),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await controller.getVehicles();
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 30),
 
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Center(
-                  child: Text(
-                    "Kendaraan",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(
+                    child: Text(
+                      "Kendaraan",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 30),
+                const SizedBox(height: 30),
 
-              Obx(
-                () => ListView.separated(
-                  shrinkWrap: true, // WAJIB
-                  physics: const NeverScrollableScrollPhysics(), // WAJIB
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: controller.kendaraanList.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final data = controller.kendaraanList[index];
+                Obx(() {
+                  if (controller.isLoading.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                    return KendaraanCard(
-                      nama: data.nama,
-                      plat: data.plat,
-                      km: data.km,
-                      status: data.status,
-                      image: data.image,
+                  if (controller.kendaraanList.isEmpty) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text("Belum ada kendaraan"),
+                      ),
                     );
-                  },
-                ),
-              ),
+                  }
 
-              const SizedBox(height: 20),
-            ],
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: controller.kendaraanList.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final data = controller.kendaraanList[index];
+
+                      return KendaraanCard(
+                        id: data.id,
+                        nama: data.nama,
+                        plat: data.plat,
+                        km: data.km,
+                        status: data.status,
+                        image: data.image,
+                      );
+                    },
+                  );
+                }),
+              ],
+            ),
           ),
         ),
       ),
@@ -72,6 +94,7 @@ class KendaraanView extends GetView<KendaraanController> {
 }
 
 class KendaraanCard extends StatelessWidget {
+  final String id;
   final String nama;
   final String plat;
   final String km;
@@ -80,6 +103,7 @@ class KendaraanCard extends StatelessWidget {
 
   const KendaraanCard({
     super.key,
+    required this.id,
     required this.nama,
     required this.plat,
     required this.km,
@@ -89,7 +113,19 @@ class KendaraanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWarning = status == "Perlu Servis";
+    String iconPath;
+    Color statusColor;
+
+    if (status == "Perlu Servis") {
+      iconPath = "assets/icon/danger.png";
+      statusColor = Colors.red;
+    } else if (status == "Perlu Perhatian") {
+      iconPath = "assets/icon/warning.png";
+      statusColor = Colors.orange;
+    } else {
+      iconPath = "assets/icon/optimal.png";
+      statusColor = Colors.green;
+    }
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -117,10 +153,18 @@ class KendaraanCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: Colors.black, width: 0.5),
-                  image: DecorationImage(
-                    image: AssetImage(image),
-                    fit: BoxFit.cover,
-                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: image.isNotEmpty
+                      ? Image.network(
+                          image,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) {
+                            return const Icon(Icons.directions_bike, size: 50);
+                          },
+                        )
+                      : const Icon(Icons.directions_bike, size: 50),
                 ),
               ),
 
@@ -157,19 +201,13 @@ class KendaraanCard extends StatelessWidget {
 
                     Row(
                       children: [
-                        Icon(
-                          isWarning
-                              ? Icons.warning_amber_rounded
-                              : Icons.check_circle,
-                          size: 16,
-                          color: isWarning ? Colors.orange : Colors.green,
-                        ),
+                        Image.asset(iconPath, width: 16, height: 16),
                         const SizedBox(width: 5),
                         Text(
                           status,
                           style: TextStyle(
                             fontSize: 12,
-                            color: isWarning ? Colors.orange : Colors.green,
+                            color: statusColor,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -195,17 +233,21 @@ class KendaraanCard extends StatelessWidget {
                   Get.dialog(
                     AlertDialog(
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(15),
                       ),
 
                       title: const Text(
                         "Konfirmasi",
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
 
                       content: const Text(
                         "Apakah Anda yakin ingin menghapus?",
-                        style: TextStyle(fontSize: 13),
+                        style: TextStyle(fontSize: 13, color: Colors.black),
                       ),
 
                       actions: [
@@ -216,24 +258,27 @@ class KendaraanCard extends StatelessWidget {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                           ),
-                          
-                          child: const Text("Tidak"),
+
+                          child: const Text(
+                            "Tidak",
+                            style: TextStyle(color: Colors.grey, fontSize: 16),
+                          ),
                         ),
 
                         ElevatedButton(
-                          onPressed: () {
-                            /// logic hapus nanti di sini
-
+                          onPressed: () async {
                             Get.back();
-                          },
 
+                            await Get.find<KendaraanController>().deleteVehicle(
+                              id,
+                            );
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
                           ),
-
                           child: const Text(
                             "Ya",
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: Colors.white, fontSize: 16),
                           ),
                         ),
                       ],
@@ -243,7 +288,24 @@ class KendaraanCard extends StatelessWidget {
               },
 
               itemBuilder: (context) => [
-                const PopupMenuItem(value: 'hapus', child: Text("Hapus")),
+                PopupMenuItem(
+                  value: 'hapus',
+                  height: 35,
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        "assets/icon/hapus.png",
+                        width: 16,
+                        height: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        "Hapus",
+                        style: TextStyle(fontSize: 14, color: Colors.black),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

@@ -2,7 +2,7 @@ name: capbatu
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -31,6 +31,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  google_sign_in: ^6.3.0
+  supabase_flutter: ^2.9.1
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -43,6 +46,12 @@ dependencies:
   cloudinary_public: ^0.23.1
   camera: ^0.11.0+2
   image: ^4.2.0
+  timeago: ^3.7.0
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  dio: ^5.8.0
+  geolocator: ^14.0.2
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -78,6 +87,42 @@ flutter:
     - assets/images/estimasi4.png
     - assets/images/map.png
     - assets/images/bengkel.png
+    - assets/images/profile.png
+
+    - assets/icon/prev_blue.png
+    - assets/icon/prev_grey.png
+    - assets/icon/next_blue.png
+    - assets/icon/next_grey.png
+    - assets/icon/warning.png
+    - assets/icon/danger.png
+    - assets/icon/optimal.png
+    - assets/icon/hapus.png
+    - assets/icon/edit.png
+    - assets/icon/filters.png
+    - assets/icon/calender_grey.png
+    - assets/icon/calender.png
+    - assets/icon/odometer_grey.png
+    - assets/icon/odometer.png
+    - assets/icon/service_grey.png
+    - assets/icon/bengkel_terdekat.png
+    - assets/icon/riwayat_servis.png
+    - assets/icon/estimasi_biaya.png
+    - assets/icon/dashboard.png
+    - assets/icon/kendaraan.png
+    - assets/icon/service.png
+    - assets/icon/edukasi.png
+    - assets/icon/profil.png
+    - assets/icon/bagikan.png
+    - assets/icon/search.png
+    - assets/icon/lokasi_saya.png
+    - assets/icon/lokasi_bengkel.png
+    - assets/icon/jam.png
+    - assets/icon/phone.png
+    - assets/icon/notif.png
+    - assets/icon/logout.png
+    - assets/icon/edit_profil.png
+    - assets/icon/ganti_pass.png
+    - assets/icon/ganti_foto.png
 
     - assets/icons/busi.png
     - assets/icons/cvt.png
@@ -85,7 +130,6 @@ flutter:
     - assets/icons/kampas_rem.png
     - assets/icons/oli_gardan.png
     - assets/icons/oli_mesin.png
-    - assets/icons/Plus.png
 
     - assets/logos/logo1.png
     - assets/logos/logo2.png
@@ -97,7 +141,6 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-  
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -51,18 +51,24 @@ class MainscreenView extends GetView<MainscreenController> {
             ),
             unselectedLabelStyle: const TextStyle(fontSize: 12),
             items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
               BottomNavigationBarItem(
-                icon: Icon(Icons.history),
+                icon: ImageIcon(AssetImage('assets/icon/dashboard.png')),
+                label: 'Dashboard',
+              ),
+              BottomNavigationBarItem(
+                icon: ImageIcon(AssetImage('assets/icon/kendaraan.png')),
                 label: 'Kendaraan',
               ),
-              BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Sevice'),
               BottomNavigationBarItem(
-                icon: Icon(Icons.school),
+                icon: ImageIcon(AssetImage('assets/icon/service.png')),
+                label: 'Servis',
+              ),
+              BottomNavigationBarItem(
+                icon: ImageIcon(AssetImage('assets/icon/edukasi.png')),
                 label: 'Edukasi',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.person),
+                icon: ImageIcon(AssetImage('assets/icon/profil.png')),
                 label: 'Profil',
               ),
             ],

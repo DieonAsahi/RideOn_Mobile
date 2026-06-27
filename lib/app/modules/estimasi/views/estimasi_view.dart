@@ -50,15 +50,26 @@ class EstimasiView extends GetView<EstimasiController> {
 
                 decoration: InputDecoration(
                   hintText: "Cari komponen...",
-                  prefixIcon: const Icon(Icons.search),
-
+                  hintStyle: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 14,
+                  ),
+                  suffixIcon: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: Center(
+                      child: Image.asset(
+                        "assets/icon/search.png",
+                        width: 20,
+                        height: 20,
+                      ),
+                    ),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
-
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
-
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(15),
                     borderSide: BorderSide.none,
                   ),
                 ),
@@ -68,26 +79,26 @@ class EstimasiView extends GetView<EstimasiController> {
             const SizedBox(height: 18),
 
             Expanded(
-              child: Obx(
-                () => GridView.builder(
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                return GridView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-
                   itemCount: controller.filteredProducts.length,
-
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 14,
                     crossAxisSpacing: 14,
                     childAspectRatio: 0.58,
                   ),
-
                   itemBuilder: (context, index) {
                     final item = controller.filteredProducts[index];
-
                     return ProductCard(item: item, controller: controller);
                   },
-                ),
-              ),
+                );
+              }),
             ),
           ],
         ),
@@ -95,19 +106,14 @@ class EstimasiView extends GetView<EstimasiController> {
 
       bottomSheet: Container(
         color: Colors.white,
-
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-
         child: SizedBox(
           height: 52,
-
           child: ElevatedButton(
             onPressed: () {},
-
             style: ElevatedButton.styleFrom(
               elevation: 0,
               backgroundColor: const Color(0xFF006BFF),
-
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
@@ -116,13 +122,11 @@ class EstimasiView extends GetView<EstimasiController> {
             child: Obx(
               () => Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
                 children: [
                   Text(
                     "Total (${controller.totalSelected} item)",
                     style: const TextStyle(color: Colors.white, fontSize: 13),
                   ),
-
                   Text(
                     controller.formatRupiah(controller.totalPrice),
                     style: const TextStyle(
@@ -152,7 +156,6 @@ class ProductCard extends StatelessWidget {
     return Obx(
       () => GestureDetector(
         onTap: () => controller.toggleProduct(item),
-
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -162,7 +165,6 @@ class ProductCard extends StatelessWidget {
 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-
             children: [
               Stack(
                 children: [
@@ -171,11 +173,9 @@ class ProductCard extends StatelessWidget {
                       topLeft: Radius.circular(16),
                       topRight: Radius.circular(16),
                     ),
-
                     child: AspectRatio(
                       aspectRatio: 1 / 1,
-
-                      child: Image.asset(
+                      child: Image.network(
                         item.image,
                         width: double.infinity,
                         fit: BoxFit.cover,
@@ -189,7 +189,6 @@ class ProductCard extends StatelessWidget {
                     child: Container(
                       width: 20,
                       height: 20,
-
                       decoration: BoxDecoration(
                         color: item.isSelected.value
                             ? const Color(0xFF006BFF)
@@ -198,7 +197,6 @@ class ProductCard extends StatelessWidget {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.grey.shade400),
                       ),
-
                       child: item.isSelected.value
                           ? const Icon(
                               Icons.check,
@@ -214,16 +212,13 @@ class ProductCard extends StatelessWidget {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(8),
-
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-
                     children: [
                       Text(
                         item.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
@@ -235,7 +230,6 @@ class ProductCard extends StatelessWidget {
 
                       Text(
                         controller.formatRupiah(item.price),
-
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
@@ -246,7 +240,6 @@ class ProductCard extends StatelessWidget {
 
                       Text(
                         item.store,
-
                         style: TextStyle(
                           color: Colors.grey.shade600,
                           fontSize: 11,

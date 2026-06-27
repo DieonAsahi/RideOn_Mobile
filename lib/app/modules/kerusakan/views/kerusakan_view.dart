@@ -13,7 +13,7 @@ class KerusakanView extends GetView<KerusakanController> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Obx(() {
-          double progress = controller.step.value / 5;
+          double progress = controller.step.value / 4;
 
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
@@ -22,7 +22,6 @@ class KerusakanView extends GetView<KerusakanController> {
               crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
-
                 const Center(
                   child: Text(
                     "Cek Kerusakan",
@@ -37,7 +36,7 @@ class KerusakanView extends GetView<KerusakanController> {
 
                   children: [
                     Text(
-                      "Langkah ${controller.step.value} dari 5",
+                      "Langkah ${controller.step.value} dari 4",
                       style: const TextStyle(fontSize: 12, color: Colors.black),
                     ),
                   ],
@@ -109,7 +108,7 @@ class KerusakanView extends GetView<KerusakanController> {
                             ),
 
                             child: Text(
-                              controller.step.value == 5 ? "Periksa" : "Lanjut",
+                              controller.step.value == 4 ? "Periksa" : "Lanjut",
 
                               style: const TextStyle(color: Colors.white),
                             ),
@@ -141,18 +140,29 @@ class KerusakanView extends GetView<KerusakanController> {
       case 4:
         return _stepRem();
 
-      case 5:
-        return _stepPenggunaan();
+      // case 5:
+      //   return _stepPenggunaan();
 
       default:
         return const Center(child: Text("Step berikutnya..."));
     }
   }
 
+  Widget gejalaItem(String kode, String label) {
+    return Obx(
+      () => CheckboxListTile(
+        value: controller.isSelected(kode),
+        onChanged: (_) => controller.toggleGejala(kode),
+        title: Text(label),
+        controlAffinity: ListTileControlAffinity.leading,
+        contentPadding: EdgeInsets.zero,
+      ),
+    );
+  }
+
   Widget _stepMesin() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-
       children: [
         const Center(
           child: Text(
@@ -170,36 +180,16 @@ class KerusakanView extends GetView<KerusakanController> {
 
         const SizedBox(height: 20),
 
-        ...[
-          "Motor sulit dinyalakan",
-          "Tarikan terasa berat",
-          "Mesin cepat panas",
-          "Suara mesin kasar",
-          "Motor sering mati mendadak",
-          "Asap knalpot keluar berlebihan",
-          "Konsumsi bensin lebih boros",
-          "Motor terasa bergetar",
-        ].map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 14),
-
-            child: Row(
-              children: [
-                Icon(
-                  Icons.radio_button_unchecked,
-                  size: 18,
-                  color: Colors.grey.shade600,
-                ),
-
-                const SizedBox(width: 10),
-
-                Expanded(
-                  child: Text(item, style: const TextStyle(fontSize: 14)),
-                ),
-              ],
-            ),
-          ),
+        gejalaItem("G01", "Motor susah dihidupkan saat mesin dingin"),
+        gejalaItem("G02", "Tarikan motor terasa berat / ngempos"),
+        gejalaItem("G03", "Keluar asap putih tebal dari knalpot"),
+        gejalaItem(
+          "G04",
+          "Mesin sering mati mendadak saat posisi idle/langsam",
         ),
+        gejalaItem("G05", "Terdengar suara letupan (nembak) dari knalpot"),
+        gejalaItem("G06", "Mesin cepat sangat panas (overheat)"),
+        gejalaItem("G07", "Konsumsi bensin terasa jauh lebih boros"),
       ],
     );
   }
@@ -207,7 +197,6 @@ class KerusakanView extends GetView<KerusakanController> {
   Widget _stepKelistrikan() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-
       children: [
         const Center(
           child: Text(
@@ -225,33 +214,10 @@ class KerusakanView extends GetView<KerusakanController> {
 
         const SizedBox(height: 20),
 
-        ...[
-          "Starter tidak berfungsi",
-          "Lampu indikator mesin terus menyala",
-          "Lampu motor redup",
-          "Klakson lemah",
-          "Indikator speedometer tidak normal",
-        ].map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 14),
-
-            child: Row(
-              children: [
-                Icon(
-                  Icons.radio_button_unchecked,
-                  size: 18,
-                  color: Colors.grey.shade600,
-                ),
-
-                const SizedBox(width: 10),
-
-                Expanded(
-                  child: Text(item, style: const TextStyle(fontSize: 14)),
-                ),
-              ],
-            ),
-          ),
-        ),
+        gejalaItem("G08", "Lampu utama/speedometer redup saat mesin idle"),
+        gejalaItem("G09", "Klakson suaranya lemah atau mati total"),
+        gejalaItem("G10", "Starter tangan tidak merespon"),
+        gejalaItem("G11", "Lampu indikator mesin menyala terus"),
       ],
     );
   }
@@ -259,7 +225,6 @@ class KerusakanView extends GetView<KerusakanController> {
   Widget _stepTransmisi() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-
       children: [
         const Center(
           child: Text(
@@ -277,32 +242,10 @@ class KerusakanView extends GetView<KerusakanController> {
 
         const SizedBox(height: 20),
 
-        ...[
-          "RPM tinggi tapi laju lambat",
-          "Motor nyentak saat digas",
-          "Perpindahan gigi keras",
-          "Rantai sering kendur",
-        ].map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 14),
-
-            child: Row(
-              children: [
-                Icon(
-                  Icons.radio_button_unchecked,
-                  size: 18,
-                  color: Colors.grey.shade600,
-                ),
-
-                const SizedBox(width: 10),
-
-                Expanded(
-                  child: Text(item, style: const TextStyle(fontSize: 14)),
-                ),
-              ],
-            ),
-          ),
-        ),
+        gejalaItem("G12", "Motor matic bergetar hebat (gredek)"),
+        gejalaItem("G13", "RPM mesin tinggi tapi laju motor lambat"),
+        gejalaItem("G14", "Oper gigi terasa keras"),
+        gejalaItem("G15", "Suara kasar dari CVT atau rantai"),
       ],
     );
   }
@@ -310,7 +253,6 @@ class KerusakanView extends GetView<KerusakanController> {
   Widget _stepRem() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-
       children: [
         const Center(
           child: Text(
@@ -328,127 +270,104 @@ class KerusakanView extends GetView<KerusakanController> {
 
         const SizedBox(height: 20),
 
-        ...[
-          "Rem kurang pakem",
-          "Rem berbunyi",
-          "Motor tidak stabil",
-          "Setang bergetar",
-        ].map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 14),
-
-            child: Row(
-              children: [
-                Icon(
-                  Icons.radio_button_unchecked,
-                  size: 18,
-                  color: Colors.grey.shade600,
-                ),
-
-                const SizedBox(width: 10),
-
-                Expanded(
-                  child: Text(item, style: const TextStyle(fontSize: 14)),
-                ),
-              ],
-            ),
-          ),
-        ),
+        gejalaItem("G16", "Rem terasa kurang pakem / blong"),
+        gejalaItem("G17", "Terdengar suara mendecit saat mengerem"),
+        gejalaItem("G18", "Stang terasa tidak stabil atau oleng"),
       ],
     );
   }
 
-  Widget _stepPenggunaan() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  // Widget _stepPenggunaan() {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
 
-      children: [
-        const Center(
-          child: Text(
-            "Riwayat Penggunaan",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-        ),
+  //     children: [
+  //       const Center(
+  //         child: Text(
+  //           "Riwayat Penggunaan",
+  //           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+  //         ),
+  //       ),
 
-        const SizedBox(height: 25),
+  //       const SizedBox(height: 25),
 
-        const Text(
-          "Pilih kondisi sesuai dengan yang Anda alami",
-          style: TextStyle(fontSize: 14),
-        ),
+  //       const Text(
+  //         "Pilih kondisi sesuai dengan yang Anda alami",
+  //         style: TextStyle(fontSize: 14),
+  //       ),
 
-        const SizedBox(height: 15),
+  //       const SizedBox(height: 15),
 
-        const Padding(
-          padding: EdgeInsets.only(left: 16),
+  //       const Padding(
+  //         padding: EdgeInsets.only(left: 16),
 
-          child: Text(
-            "Intensitas Pemakaian",
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-          ),
-        ),
-        const SizedBox(height: 15),
+  //         child: Text(
+  //           "Intensitas Pemakaian",
+  //           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+  //         ),
+  //       ),
+  //       const SizedBox(height: 15),
 
-        ...["Jarang dipakai", "Dipakai harian", "Rutin dipakai jarak jauh"].map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 14),
+  //       ...["Jarang dipakai", "Dipakai harian", "Rutin dipakai jarak jauh"].map(
+  //         (item) => Padding(
+  //           padding: const EdgeInsets.only(left: 16, bottom: 14),
 
-            child: Row(
-              children: [
-                Icon(
-                  Icons.radio_button_unchecked,
-                  size: 18,
-                  color: Colors.grey.shade600,
-                ),
+  //           child: Row(
+  //             children: [
+  //               Icon(
+  //                 Icons.radio_button_unchecked,
+  //                 size: 18,
+  //                 color: Colors.grey.shade600,
+  //               ),
 
-                const SizedBox(width: 10),
+  //               const SizedBox(width: 10),
 
-                Expanded(
-                  child: Text(item, style: const TextStyle(fontSize: 14)),
-                ),
-              ],
-            ),
-          ),
-        ),
+  //               Expanded(
+  //                 child: Text(item, style: const TextStyle(fontSize: 14)),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
 
-        const SizedBox(height: 10),
+  //       const SizedBox(height: 10),
 
-        const Padding(
-          padding: EdgeInsets.only(left: 16),
-          child: Text(
-            "Kondisi Jalan",
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-          ),
-        ),
+  //       const Padding(
+  //         padding: EdgeInsets.only(left: 16),
+  //         child: Text(
+  //           "Kondisi Jalan",
+  //           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+  //         ),
+  //       ),
 
-        const SizedBox(height: 15),
+  //       const SizedBox(height: 15),
 
-        ...[
-          "Jalan mulus",
-          "Jalan berlubang atau rusak",
-          "Sering melalui tanjakan dan turunan",
-        ].map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 14),
+  //       ...[
+  //         "Jalan mulus",
+  //         "Jalan berlubang atau rusak",
+  //         "Sering melalui tanjakan dan turunan",
+  //       ].map(
+  //         (item) => Padding(
+  //           padding: const EdgeInsets.only(left: 16, bottom: 14),
 
-            child: Row(
-              children: [
-                Icon(
-                  Icons.radio_button_unchecked,
-                  size: 18,
-                  color: Colors.grey.shade600,
-                ),
+  //           child: Row(
+  //             children: [
+  //               Icon(
+  //                 Icons.radio_button_unchecked,
+  //                 size: 18,
+  //                 color: Colors.grey.shade600,
+  //               ),
 
-                const SizedBox(width: 10),
+  //               const SizedBox(width: 10),
 
-                Expanded(
-                  child: Text(item, style: const TextStyle(fontSize: 14)),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  //               Expanded(
+  //                 child: Text(item, style: const TextStyle(fontSize: 14)),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 }

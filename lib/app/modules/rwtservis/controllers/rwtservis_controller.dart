@@ -1,47 +1,19 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:get_storage/get_storage.dart';
 
 class RwtservisController extends GetxController {
   var selectedFilter = 'Semua'.obs;
-
-  final riwayat = [
-    {
-      'jenis': 'SERVIS RUTIN',
-      'detail': 'Oli Mesin & Filter Udara',
-      'tanggal': '1 Mei 2026',
-      'odometer': '42.560 km',
-      'bengkel': 'AHASS Brebes',
-      'biaya': '-',
-      'status': 'Dijadwalkan',
-      'statusColor': Colors.grey,
-    },
-    {
-      'jenis': 'PERBAIKAN',
-      'detail': 'Tambal Ban',
-      'tanggal': '26 Apr 2026',
-      'odometer': '42.398 km',
-      'bengkel': 'Makmur Bengkel',
-      'biaya': 'Rp 25.000',
-      'status': 'Proses',
-      'statusColor': Colors.orange,
-    },
-    {
-      'jenis': 'PERBAIKAN',
-      'detail': 'Tambal Ban Belakang',
-      'tanggal': '23 Apr 2026',
-      'odometer': '42.398 km',
-      'bengkel': 'Bengkel Om Toni',
-      'biaya': 'Rp 20.000',
-      'status': 'Selesai',
-      'statusColor': Colors.green,
-    },
-  ].obs;
+  final box = GetStorage();
+  var riwayat = <Map<String, dynamic>>[].obs;
+  var isLoading = false.obs;
 
   List<Map<String, dynamic>> get filteredData {
     if (selectedFilter.value == 'Semua') {
       return riwayat;
     }
-
     return riwayat
         .where((item) => item['jenis'] == selectedFilter.value.toUpperCase())
         .toList();
@@ -49,5 +21,88 @@ class RwtservisController extends GetxController {
 
   void changeFilter(String filter) {
     selectedFilter.value = filter;
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadServiceHistory();
+  }
+
+  Future<void> loadServiceHistory() async {
+    try {
+      isLoading.value = true;
+
+      final token = box.read("token");
+      final vehicleId = box.read("vehicle_id");
+
+      final response = await http.get(
+        Uri.parse(
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/service-history/$vehicleId",
+        ),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+
+        riwayat.value = data.map((item) {
+          Color statusColor = Colors.grey;
+
+          if (item["status"] == "Diproses") {
+            statusColor = Colors.orange;
+          } else if (item["status"] == "Selesai") {
+            statusColor = Colors.green;
+          }
+
+          return {
+            "id": item["id"],
+            "component_id": item["component_id"],
+            "jenis": item["service_type"].toString().toUpperCase(),
+            "detail":
+                item["service_type"].toString().toLowerCase() == "servis rutin"
+                ? (item["master_components"]?["name"] ?? "-")
+                : (item["detail"] ?? "-"),
+            "tanggal": item["service_date"] ?? "-",
+            "odometer": "${item["odometer"] ?? 0} km",
+            "bengkel": item["workshop_name"] ?? "-",
+            "biaya": item["cost"] == null ? "-" : "Rp ${item["cost"]}",
+            "status": item["status"] ?? "-",
+            "statusColor": statusColor,
+          };
+        }).toList();
+      }
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> deleteServiceHistory(int id) async {
+    try {
+      isLoading.value = true;
+
+      final token = box.read("token");
+
+      final response = await http.delete(
+        Uri.parse(
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/service-history/$id",
+        ),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      if (response.statusCode == 200) {
+        Get.snackbar("Berhasil", "Riwayat servis berhasil dihapus");
+
+        await loadServiceHistory();
+      } else {
+        Get.snackbar("Error", response.body);
+      }
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

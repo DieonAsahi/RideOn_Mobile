@@ -67,12 +67,54 @@ class RwttambahView extends GetView<RwttambahController> {
 
                 const SizedBox(height: 25),
 
-                _inputLabel("Detail"),
-                const SizedBox(height: 8),
-                _textField(
-                  controller: controller.detailController,
-                  hint: 'Contoh : Ganti Oli Gardan',
-                ),
+                Obx(() {
+                  if (controller.selectedJenis.value == 'Perbaikan') {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _inputLabel("Detail"),
+                        const SizedBox(height: 8),
+                        _textField(
+                          controller: controller.detailController,
+                          hint: "Contoh : Ganti Kampas Rem",
+                        ),
+                      ],
+                    );
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _inputLabel("Komponen"),
+                      const SizedBox(height: 8),
+
+                      DropdownButtonFormField<int>(
+                        value: controller.selectedComponentId.value == 0
+                            ? null
+                            : controller.selectedComponentId.value,
+                        items: controller.components.map((item) {
+                          return DropdownMenuItem<int>(
+                            value: item["id"],
+                            child: Text(item["name"]),
+                          );
+                        }).toList(),
+                        onChanged:
+                            (controller.isEdit.value &&
+                                controller.selectedJenis.value ==
+                                    "Servis Rutin")
+                            ? null
+                            : (value) {
+                                controller.selectedComponentId.value = value!;
+                              },
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
 
                 const SizedBox(height: 20),
 
@@ -87,7 +129,11 @@ class RwttambahView extends GetView<RwttambahController> {
                     hintStyle: TextStyle(color: Colors.black, fontSize: 12),
                     suffixIcon: IconButton(
                       onPressed: controller.pickDate,
-                      icon: const Icon(Icons.calendar_month_outlined),
+                      icon: Image.asset(
+                        'assets/icon/calender.png',
+                        width: 20,
+                        height: 20,
+                      ),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -101,15 +147,16 @@ class RwttambahView extends GetView<RwttambahController> {
                 _inputLabel("Odometer (km)"),
                 const SizedBox(height: 8),
 
-                TextField(
-                  controller: controller.odometerController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    suffixText: 'km',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                Obx(
+                  () => InputDecorator(
+                    decoration: InputDecoration(
+                      suffixText: 'km',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
                     ),
+                    child: Text(controller.currentOdometer.value.toString()),
                   ),
                 ),
 
@@ -122,20 +169,31 @@ class RwttambahView extends GetView<RwttambahController> {
 
                 const SizedBox(height: 20),
 
-                _inputLabel("Total Biaya"),
-                const SizedBox(height: 8),
+                Obx(() {
+                  if (controller.selectedStatus.value != "Selesai") {
+                    return const SizedBox();
+                  }
 
-                TextField(
-                  controller: controller.biayaController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    prefixText: 'Rp ',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                  ),
-                ),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _inputLabel("Total Biaya"),
+                      const SizedBox(height: 8),
+
+                      TextField(
+                        controller: controller.biayaController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          prefixText: 'Rp ',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
 
                 const SizedBox(height: 20),
 
@@ -146,14 +204,23 @@ class RwttambahView extends GetView<RwttambahController> {
                   () => DropdownButtonFormField<String>(
                     value: controller.selectedStatus.value,
 
-                    items: ['Dijadwalkan', 'Diproses', 'Selesai']
-                        .map(
-                          (status) => DropdownMenuItem(
-                            value: status,
-                            child: Text(status),
-                          ),
-                        )
-                        .toList(),
+                    items: controller.selectedJenis.value == 'Servis Rutin'
+                        ? ['Dijadwalkan', 'Selesai']
+                              .map(
+                                (status) => DropdownMenuItem(
+                                  value: status,
+                                  child: Text(status),
+                                ),
+                              )
+                              .toList()
+                        : ['Dijadwalkan', 'Diproses', 'Selesai']
+                              .map(
+                                (status) => DropdownMenuItem(
+                                  value: status,
+                                  child: Text(status),
+                                ),
+                              )
+                              .toList(),
 
                     onChanged: controller.isStatusLocked.value
                         ? null
@@ -162,7 +229,7 @@ class RwttambahView extends GetView<RwttambahController> {
                               controller.changeStatus(value);
                             }
                           },
-                          
+
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -190,7 +257,13 @@ class RwttambahView extends GetView<RwttambahController> {
                         ),
                       ),
 
-                      onPressed: controller.simpanRiwayat,
+                      onPressed: () {
+                        if (controller.isEdit.value) {
+                          controller.updateRiwayat();
+                        } else {
+                          controller.simpanRiwayat();
+                        }
+                      },
 
                       child: const Text(
                         "Simpan",

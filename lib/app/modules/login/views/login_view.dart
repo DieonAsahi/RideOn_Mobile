@@ -224,7 +224,7 @@ class LoginView extends GetView<LoginController> {
                         side: const BorderSide(color: Colors.grey),
                         backgroundColor: Colors.white,
                       ),
-                      onPressed: () {},
+                      onPressed: controller.loginGoogle,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

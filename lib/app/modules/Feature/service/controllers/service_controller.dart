@@ -1,6 +1,80 @@
+import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:http/http.dart' as http;
+
+class ServiceItem {
+  final int id;
+  final String name;
+  final String icon;
+  final bool isScheduled;
+  final String status;
+  final String message;
+
+  ServiceItem({
+    required this.id,
+    required this.name,
+    required this.icon,
+    required this.isScheduled,
+    required this.status,
+    required this.message,
+  });
+
+  factory ServiceItem.fromJson(Map<String, dynamic> json) {
+    return ServiceItem(
+      id: json["id"],
+      name: json["name"],
+      icon: json["icon"],
+      isScheduled: json["isScheduled"] ?? false,
+      status: json["status"],
+      message: json["message"],
+    );
+  }
+}
 
 class ServiceController extends GetxController {
+  final box = GetStorage();
+
+  var isLoading = false.obs;
+  var services = <ServiceItem>[].obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    getServices();
+  }
+
+  Future<void> getServices() async {
+    try {
+      isLoading.value = true;
+
+      final token = box.read("token");
+      final vehicleId = box.read("vehicle_id");
+
+      final response = await http.get(
+        Uri.parse(
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/service/$vehicleId",
+        ),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+
+        services.value = data
+            .map((e) => ServiceItem.fromJson(e))
+            .toList();
+      }
+    } catch (e) {
+      print(e);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   void goToWorkshop() {
     Get.toNamed('/bengkel');
   }
@@ -17,7 +91,13 @@ class ServiceController extends GetxController {
     Get.toNamed('/kerusakan');
   }
 
-  void goToAddHistory() {
-    Get.toNamed('/rwttambah', arguments: {'jadwalkan': true});
+  void goToAddHistory(ServiceItem item) {
+    Get.toNamed(
+      '/rwttambah',
+      arguments: {
+        'jadwalkan': true,
+        'component': item,
+      },
+    );
   }
 }

@@ -1,4 +1,8 @@
 import 'package:get/get.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:get_storage/get_storage.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class NotifModel {
   final String image;
@@ -14,72 +18,51 @@ class NotifModel {
     required this.desc,
     required this.time,
   });
+
+  factory NotifModel.fromJson(Map<String, dynamic> json) {
+    return NotifModel(
+      image: "assets/icons/${json["master_components"]["icon"]}.png",
+      status: json["severity"],
+      title: json["title"],
+      desc: json["message"],
+      time: timeago.format(DateTime.parse(json["created_at"]), locale: 'id'),
+    );
+  }
 }
 
 class NotifController extends GetxController {
-  final notifList = <NotifModel>[
-    NotifModel(
-      image: 'assets/icons/Oli Mesin.png',
-      status: 'Darurat',
-      title: 'Oli Mesin',
-      desc: 'Sudah melewati 40 km, ganti oli mesin sekarang',
-      time: '46 menit yang lalu',
-    ),
+  final box = GetStorage();
 
-    NotifModel(
-      image: 'assets/icons/Oli Mesin.png',
-      status: 'Darurat',
-      title: 'Oli Mesin',
-      desc: 'Saatnya ganti oli mesin sekarang',
-      time: '8 jam yang lalu',
-    ),
+  var notifList = <NotifModel>[].obs;
+  var isLoading = false.obs;
 
-    NotifModel(
-      image: 'assets/icons/Kampas Rem.png',
-      status: 'Mendesak',
-      title: 'Kampas Rem',
-      desc: 'Perlu diperiksa dalam 3 hari',
-      time: '12 jam yang lalu',
-    ),
+  @override
+  void onInit() {
+    super.onInit();
+    getNotifications();
+  }
 
-    NotifModel(
-      image: 'assets/icons/Oli Mesin.png',
-      status: 'Mendesak',
-      title: 'Oli Mesin',
-      desc: '100 km lagi menuju ganti oli',
-      time: '3 hari yang lalu',
-    ),
+  Future<void> getNotifications() async {
+    try {
+      isLoading.value = true;
 
-    NotifModel(
-      image: 'assets/icons/Busi.png',
-      status: 'Segera',
-      title: 'Busi',
-      desc: 'Lakukan pengecekan dalam 7 hari',
-      time: '4 hari yang lalu',
-    ),
+      final token = box.read("token");
+      final vehicleId = box.read("vehicle_id");
 
-    NotifModel(
-      image: 'assets/icons/Filter Udara.png',
-      status: 'Darurat',
-      title: 'Filter Udara',
-      desc: 'Sudah melewati 6 hari, periksa filter udara sekarang',
-      time: '6 hari yang lalu',
-    ),
+      final response = await http.get(
+        Uri.parse(
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/notifications/$vehicleId",
+        ),
+        headers: {"Authorization": "Bearer $token"},
+      );
 
-    NotifModel(
-      image: 'assets/icons/CVT.png',
-      status: 'Segera',
-      title: 'CVT',
-      desc: '300 km lagi menuju pengecekan CVT',
-      time: '6 hari yang lalu',
-    ),
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
 
-    NotifModel(
-      image: 'assets/icons/Oli Mesin.png',
-      status: 'Segera',
-      title: 'Oli Mesin',
-      desc: 'Lakukan penggantian oli mesin dalam 7 hari',
-      time: '6 hari yang lalu',
-    ),
-  ].obs;
+        notifList.value = data.map((e) => NotifModel.fromJson(e)).toList();
+      }
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }

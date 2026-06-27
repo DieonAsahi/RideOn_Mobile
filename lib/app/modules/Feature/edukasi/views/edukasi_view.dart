@@ -5,46 +5,39 @@ import '../controllers/edukasi_controller.dart';
 
 class EdukasiView extends GetView<EdukasiController> {
   const EdukasiView({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
-
-      // bottomNavigationBar abaikan karena sudah ada
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 30),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await controller.fetchArtikel();
+          },
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 30),
 
-              /// TITLE
-              Center(
-                child: Text(
-                  "Edukasi",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                /// TITLE
+                Center(
+                  child: Text(
+                    "Edukasi",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              /// SEARCH
-              Container(
-                height: 52,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade400),
-                ),
-                child: TextField(
+                TextField(
                   controller: controller.searchController,
                   onChanged: (value) {
                     controller.search.value = value;
@@ -55,59 +48,75 @@ class EdukasiView extends GetView<EdukasiController> {
                       color: Colors.grey.shade500,
                       fontSize: 14,
                     ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
+                    suffixIcon: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: Center(
+                        child: Image.asset(
+                          "assets/icon/search.png",
+                          width: 20,
+                          height: 20,
+                        ),
+                      ),
                     ),
-                    suffixIcon: const Padding(
-                      padding: EdgeInsets.only(right: 14),
-                      child: Icon(Icons.search, color: Colors.black, size: 26),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
                     ),
-                    suffixIconConstraints: const BoxConstraints(
-                      minWidth: 24,
-                      minHeight: 24,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
                     ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              /// TITLE SECTION
-              const Text(
-                "Artikel Populer",
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                /// TITLE SECTION
+                const Text(
+                  "Artikel Populer",
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              /// LIST ARTIKEL
-              Obx(
-                () => ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: controller.filteredArtikel.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 14),
-                  itemBuilder: (context, index) {
-                    final data = controller.filteredArtikel[index];
+                /// LIST ARTIKEL
+                Obx(() {
+                  if (controller.isLoading.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: controller.filteredArtikel.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 14),
+                    itemBuilder: (context, index) {
+                      final data = controller.filteredArtikel[index];
 
-                    return ArtikelCard(
-                      source: data.source,
-                      title: data.title,
-                      date: data.date,
-                      desc: data.desc,
-                      logo: data.logo,
-                    );
-                  },
-                ),
-              ),
-            ],
+                      return GestureDetector(
+                        onTap: () {
+                          controller.bukaArtikel(data.link);
+                        },
+                        child: ArtikelCard(
+                          source: data.source,
+                          title: data.title,
+                          date: data.date,
+                          desc: data.desc,
+                        ),
+                      );
+                    },
+                  );
+                }),
+              ],
+            ),
           ),
         ),
       ),
@@ -120,7 +129,6 @@ class ArtikelCard extends StatelessWidget {
   final String title;
   final String date;
   final String desc;
-  final String logo;
 
   const ArtikelCard({
     super.key,
@@ -128,7 +136,6 @@ class ArtikelCard extends StatelessWidget {
     required this.title,
     required this.date,
     required this.desc,
-    required this.logo,
   });
 
   @override
@@ -154,15 +161,11 @@ class ArtikelCard extends StatelessWidget {
           /// LOGO + SOURCE
           Row(
             children: [
-              Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  image: DecorationImage(
-                    image: AssetImage(logo),
-                    fit: BoxFit.cover,
-                  ),
+              CircleAvatar(
+                radius: 11,
+                child: Text(
+                  source.isNotEmpty ? source[0].toUpperCase() : "A",
+                  style: const TextStyle(fontSize: 10),
                 ),
               ),
 

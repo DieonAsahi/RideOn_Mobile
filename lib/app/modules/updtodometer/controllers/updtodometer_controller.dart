@@ -229,7 +229,7 @@ class UpdtodometerController extends GetxController {
       print(response.body);
 
       if (response.statusCode == 200) {
-        Get.back(result: true);
+        Get.offNamed('/mainscreen', arguments: 0);
 
         Get.snackbar("Berhasil", "Odometer berhasil diperbarui");
       } else {

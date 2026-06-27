@@ -24,7 +24,7 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
               Row(
                 children: [
                   IconButton(
-                    onPressed: () => Get.back(),
+                    onPressed: () => Get.offNamed('/service'),
                     icon: const Icon(Icons.arrow_back_ios),
                   ),
 
@@ -65,9 +65,9 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
 
                     const SizedBox(height: 10),
 
-                    const Text(
-                      "Busi Bermasalah",
-                      style: TextStyle(
+                    Text(
+                      controller.hasil["nama"] ?? "-",
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                       ),
@@ -75,31 +75,30 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
 
                     const SizedBox(height: 15),
 
-                    const Text(
-                      "Masalah pada busi mengakibatkan mesin susah dihidupkan (starter/kickstarter), tarikan motor terasa berat, konsumsi bahan bakar boros, serta muncul suara letupan pada knalpot.",
-                      style: TextStyle(fontSize: 14, height: 1.5),
+                    Text(
+                      controller.hasil["penjelasan"] ?? "-",
+                      style: const TextStyle(fontSize: 14, height: 1.5),
                     ),
 
                     const SizedBox(height: 18),
 
                     Row(
                       children: [
-                        const SizedBox(
+                        SizedBox(
                           width: 18,
                           height: 18,
-
                           child: CircularProgressIndicator(
-                            value: 0.86,
+                            value: (controller.hasil["confidence"] ?? 0) / 100,
                             strokeWidth: 3,
-                            color: Color(0xFF006BFF),
+                            color: const Color(0xFF006BFF),
                           ),
                         ),
 
                         const SizedBox(width: 10),
 
-                        const Text(
-                          "Confidence 86%",
-                          style: TextStyle(fontSize: 14),
+                        Text(
+                          "Confidence ${controller.hasil["confidence"] ?? 0}%",
+                          style: const TextStyle(fontSize: 14),
                         ),
                       ],
                     ),
@@ -116,9 +115,9 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
 
               const SizedBox(height: 15),
 
-              const Text(
-                "Bersihkan busi dan cek celah elektroda, atau lakukan servis sistem pembakaran dan periksa kabel busi. Jika kondisi parah, ganti busi dengan yang baru agar performa mesin kembali normal.",
-                style: TextStyle(fontSize: 14, height: 1.5),
+              Text(
+                controller.hasil["solusi"] ?? "-",
+                style: const TextStyle(fontSize: 14, height: 1.5),
               ),
 
               const Spacer(),

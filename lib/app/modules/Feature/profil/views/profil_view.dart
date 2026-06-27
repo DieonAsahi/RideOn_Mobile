@@ -10,150 +10,194 @@ class ProfilView extends GetView<ProfilController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
-      // supaya aman saat keyboard muncul
       resizeToAvoidBottomInset: true,
 
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await controller.getProfile();
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: const Center(child: CircularProgressIndicator()),
+                );
+              }
 
-          child: Column(
-            children: [
-              const SizedBox(height: 30),
+              return Column(
+                children: [
+                  const SizedBox(height: 30),
 
-              const Center(
-                child: Text(
-                  "Profil",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              /// PROFILE
-              CircleAvatar(
-                radius: 42,
-                backgroundImage: AssetImage(controller.profileImage),
-              ),
-
-              const SizedBox(height: 14),
-
-              Text(
-                controller.name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 4),
-
-              Text(
-                controller.bio,
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-              ),
-
-              const SizedBox(height: 30),
-
-              /// SECTION
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Pengaturan Akun",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              /// MENU
-              ProfileMenuTile(
-                icon: Icons.person_outline,
-                title: "Edit Profil",
-                onTap: () {
-                  // tutup keyboard dulu
-                  FocusScope.of(context).unfocus();
-
-                  Get.toNamed('/editprofil');
-                },
-              ),
-
-              const SizedBox(height: 10),
-
-              ProfileMenuTile(
-                icon: Icons.password_outlined,
-                title: "Ganti Password",
-                onTap: () {
-                  FocusScope.of(context).unfocus();
-
-                  Get.toNamed('/emailver', arguments: {'from': 'profile'});
-                },
-              ),
-
-              const SizedBox(height: 10),
-
-              ProfileMenuTile(
-                icon: Icons.logout,
-                title: "Logout",
-                isLogout: true,
-                onTap: () {
-                  FocusScope.of(context).unfocus();
-
-                  Get.dialog(
-                    AlertDialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+                  const Center(
+                    child: Text(
+                      "Profil",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
                       ),
-
-                      title: const Text(
-                        "Konfirmasi",
-                        style: TextStyle(fontSize: 16),
-                      ),
-
-                      content: const Text(
-                        "Apakah Anda yakin ingin keluar?",
-                        style: TextStyle(fontSize: 13),
-                      ),
-
-                      actions: [
-                        OutlinedButton(
-                          onPressed: () {
-                            Get.back();
-                          },
-
-                          child: const Text("Tidak"),
-                        ),
-
-                        ElevatedButton(
-                          onPressed: () {
-                            Get.offAllNamed('/login');
-
-                            /// logout logic
-                          },
-
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-
-                          child: const Text(
-                            "Ya",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
                     ),
-                  );
-                },
-              ),
+                  ),
 
-              // tambahan supaya aman di hp kecil
-              const SizedBox(height: 30),
-            ],
+                  const SizedBox(height: 30),
+
+                  /// PROFILE
+                  Obx(
+                    () => CircleAvatar(
+                      radius: 42,
+                      backgroundImage: controller.imageUrl.value.isNotEmpty
+                          ? NetworkImage(controller.imageUrl.value)
+                          : const AssetImage("assets/images/profile.png")
+                                as ImageProvider,
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  Obx(
+                    () => Text(
+                      controller.name.value,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  Obx(
+                    () => Text(
+                      controller.bio.value,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  /// SECTION
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "Pengaturan Akun",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  /// MENU
+                  ProfileMenuTile(
+                    icon: Image.asset(
+                      'assets/icon/edit_profil.png',
+                      width: 24,
+                      height: 24,
+                    ),
+                    title: "Edit Profil",
+                    onTap: () {
+                      // tutup keyboard dulu
+                      FocusScope.of(context).unfocus();
+
+                      Get.toNamed('/editprofil');
+                    },
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  ProfileMenuTile(
+                    icon: Image.asset(
+                      'assets/icon/ganti_pass.png',
+                      width: 24,
+                      height: 24,
+                    ),
+                    title: "Ganti Password",
+                    onTap: () {
+                      FocusScope.of(context).unfocus();
+
+                      Get.toNamed('/emailver', arguments: {'from': 'profile'});
+                    },
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  ProfileMenuTile(
+                    icon: Image.asset(
+                      'assets/icon/logout.png',
+                      width: 24,
+                      height: 24,
+                    ),
+                    title: "Logout",
+                    isLogout: true,
+                    onTap: () {
+                      FocusScope.of(context).unfocus();
+
+                      Get.dialog(
+                        AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+
+                          title: const Text(
+                            "Konfirmasi",
+                            style: TextStyle(fontSize: 16),
+                          ),
+
+                          content: const Text(
+                            "Apakah Anda yakin ingin keluar?",
+                            style: TextStyle(fontSize: 13),
+                          ),
+
+                          actions: [
+                            OutlinedButton(
+                              onPressed: () {
+                                Get.back();
+                              },
+
+                              child: const Text("Tidak"),
+                            ),
+
+                            ElevatedButton(
+                              onPressed: () {
+                                Get.offAllNamed('/login');
+
+                                /// logout logic
+                              },
+
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+
+                              child: const Text(
+                                "Ya",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
+                  // tambahan supaya aman di hp kecil
+                  const SizedBox(height: 30),
+                ],
+              );
+            }),
           ),
         ),
       ),
@@ -162,7 +206,7 @@ class ProfilView extends GetView<ProfilController> {
 }
 
 class ProfileMenuTile extends StatelessWidget {
-  final IconData icon;
+  final Widget icon;
   final String title;
   final VoidCallback onTap;
   final bool isLogout;
@@ -193,7 +237,7 @@ class ProfileMenuTile extends StatelessWidget {
 
         child: Row(
           children: [
-            Icon(icon, size: 22, color: isLogout ? Colors.red : Colors.black),
+            icon,
 
             const SizedBox(width: 12),
 
