@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 import '../controllers/home_controller.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
@@ -113,8 +114,20 @@ class HomeView extends GetView<HomeController> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Obx(
-                                () => ClipRRect(
+                              child: Obx(() {
+                                if (controller.vehicleImage.value.isEmpty) {
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Container(
+                                      color: Colors.grey.shade200,
+                                      child: const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                return ClipRRect(
                                   borderRadius: BorderRadius.circular(20),
                                   child: Image.network(
                                     controller.vehicleImage.value,
@@ -129,9 +142,18 @@ class HomeView extends GetView<HomeController> {
                                         ),
                                       );
                                     },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey.shade200,
+                                        child: const Icon(
+                                          Icons.image_not_supported,
+                                          size: 50,
+                                        ),
+                                      );
+                                    },
                                   ),
-                                ),
-                              ),
+                                );
+                              }),
                             ),
                           ),
 
@@ -222,6 +244,21 @@ class HomeView extends GetView<HomeController> {
                           },
                         );
                       }),
+                      const SizedBox(height: 30),
+
+                      const TopikArtikelSection(),
+
+                      const SizedBox(height: 30),
+
+                      const TrendTopikSection(),
+                      
+                      const SizedBox(height: 30),
+
+                      const TopikKomponenSection(),
+
+                      // const SizedBox(height: 30),
+
+                      // const TrendServisSection(),
                     ],
                   ),
                 ),
@@ -687,5 +724,668 @@ class PerformaSection extends GetView<HomeController> {
         ],
       );
     });
+  }
+}
+
+class TopikArtikelSection extends GetView<HomeController> {
+  const TopikArtikelSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (controller.isLoadingArtikel.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      final maxValue = controller.artikelTopik.isEmpty
+          ? 1
+          : controller.artikelTopik
+                .map((e) => e.jumlah)
+                .reduce((a, b) => a > b ? a : b);
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Expanded(
+                child: Text(
+                  "Topik Artikel Paling Banyak Dibahas",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(
+            "Update terakhir ${controller.formatLastUpdate(controller.lastUpdateArtikel.value)}",
+            style: const TextStyle(fontSize: 11, color: Colors.grey),
+          ),
+
+          const SizedBox(height: 20),
+
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  value: controller.selectedYearArtikel.value == 0
+                      ? null
+                      : controller.selectedYearArtikel.value,
+                  isExpanded: true,
+                  dropdownColor: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  icon: const Icon(Icons.keyboard_arrow_down),
+                  hint: const Text("Pilih Tahun"),
+                  decoration: InputDecoration(
+                    labelText: "Tahun",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF006BFF)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  items: controller.yearsArtikel
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(e.toString()),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    controller.selectYearArtikel(value);
+                  },
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  value:
+                      controller.monthsArtikel.contains(
+                        controller.selectedMonthArtikel.value,
+                      )
+                      ? controller.selectedMonthArtikel.value
+                      : null,
+                  isExpanded: true,
+                  dropdownColor: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  icon: const Icon(Icons.keyboard_arrow_down),
+                  hint: const Text("Pilih Bulan"),
+                  decoration: InputDecoration(
+                    labelText: "Bulan",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF006BFF)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  items: controller.monthsArtikel
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(controller.namaBulan[e]),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: controller.selectedYearArtikel.value == 0
+                      ? null
+                      : (value) {
+                          if (value == null) return;
+                          controller.selectMonthArtikel(value);
+                        },
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  value:
+                      controller.weeksArtikel.contains(
+                        controller.selectedWeekArtikel.value,
+                      )
+                      ? controller.selectedWeekArtikel.value
+                      : null,
+                  isExpanded: true,
+                  dropdownColor: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  icon: const Icon(Icons.keyboard_arrow_down),
+                  hint: const Text("Pilih Minggu"),
+                  decoration: InputDecoration(
+                    labelText: "Minggu",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF006BFF)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  items: controller.weeksArtikel
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text("Minggu $e"),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: controller.selectedMonthArtikel.value == 0
+                      ? null
+                      : (value) {
+                          if (value == null) return;
+                          controller.selectWeekArtikel(value);
+                        },
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          if (controller.artikelTopik.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 30),
+                child: Text(
+                  "Tidak ada data pada filter yang dipilih",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            )
+          else
+            ...controller.artikelTopik.take(5).map((item) {
+              final progress = item.jumlah / maxValue;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.kata,
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        Text(
+                          "${item.jumlah}",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 7,
+                        backgroundColor: Colors.grey.shade200,
+                        valueColor: const AlwaysStoppedAnimation(
+                          Color(0xFF006BFF),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      );
+    });
+  }
+}
+
+class TrendTopikSection extends GetView<HomeController> {
+  const TrendTopikSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (controller.isLoadingTrendTopik.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      if (controller.trendTopik.isEmpty) {
+        return const SizedBox();
+      }
+
+      return _TrendChartCard(
+        title: "Tren Topik Terpopuler",
+        subtitle: "Jumlah artikel edukasi tiap bulan",
+        data: controller.trendTopik
+            .map(
+              (e) => FlSpot(
+                controller.trendTopik.indexOf(e).toDouble(),
+                e.jumlah.toDouble(),
+              ),
+            )
+            .toList(),
+        labels: controller.trendTopik
+            .map((e) => e.label)
+            .toList(),
+        lastUpdate: controller.formatLastUpdate(
+          controller.lastUpdateTrendTopik.value,
+        ),
+      );
+    });
+  }
+}
+
+class TopikKomponenSection extends GetView<HomeController> {
+  const TopikKomponenSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      // print("BUILD HASH = ${controller.hashCode}");
+      // print("BUILD LENGTH = ${controller.komponenServis.length}");
+
+      if (controller.isLoadingKomponen.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      // print("BUILD -> ${controller.komponenServis.length}");
+      // print("BUILD TopikKomponen");
+      // print(controller.komponenServis.length);
+
+      final maxValue = controller.komponenServis
+          .map((e) => e.totalServis)
+          .reduce((a, b) => a > b ? a : b);
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  "Komponen Paling Banyak Diservis",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 10),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "Update terakhir ${controller.formatLastUpdate(controller.lastUpdateKomponen.value)}",
+            style: const TextStyle(fontSize: 11, color: Colors.grey),
+          ),
+
+          const SizedBox(height: 20),
+
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int?>(
+                  value: controller.selectedYearKomponen.value == 0
+                      ? null
+                      : controller.selectedYearKomponen.value,
+                  isExpanded: true,
+                  hint: Text("Pilih Tahun"),
+                  decoration: InputDecoration(
+                    labelText: "Tahun",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF006BFF)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  items: controller.yearsKomponen
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(e.toString()),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    controller.selectYearKomponen(value);
+                  },
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: DropdownButtonFormField<int?>(
+                  value:
+                      controller.monthsKomponen.contains(
+                        controller.selectedMonthKomponen.value,
+                      )
+                      ? controller.selectedMonthKomponen.value
+                      : null,
+                  isExpanded: true,
+                  hint: Text("Pilih Bulan"),
+                  decoration: InputDecoration(
+                    labelText: "Bulan",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF006BFF)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  items: controller.monthsKomponen
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(controller.namaBulan[e]),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: controller.selectedYearKomponen.value == 0
+                      ? null
+                      : (value) {
+                          if (value == null) return;
+                          controller.selectMonthKomponen(value);
+                        },
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: DropdownButtonFormField<int?>(
+                  value:
+                      controller.weeksKomponen.contains(
+                        controller.selectedWeekKomponen.value,
+                      )
+                      ? controller.selectedWeekKomponen.value
+                      : null,
+                  isExpanded: true,
+                  hint: Text("Pilih Minggu"),
+                  decoration: InputDecoration(
+                    labelText: "Minggu",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF006BFF)),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  items: controller.weeksKomponen
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text("Minggu $e"),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: controller.selectedMonthKomponen.value == 0
+                      ? null
+                      : (value) {
+                          if (value == null) return;
+                          controller.selectWeekKomponen(value);
+                        },
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          if (controller.komponenServis.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 30),
+                child: Text(
+                  "Tidak ada data pada filter yang dipilih",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            )
+          else
+            ...controller.komponenServis.take(5).map((item) {
+              final progress = item.totalServis / maxValue;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.komponen,
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        Text(
+                          "${item.totalServis}",
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 7,
+                        backgroundColor: Colors.grey.shade200,
+                        valueColor: const AlwaysStoppedAnimation(
+                          Color(0xFF006BFF),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      );
+    });
+  }
+}
+
+class TrendServisSection extends GetView<HomeController> {
+  const TrendServisSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (controller.isLoadingTrendServis.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      if (controller.trendServis.isEmpty) {
+        return const SizedBox();
+      }
+
+      return _TrendChartCard(
+        title: "Tren Jumlah Servis",
+        subtitle: "Aktivitas servis kendaraan tiap bulan",
+        data: controller.trendServis
+            .map(
+              (e) => FlSpot(
+                controller.trendServis.indexOf(e).toDouble(),
+                e.total.toDouble(),
+              ),
+            )
+            .toList(),
+        labels: controller.trendServis
+            .map((e) => e.periode.substring(5))
+            .toList(),
+        lastUpdate: controller.formatLastUpdate(
+          controller.lastUpdateTrendServis.value,
+        ),
+      );
+    });
+  }
+}
+
+class _TrendChartCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final List<FlSpot> data;
+  final List<String> labels;
+  final String lastUpdate;
+
+  const _TrendChartCard({
+    required this.title,
+    required this.subtitle,
+    required this.data,
+    required this.labels,
+    required this.lastUpdate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 18),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xff1D1D1D),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+          ),
+          const SizedBox(height: 20),
+
+          SizedBox(
+            height: 240,
+            child: LineChart(
+              LineChartData(
+                borderData: FlBorderData(show: false),
+
+                gridData: FlGridData(
+                  drawVerticalLine: false,
+                  horizontalInterval: 2,
+                ),
+
+                titlesData: FlTitlesData(
+                  topTitles: const AxisTitles(),
+                  rightTitles: const AxisTitles(),
+
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: true, reservedSize: 34),
+                  ),
+
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: 1,
+                      getTitlesWidget: (value, meta) {
+                        int i = value.toInt();
+
+                        if (i >= labels.length) {
+                          return const SizedBox();
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            labels[i],
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: data,
+                    isCurved: true,
+                    color: Colors.blue,
+                    barWidth: 4,
+                    dotData: const FlDotData(show: true),
+                    belowBarData: BarAreaData(show: false),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          Text(
+            "Last Update : $lastUpdate",
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+          ),
+        ],
+      ),
+    );
   }
 }

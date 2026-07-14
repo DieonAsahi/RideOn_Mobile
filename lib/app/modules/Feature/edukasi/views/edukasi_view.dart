@@ -5,6 +5,7 @@ import '../controllers/edukasi_controller.dart';
 
 class EdukasiView extends GetView<EdukasiController> {
   const EdukasiView({super.key});
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,10 +23,8 @@ class EdukasiView extends GetView<EdukasiController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 30),
-
-                /// TITLE
                 Center(
-                  child: Text(
+                  child: const Text(
                     "Edukasi",
                     style: TextStyle(
                       fontSize: 20,
@@ -34,9 +33,7 @@ class EdukasiView extends GetView<EdukasiController> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 TextField(
                   controller: controller.searchController,
                   onChanged: (value) {
@@ -72,10 +69,7 @@ class EdukasiView extends GetView<EdukasiController> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
-                /// TITLE SECTION
                 const Text(
                   "Artikel Populer",
                   style: TextStyle(
@@ -84,10 +78,7 @@ class EdukasiView extends GetView<EdukasiController> {
                     color: Colors.black,
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
-                /// LIST ARTIKEL
                 Obx(() {
                   if (controller.isLoading.value) {
                     return const Center(child: CircularProgressIndicator());
@@ -154,11 +145,9 @@ class ArtikelCard extends StatelessWidget {
           ),
         ],
       ),
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// LOGO + SOURCE
           Row(
             children: [
               CircleAvatar(
@@ -168,23 +157,22 @@ class ArtikelCard extends StatelessWidget {
                   style: const TextStyle(fontSize: 10),
                 ),
               ),
-
               const SizedBox(width: 6),
-
-              Text(
-                source,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
+              Expanded(
+                child: Text(
+                  source,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 6),
-
-          /// TITLE
           Text(
             title,
             maxLines: 2,
@@ -195,10 +183,7 @@ class ArtikelCard extends StatelessWidget {
               color: Color(0xFF2782FF),
             ),
           ),
-
           const SizedBox(height: 6),
-
-          /// DATE + DESC
           Text.rich(
             TextSpan(
               children: [
@@ -206,7 +191,6 @@ class ArtikelCard extends StatelessWidget {
                   text: "$date — ",
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
-
                 TextSpan(
                   text: desc,
                   style: const TextStyle(color: Colors.black),

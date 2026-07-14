@@ -29,9 +29,9 @@ class KendaraanController extends GetxController {
   var isLoading = false.obs;
   var kendaraanList = <Kendaraan>[].obs;
 
-  void goToTambahKendaraan() {
-    Get.toNamed('/pluskendaraan', arguments: false);
-  }
+  // void goToTambahKendaraan() {
+  //   Get.toNamed('/pluskendaraan', arguments: false);
+  // }
 
   @override
   void onInit() {
@@ -57,9 +57,14 @@ class KendaraanController extends GetxController {
       print("DELETE BODY: ${response.body}");
 
       if (response.statusCode == 200) {
-        kendaraanList.removeWhere((e) => e.id == id);
+        // kendaraanList.removeWhere((e) => e.id == id);
+        await getVehicles();
 
         Get.snackbar("Berhasil", "Kendaraan berhasil dihapus");
+
+        if (kendaraanList.isEmpty) {
+          Get.offNamed('/pluskendaraan', arguments: true);
+        }
       } else {
         Get.snackbar("Error", "Gagal menghapus kendaraan");
       }

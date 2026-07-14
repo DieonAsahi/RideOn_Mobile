@@ -72,6 +72,15 @@ class PetabengkelController extends GetxController {
 
   final isLoading = false.obs;
 
+  List<WorkshopModel> get otherWorkshops {
+    if (selectedWorkshop.value == null) return [];
+
+    return workshops
+        .where((e) => e.id != selectedWorkshop.value!.id)
+        .take(10)
+        .toList();
+  }
+
   @override
   void onInit() async {
     super.onInit();

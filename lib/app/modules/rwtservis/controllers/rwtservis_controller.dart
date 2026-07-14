@@ -46,33 +46,40 @@ class RwtservisController extends GetxController {
       if (response.statusCode == 200) {
         final List data = jsonDecode(response.body);
 
-        riwayat.value = data.map((item) {
-          Color statusColor = Colors.grey;
+        // Tambahkan .cast<Map<String, dynamic>>() di akhir agar tipe datanya mutlak dan tidak bikin UI crash
+        riwayat.value = data
+            .map((item) {
+              Color statusColor = Colors.grey;
 
-          if (item["status"] == "Diproses") {
-            statusColor = Colors.orange;
-          } else if (item["status"] == "Selesai") {
-            statusColor = Colors.green;
-          }
+              if (item["status"] == "Diproses") {
+                statusColor = Colors.orange;
+              } else if (item["status"] == "Selesai") {
+                statusColor = Colors.green;
+              }
 
-          return {
-            "id": item["id"],
-            "component_id": item["component_id"],
-            "jenis": item["service_type"].toString().toUpperCase(),
-            "detail":
-                item["service_type"].toString().toLowerCase() == "servis rutin"
-                ? (item["master_components"]?["name"] ?? "-")
-                : (item["detail"] ?? "-"),
-            "tanggal": item["service_date"] ?? "-",
-            "odometer": "${item["odometer"] ?? 0} km",
-            "bengkel": item["workshop_name"] ?? "-",
-            "biaya": item["cost"] == null ? "-" : "Rp ${item["cost"]}",
-            "status": item["status"] ?? "-",
-            "statusColor": statusColor,
-          };
-        }).toList();
+              // Di dalam loadServiceHistory()
+              return {
+                "id": item["id"],
+                "component_id": item["component_id"],
+                "jenis": item["service_type"].toString().toUpperCase(),
+                "detail":
+                    item["service_type"].toString().toLowerCase() ==
+                        "servis rutin"
+                    ? (item["master_components"]?["name"] ?? "-")
+                    : (item["detail"] ?? "-"),
+                "tanggal": item["service_date"] ?? "-",
+                "odometer": "${item["odometer"] ?? 0} km",
+                "bengkel": item["workshop_name"] ?? "-",
+                "biaya": item["cost"] == null ? "-" : "Rp ${item["cost"]}",
+                "status": item["status"] ?? "-",
+                "statusColor": statusColor,
+              };
+            })
+            .toList()
+            .cast<Map<String, dynamic>>();
       }
     } catch (e) {
+      print("ERROR RIWAYAT UI: $e");
       Get.snackbar("Error", e.toString());
     } finally {
       isLoading.value = false;

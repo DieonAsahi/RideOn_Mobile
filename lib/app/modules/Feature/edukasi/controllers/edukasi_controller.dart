@@ -7,7 +7,7 @@ class ArtikelModel {
   final String title;
   final String date;
   final String desc;
-  final String link; // Tambahan field link sesuai backend
+  final String link;
 
   ArtikelModel({
     required this.source,
@@ -17,7 +17,6 @@ class ArtikelModel {
     required this.link,
   });
 
-  // Fungsi helper untuk mengubah JSON dari backend menjadi Object Flutter
   factory ArtikelModel.fromJson(Map<String, dynamic> json) {
     return ArtikelModel(
       source: json['sumber'] ?? 'Portal Otomotif',
@@ -31,16 +30,16 @@ class ArtikelModel {
 
 class EdukasiController extends GetxController {
   final searchController = TextEditingController();
-  final _connect = GetConnect(); // HTTP Client bawaan GetX
+  final _connect = GetConnect();
   
   RxString search = ''.obs;
   RxList<ArtikelModel> artikelList = <ArtikelModel>[].obs;
-  RxBool isLoading = false.obs; // State untuk loading indicator
+  RxBool isLoading = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    fetchArtikel(); // Ambil data dari backend saat controller aktif
+    fetchArtikel(); 
   }
 
 Future<void> fetchArtikel() async {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'package:get_storage/get_storage.dart';
 import '../controllers/profil_controller.dart';
 
 class ProfilView extends GetView<ProfilController> {
@@ -51,7 +51,7 @@ class ProfilView extends GetView<ProfilController> {
                       radius: 42,
                       backgroundImage: controller.imageUrl.value.isNotEmpty
                           ? NetworkImage(controller.imageUrl.value)
-                          : const AssetImage("assets/images/profile.png")
+                          : const AssetImage("assets/images/profile.jpg")
                                 as ImageProvider,
                     ),
                   ),
@@ -168,7 +168,13 @@ class ProfilView extends GetView<ProfilController> {
                             ),
 
                             ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
+                                final box = GetStorage();
+
+                                await box.remove("token");
+                                await box.remove("user");
+                                await box.remove("vehicle_id");
+
                                 Get.offAllNamed('/login');
 
                                 /// logout logic

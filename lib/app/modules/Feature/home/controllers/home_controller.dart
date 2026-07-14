@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class VehicleComponent {
   final String title;
@@ -37,6 +38,67 @@ class VehicleComponent {
   }
 }
 
+class TopikModel {
+  final String kata;
+  final int jumlah;
+  final String kategori;
+
+  TopikModel({
+    required this.kata,
+    required this.jumlah,
+    required this.kategori,
+  });
+
+  factory TopikModel.fromJson(Map<String, dynamic> json) {
+    return TopikModel(
+      kata: json["kata"],
+      jumlah: json["jumlah"],
+      kategori: json["kategori"],
+    );
+  }
+}
+
+class KomponenServisModel {
+  final String komponen;
+  final int totalServis;
+  final String persentase;
+
+  KomponenServisModel({
+    required this.komponen,
+    required this.totalServis,
+    required this.persentase,
+  });
+
+  factory KomponenServisModel.fromJson(Map<String, dynamic> json) {
+    return KomponenServisModel(
+      komponen: json["komponen"],
+      totalServis: json["total_servis"],
+      persentase: json["persentase"],
+    );
+  }
+}
+
+class TrendServisModel {
+  final String periode;
+  final int total;
+
+  TrendServisModel({required this.periode, required this.total});
+
+  factory TrendServisModel.fromJson(Map<String, dynamic> json) {
+    return TrendServisModel(periode: json["periode"], total: json["total"]);
+  }
+}
+
+class TrendTopikModel {
+  final String label;
+  final int jumlah;
+  TrendTopikModel({required this.label, required this.jumlah});
+
+  factory TrendTopikModel.fromJson(Map<String, dynamic> json) {
+    return TrendTopikModel(label: json["label"], jumlah: json["jumlah"]);
+  }
+}
+
 class HomeController extends GetxController {
   final namaController = ''.obs;
   late String vehicleId;
@@ -44,9 +106,7 @@ class HomeController extends GetxController {
   final vehicleImage = ''.obs;
 
   var isLoadingOdometer = false.obs;
-
   var odometer = 0.obs;
-
   var components = <VehicleComponent>[].obs;
 
   var isLoading = false.obs;
@@ -57,12 +117,45 @@ class HomeController extends GetxController {
   var vehicles = <dynamic>[].obs;
 
   bool get isFirstVehicle => currentVehicleIndex.value == vehicles.length - 1;
-
   bool get isLastVehicle => vehicles.isEmpty || currentVehicleIndex.value == 0;
+
+  final isLoadingArtikel = false.obs;
+  final isLoadingKomponen = false.obs;
+  final isLoadingTrendTopik = false.obs;
+  final isLoadingTrendServis = false.obs;
+
+  final artikelTopik = <TopikModel>[].obs;
+  final komponenServis = <KomponenServisModel>[].obs;
+  final trendTopik = <TrendTopikModel>[].obs;
+  final trendServis = <TrendServisModel>[].obs;
+
+  final lastUpdateArtikel = "".obs;
+  final lastUpdateKomponen = "".obs;
+  final lastUpdateTrendServis = "".obs;
+  final lastUpdateTrendTopik = "".obs;
+
+  // Filter Komponen
+  final selectedYearKomponen = 0.obs;
+  final selectedMonthKomponen = 0.obs;
+  final selectedWeekKomponen = 0.obs;
+  // Filter Artikel
+  final selectedYearArtikel = 0.obs;
+  final selectedMonthArtikel = 0.obs;
+  final selectedWeekArtikel = 0.obs;
+
+  // Komponen
+  final yearsKomponen = <int>[].obs;
+  final monthsKomponen = <int>[].obs;
+  final weeksKomponen = <int>[].obs;
+  // Artikel
+  final yearsArtikel = <int>[].obs;
+  final monthsArtikel = <int>[].obs;
+  final weeksArtikel = <int>[].obs;
 
   @override
   void onInit() {
     super.onInit();
+    print("INIT HASH = $hashCode");
 
     vehicleId = box.read("vehicle_id") ?? "";
 
@@ -74,7 +167,38 @@ class HomeController extends GetxController {
     }
 
     fetchHome();
+
+    fetchKomponenFilter();
+    fetchArtikelFilter();
+
+    fetchDashboardArtikel();
+    fetchKomponenServis();
+
+    // fetchTrendServis();
+    fetchTrendTopik();
   }
+
+  String formatLastUpdate(String isoString) {
+    final date = DateTime.parse(isoString).toLocal();
+
+    return DateFormat('dd MMMM yyyy, HH:mm', 'id_ID').format(date);
+  }
+
+  final List<String> namaBulan = [
+    "",
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
 
   String formatTanggal(DateTime date) {
     const bulan = [
@@ -117,6 +241,56 @@ class HomeController extends GetxController {
     }
   }
 
+  Future<void> selectYearArtikel(int year) async {
+    selectedYearArtikel.value = year;
+    selectedMonthArtikel.value = 0;
+    selectedWeekArtikel.value = 0;
+
+    await fetchArtikelFilter();
+    await fetchDashboardArtikel();
+    await fetchTrendTopik();
+  }
+
+  Future<void> selectMonthArtikel(int month) async {
+    selectedMonthArtikel.value = month;
+    selectedWeekArtikel.value = 0;
+
+    await fetchArtikelFilter();
+    await fetchDashboardArtikel();
+    await fetchTrendTopik();
+  }
+
+  Future<void> selectWeekArtikel(int week) async {
+    selectedWeekArtikel.value = week;
+
+    await fetchDashboardArtikel();
+    await fetchTrendTopik();
+  }
+
+  Future<void> selectYearKomponen(int year) async {
+    selectedYearKomponen.value = year;
+    selectedMonthKomponen.value = 0;
+    selectedWeekKomponen.value = 0;
+
+    await fetchKomponenFilter();
+    await fetchKomponenServis();
+  }
+
+  Future<void> selectMonthKomponen(int month) async {
+    selectedMonthKomponen.value = month;
+    selectedWeekKomponen.value = 0;
+
+    await fetchKomponenFilter();
+    await fetchKomponenServis();
+  }
+
+  Future<void> selectWeekKomponen(int week) async {
+    selectedWeekKomponen.value = week;
+
+    await fetchKomponenFilter();
+    await fetchKomponenServis();
+  }
+
   Future<void> getVehicles() async {
     final token = box.read("token");
 
@@ -144,10 +318,263 @@ class HomeController extends GetxController {
     }
   }
 
+  Future<void> fetchDashboardArtikel() async {
+    isLoadingArtikel.value = true;
+
+    try {
+      final params = <String>[];
+
+      if (selectedYearArtikel.value != 0) {
+        params.add("tahun=${selectedYearArtikel.value}");
+      }
+
+      if (selectedMonthArtikel.value != 0) {
+        params.add("bulan=${selectedMonthArtikel.value}");
+      }
+
+      if (selectedWeekArtikel.value != 0) {
+        params.add("minggu=${selectedWeekArtikel.value}");
+      }
+
+      final response = await http.get(
+        Uri.parse(
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/artikel?${params.join("&")}",
+        ),
+      );
+      print(response.statusCode);
+      print(response.body);
+
+      final json = jsonDecode(response.body);
+      if (json["status"] == "success") {
+        lastUpdateArtikel.value = json["lastUpdate"];
+
+        artikelTopik.value = (json["charts"]["barChartTopik"] as List)
+            .map((e) => TopikModel.fromJson(e))
+            .toList();
+      }
+    } catch (e) {
+      print(e);
+    } finally {
+      isLoadingArtikel.value = false;
+    }
+  }
+
+  Future<void> fetchArtikelFilter() async {
+    String url =
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/artikel-filter";
+
+    final params = <String>[];
+
+    if (selectedYearArtikel.value != 0) {
+      params.add("tahun=${selectedYearArtikel.value}");
+    }
+
+    if (selectedMonthArtikel.value != 0) {
+      params.add("bulan=${selectedMonthArtikel.value}");
+    }
+
+    if (selectedWeekArtikel.value != 0) {
+      params.add("minggu=${selectedWeekArtikel.value}");
+    }
+
+    if (params.isNotEmpty) {
+      url += "?${params.join("&")}";
+    }
+
+    print("FILTER URL = $url");
+
+    final response = await http.get(Uri.parse(url));
+    print(response.statusCode);
+    print(response.body);
+
+    final json = jsonDecode(response.body);
+
+    if (json["status"] == "success") {
+      yearsArtikel.value = List<int>.from(json["tahun"]);
+      monthsArtikel.value = List<int>.from(json["bulan"]);
+      weeksArtikel.value = List<int>.from(json["minggu"]);
+    }
+
+    if (selectedYearArtikel.value == 0 && yearsArtikel.isNotEmpty) {
+      selectedYearArtikel.value = yearsArtikel.first;
+    }
+  }
+
+  Future<void> fetchTrendTopik() async {
+    isLoadingTrendTopik.value = true;
+
+    try {
+      final params = <String>[];
+
+      if (selectedYearArtikel.value != 0) {
+        params.add("tahun=${selectedYearArtikel.value}");
+      }
+
+      if (selectedMonthArtikel.value != 0) {
+        params.add("bulan=${selectedMonthArtikel.value}");
+      }
+
+      if (selectedWeekArtikel.value != 0) {
+        params.add("minggu=${selectedWeekArtikel.value}");
+      }
+
+      final response = await http.get(
+        Uri.parse(
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/artikel-trend?${params.join("&")}",
+        ),
+      );
+      print(response.statusCode);
+      print(response.body);
+
+      final json = jsonDecode(response.body);
+
+      if (json["status"] == "success") {
+        lastUpdateTrendTopik.value = json["lastUpdate"];
+
+        trendTopik.value = (json["data"] as List)
+            .map((e) => TrendTopikModel.fromJson(e))
+            .toList();
+      }
+    } catch (e) {
+      print(e);
+    } finally {
+      isLoadingTrendTopik.value = false;
+    }
+  }
+
+  Future<void> fetchKomponenServis() async {
+    // print("FETCH HASH = $hashCode");
+    // print("FETCH LENGTH = ${komponenServis.length}");
+
+    isLoadingKomponen.value = true;
+
+    try {
+      final params = <String>[];
+
+      if (selectedYearKomponen.value != 0) {
+        params.add("tahun=${selectedYearKomponen.value}");
+      }
+
+      if (selectedMonthKomponen.value != 0) {
+        params.add("bulan=${selectedMonthKomponen.value}");
+      }
+
+      if (selectedWeekKomponen.value != 0) {
+        params.add("minggu=${selectedWeekKomponen.value}");
+      }
+
+      final response = await http.get(
+        Uri.parse(
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/tren-komponen?${params.join("&")}",
+        ),
+      );
+
+      // print(response.statusCode);
+      // print(response.body);
+
+      final json = jsonDecode(response.body);
+      if (json["status"] == "success") {
+        lastUpdateKomponen.value = json["lastUpdate"];
+        komponenServis.value = (json["data"] as List)
+            .map((e) => KomponenServisModel.fromJson(e))
+            .toList();
+
+        // print("Komponen setelah fetch: ${komponenServis.length}");
+        // print("FETCH -> ${komponenServis.length}");
+      }
+      // print("Komponen setelah fetch: ${komponenServis.length}");
+      // print("FETCH -> ${komponenServis.length}");
+
+      // print("Jumlah komponen = ${komponenServis.length}");
+
+      // for (final k in komponenServis) {
+      //   print("${k.komponen} ${k.totalServis}");
+      // }
+
+      // print("FETCH HASH = $hashCode");
+    } catch (e, stack) {
+      print(e);
+      print(stack);
+    } finally {
+      isLoadingKomponen.value = false;
+    }
+  }
+
+  Future<void> fetchKomponenFilter() async {
+    String url =
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/komponen-filter";
+
+    final params = <String>[];
+
+    if (selectedYearKomponen.value != 0) {
+      params.add("tahun=${selectedYearKomponen.value}");
+    }
+
+    if (selectedMonthKomponen.value != 0) {
+      params.add("bulan=${selectedMonthKomponen.value}");
+    }
+
+    if (selectedWeekKomponen.value != 0) {
+      params.add("minggu=${selectedWeekKomponen.value}");
+    }
+
+    if (params.isNotEmpty) {
+      url += "?${params.join("&")}";
+    }
+
+    print(url);
+
+    final response = await http.get(Uri.parse(url));
+
+    print(response.statusCode);
+    print(response.body);
+
+    final json = jsonDecode(response.body);
+
+    if (json["status"] == "success") {
+      yearsKomponen.value = List<int>.from(json["tahun"]);
+      monthsKomponen.value = List<int>.from(json["bulan"]);
+      weeksKomponen.value = List<int>.from(json["minggu"]);
+    }
+
+    if (selectedYearKomponen.value == 0 && yearsKomponen.isNotEmpty) {
+      selectedYearKomponen.value = yearsKomponen.first;
+    }
+  }
+
+  Future<void> fetchTrendServis() async {
+    try {
+      isLoadingTrendServis.value = true;
+
+      final response = await http.get(
+        Uri.parse(
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/tren-servis",
+        ),
+      );
+
+      print(response.statusCode);
+      print(response.body);
+
+      final json = jsonDecode(response.body);
+
+      if (json["status"] == "success") {
+        lastUpdateTrendServis.value = json["lastUpdate"];
+
+        trendServis.value = (json["data"] as List)
+            .map((e) => TrendServisModel.fromJson(e))
+            .toList();
+      }
+    } catch (e) {
+      print(e);
+    } finally {
+      isLoadingTrendServis.value = false;
+    }
+  }
+
   Future<void> fetchHome() async {
     try {
-      isLoadingOdometer.value = true;
       isLoading.value = true;
+      isLoadingOdometer.value = true;
       final token = box.read("token");
 
       final response = await http.get(
@@ -159,6 +586,9 @@ class HomeController extends GetxController {
           "Authorization": "Bearer $token",
         },
       );
+
+      print(response.statusCode);
+      print(response.body);
 
       final data = jsonDecode(response.body);
 

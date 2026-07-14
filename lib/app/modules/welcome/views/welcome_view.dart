@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:get/get_navigation/get_navigation.dart';
-import 'package:get/utils.dart';
+import 'package:get/get.dart';
 
-class WelcomeView extends StatelessWidget {
+import '../controllers/welcome_controller.dart';
+
+class WelcomeView extends GetView<WelcomeController> {
   const WelcomeView({super.key});
 
   @override
@@ -60,7 +61,7 @@ class WelcomeView extends StatelessWidget {
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      onPressed: () => Get.offNamed('/login'),
+                      onPressed: controller.getStarted,
                       child: const Text(
                         "Get Started",
                         style: TextStyle(

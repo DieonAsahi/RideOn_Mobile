@@ -12,70 +12,74 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
-
       body: SafeArea(
         child: Obx(() {
           double progress = controller.step.value / 8;
+          bool isCameraFullScreen =
+              controller.step.value == 7 && controller.odometerStep.value == 1;
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 30),
-
-                const Center(
-                  child: Text(
-                    "Tambah Kendaraan Baru",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+          return Stack(
+            children: [
+              // KONTEN UTAMA MULTI-STEP
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Langkah ${controller.step.value} dari 8",
-                      style: TextStyle(color: Colors.black, fontSize: 12),
+                    const SizedBox(height: 30),
+                    const Center(
+                      child: Text(
+                        "Tambah Kendaraan Baru",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
                     ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          "Langkah ${controller.step.value} dari 8",
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 6,
+                      backgroundColor: Colors.grey.shade300,
+                      valueColor: const AlwaysStoppedAnimation(
+                        Color(0xFF006BFF),
+                      ),
+                    ),
+                    if (!isCameraFullScreen) const SizedBox(height: 50),
+                    Expanded(
+                      child: isCameraFullScreen
+                          ? _buildStepContent(controller.step.value)
+                          : SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              child: _buildStepContent(controller.step.value),
+                            ),
+                    ),
+                    if (!isCameraFullScreen)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 20),
+                        child: _buildButtonsDynamic(),
+                      ),
                   ],
                 ),
+              ),
 
-                const SizedBox(height: 8),
-
-                LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: Colors.grey.shade300,
-                  valueColor: const AlwaysStoppedAnimation(Color(0xFF006BFF)),
-                ),
-
-                if (!(controller.step.value == 7 &&
-                    controller.odometerStep.value == 1))
-                  const SizedBox(height: 50),
-
-                Expanded(
-                  child:
-                      controller.step.value == 7 &&
-                          controller.odometerStep.value == 1
-                      ? _buildStepContent(controller.step.value)
-                      : SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          child: _buildStepContent(controller.step.value),
-                        ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: _buildButtonsDynamic(),
-                ),
-              ],
-            ),
+              // LAYER FULL SCREEN KHUSUS PREVIEW SCAN KAMERA STEP 7
+              if (isCameraFullScreen) _step7Camera(),
+            ],
           );
         }),
       ),
@@ -111,7 +115,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
         case 0:
           return _step7Main();
         case 1:
-          return _step7Camera();
+          return const SizedBox(); // Di-handle oleh layer Stack utama di atas
         case 2:
           return _step7Result();
         default:
@@ -134,7 +138,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Center(
+        const Center(
           child: Text(
             "Masukkan merek kendaraan",
             textAlign: TextAlign.center,
@@ -147,35 +151,70 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
         ),
         const SizedBox(height: 35),
 
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          decoration: BoxDecoration(
+        PopupMenuButton<String>(
+          color: Colors.white,
+          offset: const Offset(0, 55),
+          elevation: 4,
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: controller.selectedBrand.value.isEmpty
-                  ? null
-                  : controller.selectedBrand.value,
-              hint: const Text(
-                "Merek",
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-              isExpanded: true,
 
-              items: [
-                "Honda",
-                "Yamaha",
-                "Suzuki",
-              ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-              onChanged: (value) {
-                controller.selectedBrand.value = value!;
-              },
+          onSelected: (value) {
+            controller.selectedBrand.value = value;
+            controller.selectedModel.value = "";
+          },
+
+          itemBuilder: (context) {
+            return controller.vehicleData.keys.map((brand) {
+              return PopupMenuItem<String>(
+                value: brand,
+                height: 45,
+                child: Text(
+                  brand,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: controller.selectedBrand.value == brand
+                        ? Colors.blue
+                        : Colors.black,
+                    fontWeight: controller.selectedBrand.value == brand
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
+                ),
+              );
+            }).toList();
+          },
+
+          child: Container(
+            height: 55,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Obx(
+                    () => Text(
+                      controller.selectedBrand.value.isEmpty
+                          ? "Pilih Merek"
+                          : controller.selectedBrand.value,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: controller.selectedBrand.value.isEmpty
+                            ? Colors.grey
+                            : Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Colors.grey,
+                ),
+              ],
             ),
           ),
         ),
@@ -184,62 +223,100 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
   }
 
   Widget _step2() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Center(
-          child: Text(
-            "Masukkan model kendaraan",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-              fontSize: 16,
-            ),
-          ),
-        ),
-        const SizedBox(height: 35),
+    return Obx(() {
+      final models =
+          controller.vehicleData[controller.selectedBrand.value] ?? [];
 
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: controller.selectedModel.value.isEmpty
-                  ? null
-                  : controller.selectedModel.value,
-              hint: const Text(
-                "Model",
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w300,
-                ),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Center(
+            child: Text(
+              "Masukkan model kendaraan",
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+                fontSize: 16,
               ),
-              isExpanded: true,
-              items: [
-                "Vario",
-                "Beat",
-                "Supra X",
-              ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-              onChanged: (value) {
-                controller.selectedModel.value = value!;
-              },
             ),
           ),
-        ),
-      ],
-    );
+
+          const SizedBox(height: 35),
+
+          PopupMenuButton<String>(
+            color: Colors.white,
+            offset: const Offset(0, 55),
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+
+            onSelected: (value) {
+              controller.selectedModel.value = value;
+            },
+
+            itemBuilder: (context) {
+              return models.map((model) {
+                return PopupMenuItem<String>(
+                  value: model,
+                  height: 45,
+                  child: Text(
+                    model,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: controller.selectedModel.value == model
+                          ? Colors.blue
+                          : Colors.black,
+                      fontWeight: controller.selectedModel.value == model
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  ),
+                );
+              }).toList();
+            },
+
+            child: Container(
+              height: 55,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      controller.selectedModel.value.isEmpty
+                          ? "Pilih Model"
+                          : controller.selectedModel.value,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: controller.selectedModel.value.isEmpty
+                            ? Colors.grey
+                            : Colors.black,
+                      ),
+                    ),
+                  ),
+                  const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Colors.grey,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    });
   }
 
   Widget _step3() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Center(
+        const Center(
           child: Text(
             "Masukkan tahun kendaraan",
             textAlign: TextAlign.center,
@@ -251,14 +328,12 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
           ),
         ),
         const SizedBox(height: 35),
-
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 15),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey),
           ),
-
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: controller.selectedYear.value.isEmpty
@@ -292,7 +367,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Center(
+        const Center(
           child: Text(
             "Masukkan kode plat nomor kendaraan",
             textAlign: TextAlign.center,
@@ -303,22 +378,18 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             ),
           ),
         ),
-
         const SizedBox(height: 35),
-
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 15),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey),
           ),
-
           child: TextField(
             controller: controller.platController,
             keyboardType: TextInputType.text,
             textCapitalization: TextCapitalization.characters,
-
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               hintText: "contoh : A 1234 BC",
               hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
               border: InputBorder.none,
@@ -339,9 +410,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
           ),
         ),
-
         const SizedBox(height: 30),
-
         Container(
           width: double.infinity,
           height: 300,
@@ -356,14 +425,11 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                 size: 70,
                 color: Colors.grey.shade400,
               ),
-
               const SizedBox(height: 20),
-
               Obx(() {
                 if (controller.isUploading.value) {
                   return const CircularProgressIndicator();
                 }
-
                 return ElevatedButton(
                   onPressed: () {
                     Get.bottomSheet(
@@ -382,17 +448,14 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                               title: const Text("Kamera"),
                               onTap: () {
                                 Get.back();
-
                                 controller.pickVehicleImage(ImageSource.camera);
                               },
                             ),
-
                             ListTile(
                               leading: const Icon(Icons.photo),
                               title: const Text("Galeri"),
                               onTap: () {
                                 Get.back();
-
                                 controller.pickVehicleImage(
                                   ImageSource.gallery,
                                 );
@@ -403,14 +466,12 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                       ),
                     );
                   },
-
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF006BFF),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-
                   child: const Text(
                     "Unggah",
                     style: TextStyle(color: Colors.white),
@@ -434,9 +495,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
           ),
         ),
-
         const SizedBox(height: 30),
-
         Stack(
           children: [
             Container(
@@ -454,7 +513,6 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                     : const SizedBox(),
               ),
             ),
-
             Positioned(
               top: 10,
               right: 10,
@@ -484,7 +542,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Center(
+        const Center(
           child: Text(
             "Estimasi pengguna harian",
             textAlign: TextAlign.center,
@@ -495,14 +553,12 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             ),
           ),
         ),
-
         const SizedBox(height: 15),
         const Text(
           "Anda tetap dapat memperbaharui odometer secara manual untuk mendapatkan angka yang akurat.",
           style: TextStyle(color: Colors.black, fontSize: 14),
         ),
         const SizedBox(height: 20),
-
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 15),
           decoration: BoxDecoration(
@@ -522,7 +578,6 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                   ),
                 ),
               ),
-
               const Text(
                 "km/hari",
                 style: TextStyle(color: Colors.black, fontSize: 14),
@@ -535,10 +590,10 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
   }
 
   Widget _step7Main() {
-    return Column(
+    return const Column(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        const Center(
+        Center(
           child: Text(
             "Ambil gambar angka odometer",
             style: TextStyle(
@@ -552,86 +607,119 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
     );
   }
 
+  // DIUBAH MENJADI FULLSCREEN OVERLAY DENGAN MENGGUNAKAN INDIKATOR RADAR SCAN REALTIME
   Widget _step7Camera() {
     return Obx(() {
       if (!controller.isCameraInitialized.value) {
-        return const Center(child: CircularProgressIndicator());
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       }
 
-      return Stack(
-        children: [
-          SizedBox.expand(child: CameraPreview(controller.cameraController!)),
-
-          // overlay gelap
-          IgnorePointer(
-            child: Container(color: Colors.black.withOpacity(0.35)),
-          ),
-
-          // kotak scanner
-          Center(
-            child: Container(
-              width: 280,
-              height: 100,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white, width: 3),
-                borderRadius: BorderRadius.circular(12),
+      return Positioned.fill(
+        child: Container(
+          color: Colors.black,
+          child: Stack(
+            children: [
+              SizedBox.expand(
+                child: CameraPreview(controller.cameraController!),
               ),
-            ),
-          ),
-
-          Positioned(
-            top: 50,
-            left: 20,
-            child: GestureDetector(
-              onTap: () async {
-                await controller.disposeCamera();
-                controller.odometerStep.value = 0;
-              },
-              child: const Icon(Icons.close, color: Colors.white, size: 32),
-            ),
-          ),
-
-          const Positioned(
-            bottom: 140,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Text(
-                "Posisikan odometer di dalam kotak",
-                style: TextStyle(color: Colors.white, fontSize: 14),
+              IgnorePointer(
+                child: Container(color: Colors.black.withOpacity(0.45)),
               ),
-            ),
-          ),
-
-          Positioned(
-            bottom: 40,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: () async {
-                  if (controller.isLoading.value) return;
-
-                  await controller.captureAndScanOdometer();
-                },
-                child: Obx(() {
-                  if (controller.isLoading.value) {
-                    return const CircularProgressIndicator(color: Colors.white);
-                  }
-
-                  return Container(
-                    width: 75,
-                    height: 75,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 5),
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 280,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: controller.isScanning.value
+                              ? Colors.greenAccent
+                              : Colors.white,
+                          width: 3,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          if (controller.isScanning.value)
+                            BoxShadow(
+                              color: Colors.greenAccent.withOpacity(0.2),
+                              blurRadius: 15,
+                              spreadRadius: 2,
+                            ),
+                        ],
+                      ),
                     ),
-                  );
-                }),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.greenAccent,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          Text(
+                            "Memindai odometer otomatis...",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              Positioned(
+                top: 40,
+                left: 20,
+                child: SafeArea(
+                  child: GestureDetector(
+                    onTap: () async {
+                      await controller.disposeCamera();
+                      controller.odometerStep.value = 0;
+                    },
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ),
+                ),
+              ),
+              const Positioned(
+                bottom: 80,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Text(
+                    "Sejajarkan angka odometer tepat di dalam kotak hijau",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       );
     });
   }
@@ -650,9 +738,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             ),
           ),
         ),
-
         const SizedBox(height: 35),
-
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 15),
           decoration: BoxDecoration(
@@ -661,10 +747,13 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
           ),
           child: TextField(
             controller: controller.odometerController,
-            decoration: const InputDecoration(border: InputBorder.none),
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              hintText: "Sesuaikan angka apabila tidak tepat",
+            ),
           ),
         ),
-
         const SizedBox(height: 30),
       ],
     );
@@ -681,9 +770,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
           ),
         ),
-
         const SizedBox(height: 30),
-
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -708,9 +795,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
           title,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
-
         const SizedBox(height: 10),
-
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 15),
           decoration: BoxDecoration(
@@ -747,7 +832,6 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
 
     return Row(
       children: [
-        // 🔥 TOMBOL KIRI (BATAL / KEMBALI)
         if (!(controller.isFromLogin.value && step == 1))
           Expanded(
             child: SizedBox(
@@ -773,12 +857,8 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
               ),
             ),
           ),
-
-        // 🔥 SPACING (hanya kalau tombol kiri ada)
         if (!(controller.isFromLogin.value && step == 1))
           const SizedBox(width: 10),
-
-        // 🔥 TOMBOL KANAN (LANJUT / SIMPAN)
         Expanded(
           child: SizedBox(
             height: 40,
@@ -833,7 +913,8 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
               child: ElevatedButton(
                 onPressed: () async {
                   await controller.initCamera();
-                  controller.odometerStep.value = 1;
+                  controller.odometerStep.value =
+                      1; // Mengaktifkan kamera stream
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF006BFF),
@@ -864,8 +945,8 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
               height: 40,
               child: ElevatedButton(
                 onPressed: () async {
-                  await controller.initCamera();
-                  controller.odometerStep.value = 1;
+                  controller.odometerStep.value = 0;
+                  await controller.disposeCamera();
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
                 child: const Text(
@@ -922,14 +1003,14 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
               ),
             ),
           ),
-
           const SizedBox(width: 10),
-
           Expanded(
             child: SizedBox(
               height: 40,
               child: ElevatedButton(
-                onPressed: controller.nextStep,
+                onPressed: controller.isLoading.value
+                    ? null
+                    : controller.nextStep,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF006BFF),
                 ),
@@ -944,7 +1025,6 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                       ),
                     );
                   }
-
                   return const Text(
                     "Simpan",
                     style: TextStyle(color: Colors.white),

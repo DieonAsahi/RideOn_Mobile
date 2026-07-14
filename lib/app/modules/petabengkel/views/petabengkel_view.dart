@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import '../controllers/petabengkel_controller.dart';
 
 class PetabengkelView extends GetView<PetabengkelController> {
@@ -14,7 +13,6 @@ class PetabengkelView extends GetView<PetabengkelController> {
 
       body: Stack(
         children: [
-          // MAP
           Obx(() {
             if (controller.userLocation.value == null) {
               return const Center(child: CircularProgressIndicator());
@@ -98,7 +96,6 @@ class PetabengkelView extends GetView<PetabengkelController> {
             ),
           ),
 
-          // BOTTOM SHEET
           Obx(() {
             if (!controller.showBottomSheet.value) {
               return const SizedBox();
@@ -106,7 +103,6 @@ class PetabengkelView extends GetView<PetabengkelController> {
 
             return NotificationListener<DraggableScrollableNotification>(
               onNotification: (notification) {
-                // jika ditarik hampir habis ke bawah
                 if (notification.extent <= 0.20) {
                   controller.showBottomSheet.value = false;
                 }
@@ -390,143 +386,145 @@ class PetabengkelView extends GetView<PetabengkelController> {
                                   const SizedBox(height: 20),
 
                                   const Text(
-                                    "Ringkasan Ulasan",
+                                    "Bengkel Lainnya",
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
 
-                                  const SizedBox(height: 20),
-
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          children: List.generate(5, (index) {
-                                            int star = 5 - index;
-
-                                            return Padding(
-                                              padding: const EdgeInsets.only(
-                                                bottom: 8,
-                                              ),
-
-                                              child: Row(
-                                                children: [
-                                                  Text("$star"),
-
-                                                  const SizedBox(width: 8),
-
-                                                  Expanded(
-                                                    child: LinearProgressIndicator(
-                                                      value: star == 5
-                                                          ? 0.95
-                                                          : 0.05,
-
-                                                      minHeight: 6,
-
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            10,
-                                                          ),
-
-                                                      backgroundColor:
-                                                          Colors.grey.shade200,
-
-                                                      valueColor:
-                                                          const AlwaysStoppedAnimation(
-                                                            Colors.amber,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          }),
-                                        ),
-                                      ),
-
-                                      const SizedBox(width: 20),
-
-                                      Column(
-                                        children: [
-                                          Obx(
-                                            () => Text(
-                                              controller
-                                                      .selectedWorkshop
-                                                      .value
-                                                      ?.rating
-                                                      .toStringAsFixed(1) ??
-                                                  "0.0",
-                                              style: const TextStyle(
-                                                fontSize: 48,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.star,
-                                                color: Colors.amber,
-                                                size: 18,
-                                              ),
-                                              Icon(
-                                                Icons.star,
-                                                color: Colors.amber,
-                                                size: 18,
-                                              ),
-                                              Icon(
-                                                Icons.star,
-                                                color: Colors.amber,
-                                                size: 18,
-                                              ),
-                                              Icon(
-                                                Icons.star,
-                                                color: Colors.amber,
-                                                size: 18,
-                                              ),
-                                              Icon(
-                                                Icons.star,
-                                                color: Colors.amber,
-                                                size: 18,
-                                              ),
-                                            ],
-                                          ),
-
-                                          SizedBox(height: 6),
-
-                                          Obx(
-                                            () => Text(
-                                              "${controller.selectedWorkshop.value?.reviewCount ?? 0} ulasan",
-                                              style: const TextStyle(
-                                                color: Colors.blue,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-
-                                  const SizedBox(height: 25),
-
-                                  _reviewItem(
-                                    "“Service nya bagus, pelayanan memuaskan”",
-                                  ),
-
                                   const SizedBox(height: 16),
 
-                                  _reviewItem(
-                                    "“Cepat tanggap solusi terbaik pas motor trouble tapi ngga ada bengkel di sekitar”",
-                                  ),
+                                  Obx(
+                                    () => Column(
+                                      children: controller.otherWorkshops.map((
+                                        item,
+                                      ) {
+                                        return GestureDetector(
+                                          onTap: () {
+                                            controller.getWorkshopDetail(
+                                              item.id!,
+                                            );
+                                          },
+                                          child: Container(
+                                            margin: const EdgeInsets.only(
+                                              bottom: 16,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(18),
+                                              border: Border.all(
+                                                color: Colors.grey.shade300,
+                                              ),
+                                            ),
+                                            child: Column(
+                                              children: [
+                                                ClipRRect(
+                                                  borderRadius:
+                                                      const BorderRadius.only(
+                                                        topLeft:
+                                                            Radius.circular(18),
+                                                        topRight:
+                                                            Radius.circular(18),
+                                                      ),
+                                                  child: Image.network(
+                                                    item.imageUrl,
+                                                    height: 140,
+                                                    width: double.infinity,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
 
-                                  const SizedBox(height: 40),
+                                                Padding(
+                                                  padding: const EdgeInsets.all(
+                                                    12,
+                                                  ),
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        item.title,
+                                                        style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 17,
+                                                        ),
+                                                      ),
+
+                                                      const SizedBox(height: 4),
+
+                                                      Text(item.category),
+
+                                                      const SizedBox(height: 8),
+
+                                                      Row(
+                                                        children: [
+                                                          Text(
+                                                            "${item.distanceKm.toStringAsFixed(0)} m",
+                                                          ),
+
+                                                          const SizedBox(
+                                                            width: 12,
+                                                          ),
+
+                                                          const Icon(
+                                                            Icons.star,
+                                                            color: Colors.amber,
+                                                            size: 16,
+                                                          ),
+
+                                                          Text(
+                                                            " ${item.rating} (${item.reviewCount} Ulasan)",
+                                                          ),
+
+                                                          const Spacer(),
+
+                                                          GestureDetector(
+                                                            onTap: () {
+                                                              Get.toNamed(
+                                                                '/rwttambah',
+                                                                arguments: {
+                                                                  "nama_bengkel":
+                                                                      item.title,
+                                                                },
+                                                              );
+                                                            },
+                                                            child: Container(
+                                                              padding:
+                                                                  const EdgeInsets.all(
+                                                                    7,
+                                                                  ),
+                                                              decoration: BoxDecoration(
+                                                                border: Border.all(
+                                                                  color: const Color(
+                                                                    0xFF006BFF,
+                                                                  ),
+                                                                ),
+                                                                shape: BoxShape
+                                                                    .circle,
+                                                              ),
+                                                              child: Image.asset(
+                                                                "assets/icon/bagikan.png",
+                                                                width: 18,
+                                                                height: 18,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
                                 ],
                               );
                             }),
@@ -541,27 +539,6 @@ class PetabengkelView extends GetView<PetabengkelController> {
           }),
         ],
       ),
-    );
-  }
-
-  static Widget _reviewItem(String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-
-      children: [
-        const CircleAvatar(
-          radius: 16,
-          backgroundColor: Colors.grey,
-
-          child: Icon(Icons.person, color: Colors.white, size: 18),
-        ),
-
-        const SizedBox(width: 12),
-
-        Expanded(
-          child: Text(text, style: const TextStyle(fontSize: 14, height: 1.5)),
-        ),
-      ],
     );
   }
 }

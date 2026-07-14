@@ -42,7 +42,7 @@ class RwttambahController extends GetxController {
       selectedJenis.value = 'Perbaikan';
     }
 
-    if (args != null) {
+    if (args != null && args["nama_bengkel"] != null) {
       bengkelController.text = args['nama_bengkel'] ?? '';
     }
 

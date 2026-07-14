@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
@@ -26,6 +28,7 @@ class PluskendaraanController extends GetxController {
   CameraController? cameraController;
 
   var isCameraInitialized = false.obs;
+  var isScanning = false.obs; // Indikator scanning aktif
 
   var odometerImageUrl = ''.obs;
   var odometerImagePublicId = ''.obs;
@@ -36,16 +39,23 @@ class PluskendaraanController extends GetxController {
   var isLoading = false.obs;
   var isUploading = false.obs;
 
+  // Variabel untuk perulangan scan otomatis
+  Timer? _scanTimer;
+  bool _isProcessing = false;
+
   // ================= TEXT CONTROLLER =================
-
   final platController = TextEditingController();
-
   final estimasiHarianController = TextEditingController();
+  final odometerController = TextEditingController();
 
-  final odometerController = TextEditingController(text: "334488");
+  // ================= Kendaraan =================
+  final Map<String, List<String>> vehicleData = {
+    "Honda": ["Beat", "Vario 125", "Vario 160", "PCX", "Supra X"],
+    "Yamaha": ["NMAX", "Aerox", "Mio M3", "Lexi", "Jupiter Z1"],
+    "Suzuki": ["Satria F150", "Address", "Nex II", "Smash"],
+  };
 
   // ================= KOMPONEN =================
-
   final List<String> komponen = [
     "Oli Mesin",
     "Oli Gardan",
@@ -73,41 +83,158 @@ class PluskendaraanController extends GetxController {
     "Filter Udara": TextEditingController(),
   };
 
-  // ================= INIT =================
-
   @override
   void onInit() {
     super.onInit();
-
     isFromLogin.value = Get.arguments == true;
-
     print("isFromLogin = ${isFromLogin.value}");
   }
 
-  // ================= AMBIL FOTO ODOMETER =================
+  // ================= AMBIL FOTO ODOMETER (CV REALTIME) =================
   Future<void> initCamera() async {
-    final cameras = await availableCameras();
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        Get.snackbar("Error", "Kamera tidak ditemukan");
+        return;
+      }
 
-    final backCamera = cameras.firstWhere(
-      (camera) => camera.lensDirection == CameraLensDirection.back,
+      final backCamera = cameras.firstWhere(
+        (camera) => camera.lensDirection == CameraLensDirection.back,
+      );
+
+      cameraController = CameraController(
+        backCamera,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+
+      await cameraController!.initialize();
+      isCameraInitialized.value = true;
+
+      // Nyalakan loop pengambilan frame berkala
+      startLiveScanningLoop();
+    } catch (e) {
+      Get.snackbar("Error Kamera", e.toString());
+    }
+  }
+
+  void startLiveScanningLoop() {
+    isScanning.value = true;
+    _isProcessing = false;
+
+    // Menjepret preview kamera secara otomatis setiap 2000 ms (2 detik)
+    _scanTimer = Timer.periodic(const Duration(milliseconds: 2000), (
+      timer,
+    ) async {
+      if (_isProcessing || !isScanning.value) return;
+
+      if (cameraController == null ||
+          !cameraController!.value.isInitialized ||
+          cameraController!.value.isTakingPicture) {
+        return;
+      }
+
+      _isProcessing = true;
+      await _captureAndProcessFrame();
+    });
+  }
+
+  Future<void> _captureAndProcessFrame() async {
+    try {
+      final XFile picture = await cameraController!.takePicture();
+      final bytes = await File(picture.path).readAsBytes();
+
+      // Eksekusi manipulasi crop gambar pada Isolate background thread
+      final croppedBytes = await compute(_cropImageIsolate, bytes);
+
+      // Bersihkan cache file aslinya
+      try {
+        await File(picture.path).delete();
+      } catch (_) {}
+
+      if (croppedBytes == null) {
+        _isProcessing = false;
+        return;
+      }
+
+      final croppedPath = "${Directory.systemTemp.path}/odometer_crop_live.jpg";
+      File croppedFile = File(croppedPath)..writeAsBytesSync(croppedBytes);
+
+      // Mengirimkan gambar potongan target ke server OCR Paddle
+      final odometerValue = await scanOdometerFromBE(croppedFile);
+
+      // Batas maksimum odometer disesuaikan (999999 sesuai kode awal Anda)
+      if (odometerValue != null && odometerValue <= 999999) {
+        stopScanningLoop();
+
+        odometerImage = croppedFile;
+        odometerController.text = odometerValue.toString();
+
+        // Unggah gambar secara asinkron ke server cloud aset kendaraan
+        uploadImage(croppedFile).then((uploadResult) {
+          if (uploadResult != null) {
+            odometerImageUrl.value = uploadResult["url"];
+            odometerImagePublicId.value = uploadResult["public_id"];
+          }
+        });
+
+        await disposeCamera();
+        odometerStep.value = 2; // Berpindah otomatis ke status hasil ocr
+        Get.snackbar("Berhasil", "Odometer otomatis terdeteksi!");
+        return;
+      }
+    } catch (e) {
+      print("Error real-time processing: $e");
+    } finally {
+      _isProcessing = false;
+    }
+  }
+
+  static Uint8List? _cropImageIsolate(Uint8List imageBytes) {
+    img.Image? original = img.decodeImage(imageBytes);
+    if (original == null) return null;
+
+    if (original.width > original.height) {
+      original = img.copyRotate(original, angle: 90);
+    }
+
+    double ratio = 2.8;
+    int cropWidth = (original.width * 0.75).toInt();
+    int cropHeight = (cropWidth / ratio).toInt();
+
+    int cropX = ((original.width - cropWidth) / 2).toInt();
+    int cropY = ((original.height - cropHeight) / 2).toInt();
+
+    img.Image cropped = img.copyCrop(
+      original,
+      x: cropX,
+      y: cropY,
+      width: cropWidth,
+      height: cropHeight,
     );
 
-    cameraController = CameraController(
-      backCamera,
-      ResolutionPreset.medium,
-      enableAudio: false,
-      imageFormatGroup: ImageFormatGroup.jpeg,
-    );
+    return Uint8List.fromList(img.encodeJpg(cropped, quality: 80));
+  }
 
-    await cameraController!.initialize();
+  void stopScanningLoop() {
+    isScanning.value = false;
+    _scanTimer?.cancel();
+    _scanTimer = null;
+  }
 
-    isCameraInitialized.value = true;
+  Future<void> disposeCamera() async {
+    stopScanningLoop();
+    if (cameraController != null) {
+      await cameraController!.dispose();
+      cameraController = null;
+    }
+    isCameraInitialized.value = false;
   }
 
   Future<Map<String, dynamic>?> uploadImage(File file) async {
     try {
       final token = box.read("token");
-
       var request = http.MultipartRequest(
         "POST",
         Uri.parse(
@@ -116,44 +243,33 @@ class PluskendaraanController extends GetxController {
       );
 
       request.headers["Authorization"] = "Bearer $token";
-
       request.files.add(await http.MultipartFile.fromPath("image", file.path));
 
       final response = await request.send();
-
       final body = await response.stream.bytesToString();
 
-      if (response.statusCode == 200) {
-        return jsonDecode(body);
-      }
-
+      if (response.statusCode == 200) return jsonDecode(body);
       return null;
     } catch (e) {
-      print(e);
       return null;
     }
   }
 
-  // ================= PICK + UPLOAD IMAGE =================
   Future<void> pickVehicleImage(ImageSource source) async {
     try {
       final picked = await picker.pickImage(source: source, imageQuality: 70);
-
       if (picked == null) return;
 
       selectedVehicleImage = File(picked.path);
-
       isUploading.value = true;
 
       final result = await uploadImage(selectedVehicleImage!);
-
       if (result != null) {
         vehicleImageUrl.value = result["url"];
         vehicleImagePublicId.value = result["public_id"];
       }
 
       imageStep.value = 1;
-
       Get.snackbar("Berhasil", "Gambar berhasil diupload");
     } catch (e) {
       Get.snackbar("Error", e.toString());
@@ -162,83 +278,54 @@ class PluskendaraanController extends GetxController {
     }
   }
 
-  // ================= STEP =================
   void nextStep() {
-    // STEP 1
-    if (step.value == 1) {
-      if (selectedBrand.value.isEmpty) {
-        Get.snackbar("Peringatan", "Silakan pilih merek kendaraan");
-        return;
-      }
+    if (step.value == 1 && selectedBrand.value.isEmpty) {
+      Get.snackbar("Peringatan", "Silakan pilih merek kendaraan");
+      return;
     }
-
-    // STEP 2
-    if (step.value == 2) {
-      if (selectedModel.value.isEmpty) {
-        Get.snackbar("Peringatan", "Silakan pilih model kendaraan");
-        return;
-      }
+    if (step.value == 2 && selectedModel.value.isEmpty) {
+      Get.snackbar("Peringatan", "Silakan pilih model kendaraan");
+      return;
     }
-
-    // STEP 3
-    if (step.value == 3) {
-      if (selectedYear.value.isEmpty) {
-        Get.snackbar("Peringatan", "Silakan pilih tahun kendaraan");
-        return;
-      }
+    if (step.value == 3 && selectedYear.value.isEmpty) {
+      Get.snackbar("Peringatan", "Silakan pilih tahun kendaraan");
+      return;
     }
-
-    // STEP 4
     if (step.value == 4) {
       final plate = platController.text.trim();
-
       final plateRegex = RegExp(r'^[A-Z]{1,2}\s?[0-9]{1,4}\s?[A-Z]{1,3}$');
-
       if (plate.isEmpty) {
         Get.snackbar("Peringatan", "Plat nomor wajib diisi");
         return;
       }
-
       if (!plateRegex.hasMatch(plate.toUpperCase())) {
         Get.snackbar("Peringatan", "Format plat nomor tidak valid");
         return;
       }
     }
-
-    // STEP 5
-    if (step.value == 5) {
-      if (vehicleImageUrl.value.isEmpty) {
-        Get.snackbar("Peringatan", "Silakan upload gambar kendaraan");
-        return;
-      }
+    if (step.value == 5 && vehicleImageUrl.value.isEmpty) {
+      Get.snackbar("Peringatan", "Silakan upload gambar kendaraan");
+      return;
     }
-
-    // STEP 6
     if (step.value == 6) {
       final dailyKm = int.tryParse(estimasiHarianController.text.trim());
-
       if (dailyKm == null || dailyKm <= 0) {
         Get.snackbar("Peringatan", "Estimasi harian harus berupa angka valid");
         return;
       }
     }
-
-    // STEP 7
     if (step.value == 7) {
       final odometer = int.tryParse(odometerController.text.trim());
-
       if (odometer == null || odometer <= 0) {
         Get.snackbar("Peringatan", "Odometer harus berupa angka valid");
         return;
       }
-
       if (odometerImageUrl.value.isEmpty) {
         Get.snackbar("Peringatan", "Foto odometer belum berhasil diupload");
         return;
       }
     }
 
-    // NEXT
     if (step.value == 8) {
       saveVehicle();
       return;
@@ -252,12 +339,10 @@ class PluskendaraanController extends GetxController {
     }
   }
 
-  // ================= SAVE VEHICLE =================
   Future<void> saveVehicle() async {
     try {
       isLoading.value = true;
       final token = box.read("token");
-
       final currentOdo = int.tryParse(odometerController.text.trim()) ?? 0;
 
       final components = komponen.map((item) {
@@ -270,36 +355,22 @@ class PluskendaraanController extends GetxController {
       }).toList();
 
       final body = {
-        "brand": selectedBrand.value.isEmpty ? "" : selectedBrand.value,
-
-        "model": selectedModel.value.isEmpty ? "" : selectedModel.value,
-
+        "brand": selectedBrand.value,
+        "model": selectedModel.value,
         "year": int.tryParse(selectedYear.value) ?? 0,
-
         "plate_number": platController.text.trim(),
-
-        "vehicle_image": vehicleImageUrl.value.isEmpty
-            ? ""
-            : vehicleImageUrl.value,
-
-        "odometer_image": odometerImageUrl.value.isEmpty
-            ? ""
-            : odometerImageUrl.value,
+        "vehicle_image": vehicleImageUrl.value,
+        "odometer_image": odometerImageUrl.value,
         "estimated_km_per_day":
             int.tryParse(estimasiHarianController.text) ?? 0,
-
-        "current_odometer": int.tryParse(odometerController.text) ?? 0,
-
+        "current_odometer": currentOdo,
         "components": components,
       };
-
-      print(jsonEncode(body));
 
       final response = await http.post(
         Uri.parse(
           "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/add-vehicle",
         ),
-
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
@@ -307,44 +378,20 @@ class PluskendaraanController extends GetxController {
         body: jsonEncode(body),
       );
 
-      print(response.statusCode);
-      print(response.body);
-
-      Map<String, dynamic> data = {};
-
-      try {
-        data = jsonDecode(response.body);
-        print("DATA:");
-        print(data);
-
-        print("VEHICLE:");
-        print(data["vehicle"]);
-      } catch (e) {
-        Get.snackbar("Error", "Response bukan JSON");
-        return;
-      }
+      Map<String, dynamic> data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print("MASUK SUCCESS");
-
         box.write("vehicle_id", data["vehicle"]["id"]);
         Get.snackbar("Berhasil", "Kendaraan berhasil ditambahkan");
 
         if (isFromLogin.value) {
           Get.offNamed('/mainscreen');
         } else {
-          print("GET BACK");
-          print("CAN BACK = ${Get.key.currentState?.canPop()}");
-
           Get.find<KendaraanController>().getVehicles();
-
           Get.offNamed('/mainscreen', arguments: 1);
         }
       } else {
-        Get.snackbar(
-          "Error",
-          data['message'] ?? data['error'] ?? "Terjadi kesalahan",
-        );
+        Get.snackbar("Error", data['message'] ?? "Terjadi kesalahan");
       }
     } catch (e) {
       Get.snackbar("Error", e.toString());
@@ -356,138 +403,42 @@ class PluskendaraanController extends GetxController {
   Future<int?> scanOdometerFromBE(File imageFile) async {
     try {
       final token = box.read("token");
-
       var request = http.MultipartRequest(
         "POST",
         Uri.parse("https://hireable-unelegant-linwood.ngrok-free.dev/api/ocr"),
       );
-
       request.headers["Authorization"] = "Bearer $token";
-
       request.files.add(
         await http.MultipartFile.fromPath("image", imageFile.path),
       );
 
       final response = await request.send();
-
       final body = await response.stream.bytesToString();
-
-      print(body);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(body);
-
         if (data["success"] == true) {
           return int.tryParse(data["odometer"].toString());
         }
       }
-
       return null;
     } catch (e) {
-      print(e);
       return null;
     }
   }
 
-  Future<void> captureAndScanOdometer() async {
-    try {
-      if (cameraController == null ||
-          !cameraController!.value.isInitialized ||
-          cameraController!.value.isTakingPicture) {
-        return;
-      }
-
-      isLoading.value = true;
-
-      final XFile picture = await cameraController!.takePicture();
-
-      final bytes = await File(picture.path).readAsBytes();
-
-      img.Image? original = img.decodeImage(bytes);
-
-      if (original == null) {
-        Get.snackbar("Error", "Gagal membaca gambar");
-        return;
-      }
-
-      double ratio = 2.8;
-
-      int cropWidth = (original.width * 0.75).toInt();
-      int cropHeight = (cropWidth / ratio).toInt();
-
-      int cropX = ((original.width - cropWidth) / 2).toInt();
-      int cropY = ((original.height - cropHeight) / 2).toInt();
-
-      img.Image cropped = img.copyCrop(
-        original,
-        x: cropX,
-        y: cropY,
-        width: cropWidth,
-        height: cropHeight,
-      );
-
-      final croppedPath = "${Directory.systemTemp.path}/odometer_crop.jpg";
-
-      File croppedFile = File(croppedPath)
-        ..writeAsBytesSync(img.encodeJpg(cropped, quality: 80));
-
-      odometerImage = croppedFile;
-
-      final uploadResult = await uploadImage(croppedFile);
-
-      if (uploadResult == null) {
-        Get.snackbar("Error", "Upload foto odometer gagal");
-        return;
-      }
-
-      odometerImageUrl.value = uploadResult["url"];
-      odometerImagePublicId.value = uploadResult["public_id"];
-
-      // ================= UPLOAD ODOMETER KE CLOUDINARY =================
-      final odometerValue = await scanOdometerFromBE(croppedFile);
-
-      if (odometerValue == null) {
-        Get.snackbar("Error", "OCR gagal membaca odometer");
-        return;
-      }
-
-      if (odometerValue > 500000) {
-        Get.snackbar("Peringatan", "Odometer tidak masuk akal");
-        return;
-      }
-
-      odometerController.text = odometerValue.toString();
-
-      odometerStep.value = 2;
-
-      await disposeCamera();
-
-      Get.snackbar("Berhasil", "Odometer berhasil dibaca");
-    } catch (e) {
-      Get.snackbar("Error", e.toString());
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<void> disposeCamera() async {
-    await cameraController?.dispose();
-    cameraController = null;
-    isCameraInitialized.value = false;
-  }
+  // Metode warisan lama sengaja dikosongkan karena beralih ke stream loop otomatis
+  Future<void> captureAndScanOdometer() async {}
 
   @override
   void onClose() {
     disposeCamera();
-
     platController.dispose();
     estimasiHarianController.dispose();
     odometerController.dispose();
-
     for (var c in komponenControllers.values) {
       c.dispose();
     }
-
     super.onClose();
   }
 }

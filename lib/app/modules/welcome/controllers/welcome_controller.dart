@@ -1,23 +1,27 @@
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 
 class WelcomeController extends GetxController {
-  //TODO: Implement WelcomeController
-
-  final count = 0.obs;
-  @override
-  void onInit() {
-    super.onInit();
-  }
+  final box = GetStorage();
 
   @override
   void onReady() {
     super.onReady();
+
+    final isFirstInstall = box.read("first_install") ?? true;
+    final token = box.read("token");
+
+    if (!isFirstInstall) {
+      if (token != null) {
+        Get.offAllNamed("/mainscreen");
+      } else {
+        Get.offAllNamed("/login");
+      }
+    }
   }
 
-  @override
-  void onClose() {
-    super.onClose();
+  void getStarted() {
+    box.write("first_install", false);
+    Get.offAllNamed("/login");
   }
-
-  void increment() => count.value++;
 }

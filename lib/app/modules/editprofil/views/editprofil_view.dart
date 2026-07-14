@@ -76,7 +76,7 @@ class EditprofilView extends GetView<EditprofilController> {
                                                 controller.imageUrl.value,
                                               )
                                             : const AssetImage(
-                                                'assets/images/profile.png',
+                                                'assets/images/profile.jpg',
                                               ))
                                         as ImageProvider,
                             ),
