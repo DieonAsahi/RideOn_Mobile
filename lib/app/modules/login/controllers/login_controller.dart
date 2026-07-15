@@ -90,19 +90,17 @@ class LoginController extends GetxController {
 
   Future<void> loginGoogle() async {
     try {
-      print("STEP 1");
-
       final GoogleSignIn googleSignIn = GoogleSignIn(
         serverClientId:
             '223603698019-imou4debdr194jicsps6aalvl22lmls1.apps.googleusercontent.com',
       );
 
-      print("STEP 2");
+      // TAMBAHKAN INI
+      await googleSignIn.signOut();
+      // Kalau masih otomatis pilih akun, gunakan disconnect juga
+      // await googleSignIn.disconnect();
 
       final googleUser = await googleSignIn.signIn();
-
-      print("GOOGLE USER:");
-      print(googleUser?.email);
 
       if (googleUser == null) {
         print("USER CANCEL LOGIN");
@@ -110,12 +108,6 @@ class LoginController extends GetxController {
       }
 
       final googleAuth = await googleUser.authentication;
-
-      print("ACCESS TOKEN:");
-      print(googleAuth.accessToken);
-
-      print("ID TOKEN:");
-      print(googleAuth.idToken);
 
       final idToken = googleAuth.idToken;
 
@@ -129,16 +121,7 @@ class LoginController extends GetxController {
         idToken: idToken,
       );
 
-      print("SUPABASE USER:");
-      print(response.user);
-
-      print("SUPABASE SESSION:");
-      print(response.session);
-
       final token = response.session?.accessToken;
-
-      print("ACCESS TOKEN SUPABASE:");
-      print(token);
 
       if (token == null) {
         print("TOKEN NULL");
@@ -148,14 +131,10 @@ class LoginController extends GetxController {
       box.write("token", token);
 
       await syncGoogleUser();
-
       await checkVehicle();
     } catch (e, s) {
-      print("GOOGLE LOGIN ERROR:");
       print(e);
       print(s);
-
-      Get.snackbar("Error", e.toString());
     }
   }
 

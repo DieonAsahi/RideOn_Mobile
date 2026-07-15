@@ -1241,42 +1241,6 @@ class TopikKomponenSection extends GetView<HomeController> {
   }
 }
 
-class TrendServisSection extends GetView<HomeController> {
-  const TrendServisSection({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      if (controller.isLoadingTrendServis.value) {
-        return const Center(child: CircularProgressIndicator());
-      }
-
-      if (controller.trendServis.isEmpty) {
-        return const SizedBox();
-      }
-
-      return _TrendChartCard(
-        title: "Tren Jumlah Servis",
-        subtitle: "Aktivitas servis kendaraan tiap bulan",
-        data: controller.trendServis
-            .map(
-              (e) => FlSpot(
-                controller.trendServis.indexOf(e).toDouble(),
-                e.total.toDouble(),
-              ),
-            )
-            .toList(),
-        labels: controller.trendServis
-            .map((e) => e.periode.substring(5))
-            .toList(),
-        lastUpdate: controller.formatLastUpdate(
-          controller.lastUpdateTrendServis.value,
-        ),
-      );
-    });
-  }
-}
-
 class _TrendChartCard extends StatelessWidget {
   final String title;
   final String subtitle;

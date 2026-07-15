@@ -78,17 +78,6 @@ class KomponenServisModel {
   }
 }
 
-class TrendServisModel {
-  final String periode;
-  final int total;
-
-  TrendServisModel({required this.periode, required this.total});
-
-  factory TrendServisModel.fromJson(Map<String, dynamic> json) {
-    return TrendServisModel(periode: json["periode"], total: json["total"]);
-  }
-}
-
 class TrendTopikModel {
   final String label;
   final int jumlah;
@@ -122,16 +111,13 @@ class HomeController extends GetxController {
   final isLoadingArtikel = false.obs;
   final isLoadingKomponen = false.obs;
   final isLoadingTrendTopik = false.obs;
-  final isLoadingTrendServis = false.obs;
 
   final artikelTopik = <TopikModel>[].obs;
   final komponenServis = <KomponenServisModel>[].obs;
   final trendTopik = <TrendTopikModel>[].obs;
-  final trendServis = <TrendServisModel>[].obs;
 
   final lastUpdateArtikel = "".obs;
   final lastUpdateKomponen = "".obs;
-  final lastUpdateTrendServis = "".obs;
   final lastUpdateTrendTopik = "".obs;
 
   // Filter Komponen
@@ -174,7 +160,6 @@ class HomeController extends GetxController {
     fetchDashboardArtikel();
     fetchKomponenServis();
 
-    // fetchTrendServis();
     fetchTrendTopik();
   }
 
@@ -539,35 +524,6 @@ class HomeController extends GetxController {
 
     if (selectedYearKomponen.value == 0 && yearsKomponen.isNotEmpty) {
       selectedYearKomponen.value = yearsKomponen.first;
-    }
-  }
-
-  Future<void> fetchTrendServis() async {
-    try {
-      isLoadingTrendServis.value = true;
-
-      final response = await http.get(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/tren-servis",
-        ),
-      );
-
-      print(response.statusCode);
-      print(response.body);
-
-      final json = jsonDecode(response.body);
-
-      if (json["status"] == "success") {
-        lastUpdateTrendServis.value = json["lastUpdate"];
-
-        trendServis.value = (json["data"] as List)
-            .map((e) => TrendServisModel.fromJson(e))
-            .toList();
-      }
-    } catch (e) {
-      print(e);
-    } finally {
-      isLoadingTrendServis.value = false;
     }
   }
 

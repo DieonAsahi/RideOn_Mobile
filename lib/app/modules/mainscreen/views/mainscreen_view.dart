@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:capbatu/app/modules/Feature/edukasi/views/edukasi_view.dart';
 import 'package:capbatu/app/modules/Feature/kendaraan/views/kendaraan_view.dart';
@@ -51,6 +53,19 @@ class MainscreenView extends GetView<MainscreenController> {
                 ),
                 onPressed: () async {
                   final box = GetStorage();
+
+                  final googleSignIn = GoogleSignIn(
+                    serverClientId:
+                        '223603698019-imou4debdr194jicsps6aalvl22lmls1.apps.googleusercontent.com',
+                  );
+
+                  try {
+                    await googleSignIn.signOut();
+                  } catch (_) {}
+
+                  try {
+                    await Supabase.instance.client.auth.signOut();
+                  } catch (_) {}
 
                   await box.remove("token");
                   await box.remove("user");

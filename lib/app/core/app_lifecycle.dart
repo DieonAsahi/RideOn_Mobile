@@ -17,7 +17,7 @@ class AppLifecycle extends WidgetsBindingObserver {
       if (last != null) {
         final diff = DateTime.now().difference(DateTime.parse(last));
 
-        if (diff.inMinutes >= 1) {
+        if (diff >= const Duration(hours: 8)) {
           await box.erase();
           Get.offAllNamed('/login');
         }

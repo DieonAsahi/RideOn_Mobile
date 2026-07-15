@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../controllers/profil_controller.dart';
 
 class ProfilView extends GetView<ProfilController> {
@@ -171,13 +173,23 @@ class ProfilView extends GetView<ProfilController> {
                               onPressed: () async {
                                 final box = GetStorage();
 
+                                // Logout Google
+                                final googleSignIn = GoogleSignIn(
+                                  serverClientId:
+                                      '223603698019-imou4debdr194jicsps6aalvl22lmls1.apps.googleusercontent.com',
+                                );
+
+                                await googleSignIn.signOut();
+
+                                // Logout Supabase
+                                await Supabase.instance.client.auth.signOut();
+
+                                // Hapus storage lokal
                                 await box.remove("token");
                                 await box.remove("user");
                                 await box.remove("vehicle_id");
 
                                 Get.offAllNamed('/login');
-
-                                /// logout logic
                               },
 
                               style: ElevatedButton.styleFrom(
@@ -187,7 +199,6 @@ class ProfilView extends GetView<ProfilController> {
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                               ),
-
                               child: const Text(
                                 "Ya",
                                 style: TextStyle(color: Colors.white),

@@ -8,6 +8,7 @@ import 'app/core/app_lifecycle.dart';
 import 'app/routes/app_pages.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:timeago/src/messages/id_messages.dart';
+import 'app/services/local_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +23,7 @@ Future<void> main() async {
     publishableKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0Z3F6cXVsc3dtcG9uc3Rqc3BiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MTk3MTksImV4cCI6MjA5MzE5NTcxOX0.dN8m6YJbZOrxgnQXzB3Xjux8rzDiH69JNYbeJh9Orn0',
   );
+  await LocalNotificationService.init();
 
   timeago.setLocaleMessages('id', IdMessages());
 
