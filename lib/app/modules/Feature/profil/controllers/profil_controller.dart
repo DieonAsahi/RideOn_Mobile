@@ -26,7 +26,7 @@ class ProfilController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/profile",
+          "https://backend-capstone-snowy.vercel.app/api/auth/profile",
         ),
         headers: {
           "Content-Type": "application/json",

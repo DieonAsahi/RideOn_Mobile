@@ -85,7 +85,7 @@ class DtlperformaController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/performance-history/$vehicleId",
+          "https://backend-capstone-snowy.vercel.app/api/vehicle/performance-history/$vehicleId",
         ),
         headers: {
           "Authorization": "Bearer $token",

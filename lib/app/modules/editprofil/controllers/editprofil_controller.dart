@@ -45,7 +45,7 @@ class EditprofilController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/profile",
+          "https://backend-capstone-snowy.vercel.app/api/auth/profile",
         ),
         headers: {
           "Authorization": "Bearer $token",
@@ -75,7 +75,7 @@ class EditprofilController extends GetxController {
       var request = http.MultipartRequest(
         "PUT",
         Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/update-profile",
+          "https://backend-capstone-snowy.vercel.app/api/auth/update-profile",
         ),
       );
 

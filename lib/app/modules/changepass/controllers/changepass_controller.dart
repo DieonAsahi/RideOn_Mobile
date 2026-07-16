@@ -39,7 +39,7 @@ class ChangepassController extends GetxController {
     }
     try {
       final url = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/update-password",
+        "https://backend-capstone-snowy.vercel.app/api/auth/update-password",
       );
 
       final response = await http.post(

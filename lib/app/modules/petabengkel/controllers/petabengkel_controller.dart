@@ -146,7 +146,7 @@ class PetabengkelController extends GetxController {
       isLoading.value = true;
 
       final response = await dio.get(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/workshop/nearest",
+        "https://backend-capstone-snowy.vercel.app/api/workshop/nearest",
         queryParameters: {
           "lat": userLocation.value!.latitude,
           "lng": userLocation.value!.longitude,
@@ -196,7 +196,7 @@ class PetabengkelController extends GetxController {
   Future<void> getWorkshopDetail(int id) async {
     try {
       final response = await dio.get(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/workshop/petaDetail/$id",
+        "https://backend-capstone-snowy.vercel.app/api/workshop/petaDetail/$id",
       );
 
       final oldWorkshop = workshops.firstWhere((e) => e.id == id);

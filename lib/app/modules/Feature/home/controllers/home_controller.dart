@@ -281,7 +281,7 @@ class HomeController extends GetxController {
 
     final response = await http.get(
       Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/my-vehicles",
+        "https://backend-capstone-snowy.vercel.app/api/vehicle/my-vehicles",
       ),
       headers: {
         "Content-Type": "application/json",
@@ -323,7 +323,7 @@ class HomeController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/artikel?${params.join("&")}",
+          "https://backend-capstone-snowy.vercel.app/api/analisis/artikel?${params.join("&")}",
         ),
       );
       print(response.statusCode);
@@ -346,7 +346,7 @@ class HomeController extends GetxController {
 
   Future<void> fetchArtikelFilter() async {
     String url =
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/artikel-filter";
+        "https://backend-capstone-snowy.vercel.app/api/analisis/artikel-filter";
 
     final params = <String>[];
 
@@ -405,7 +405,7 @@ class HomeController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/artikel-trend?${params.join("&")}",
+          "https://backend-capstone-snowy.vercel.app/api/analisis/artikel-trend?${params.join("&")}",
         ),
       );
       print(response.statusCode);
@@ -450,7 +450,7 @@ class HomeController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/tren-komponen?${params.join("&")}",
+          "https://backend-capstone-snowy.vercel.app/api/analisis/tren-komponen?${params.join("&")}",
         ),
       );
 
@@ -487,7 +487,7 @@ class HomeController extends GetxController {
 
   Future<void> fetchKomponenFilter() async {
     String url =
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/komponen-filter";
+        "https://backend-capstone-snowy.vercel.app/api/analisis/komponen-filter";
 
     final params = <String>[];
 
@@ -535,7 +535,7 @@ class HomeController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/vehicle-health/$vehicleId",
+          "https://backend-capstone-snowy.vercel.app/api/vehicle/vehicle-health/$vehicleId",
         ),
         headers: {
           "Content-Type": "application/json",

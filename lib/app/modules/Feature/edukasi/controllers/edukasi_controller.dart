@@ -47,7 +47,7 @@ Future<void> fetchArtikel() async {
     isLoading.value = true;
 
     final response = await _connect.get(
-      'https://hireable-unelegant-linwood.ngrok-free.dev/api/edukasi/edu',
+      'https://backend-capstone-snowy.vercel.app/api/edukasi/edu',
     );
 
     if (response.statusCode == 200) {

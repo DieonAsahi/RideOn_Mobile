@@ -57,7 +57,7 @@ class EstimasiController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/kerusakan/estimasi",
+          "https://backend-capstone-snowy.vercel.app/api/kerusakan/estimasi",
         ),
       );
 

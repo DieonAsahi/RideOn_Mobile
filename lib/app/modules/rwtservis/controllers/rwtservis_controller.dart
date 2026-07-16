@@ -38,7 +38,7 @@ class RwtservisController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/service-history/$vehicleId",
+          "https://backend-capstone-snowy.vercel.app/api/vehicle/service-history/$vehicleId",
         ),
         headers: {"Authorization": "Bearer $token"},
       );
@@ -94,7 +94,7 @@ class RwtservisController extends GetxController {
 
       final response = await http.delete(
         Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/service-history/$id",
+          "https://backend-capstone-snowy.vercel.app/api/vehicle/service-history/$id",
         ),
         headers: {"Authorization": "Bearer $token"},
       );

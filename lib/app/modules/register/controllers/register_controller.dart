@@ -25,7 +25,7 @@ class RegisterController extends GetxController {
 
     try {
       final url = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/register",
+        "https://backend-capstone-snowy.vercel.app/api/auth/register",
       );
 
       final response = await http.post(

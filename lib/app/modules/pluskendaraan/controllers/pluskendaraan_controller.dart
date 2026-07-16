@@ -238,7 +238,7 @@ class PluskendaraanController extends GetxController {
       var request = http.MultipartRequest(
         "POST",
         Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/upload-vehicle-image",
+          "https://backend-capstone-snowy.vercel.app/api/vehicle/upload-vehicle-image",
         ),
       );
 
@@ -369,7 +369,7 @@ class PluskendaraanController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/add-vehicle",
+          "https://backend-capstone-snowy.vercel.app/api/vehicle/add-vehicle",
         ),
         headers: {
           "Content-Type": "application/json",
@@ -405,7 +405,7 @@ class PluskendaraanController extends GetxController {
       final token = box.read("token");
       var request = http.MultipartRequest(
         "POST",
-        Uri.parse("https://hireable-unelegant-linwood.ngrok-free.dev/api/ocr"),
+        Uri.parse("https://backend-capstone-snowy.vercel.app/api/ocr"),
       );
       request.headers["Authorization"] = "Bearer $token";
       request.files.add(
