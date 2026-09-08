@@ -19,7 +19,7 @@ class LoginController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://backend-capstone-snowy.vercel.app/api/vehicle/my-vehicle",
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/my-vehicle",
         ),
         headers: {
           "Content-Type": "application/json",
@@ -55,7 +55,7 @@ class LoginController extends GetxController {
 
     try {
       final url = Uri.parse(
-        "https://backend-capstone-snowy.vercel.app/api/auth/login",
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/login",
       );
 
       final response = await http.post(
@@ -143,7 +143,7 @@ class LoginController extends GetxController {
 
     await http.post(
       Uri.parse(
-        "https://backend-capstone-snowy.vercel.app/api/auth/google-sync",
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/google-sync",
       ),
       headers: {
         "Authorization": "Bearer $token",

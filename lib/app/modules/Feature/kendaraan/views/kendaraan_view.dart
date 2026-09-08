@@ -290,7 +290,7 @@ class KendaraanCard extends StatelessWidget {
               itemBuilder: (context) => [
                 PopupMenuItem(
                   value: 'hapus',
-                  height: 35,
+                  height: 25,
                   child: Row(
                     children: [
                       Image.asset(

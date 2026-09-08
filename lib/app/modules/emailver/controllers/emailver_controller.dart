@@ -25,7 +25,7 @@ class EmailverController extends GetxController {
     try {
       // ================= CHECK EMAIL =================
       final checkUrl = Uri.parse(
-        "https://backend-capstone-snowy.vercel.app/api/auth/check-email",
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/check-email",
       );
 
       final checkResponse = await http.post(
@@ -44,7 +44,7 @@ class EmailverController extends GetxController {
 
       // ================= KIRIM OTP =================
       final resendUrl = Uri.parse(
-        "https://backend-capstone-snowy.vercel.app/api/auth/resend-otp",
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/resend-otp",
       );
 
       final response = await http.post(

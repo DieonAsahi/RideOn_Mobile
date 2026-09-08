@@ -52,7 +52,7 @@ class KerusakanController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          "https://backend-capstone-snowy.vercel.app/api/kerusakan/diagnose",
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/kerusakan/diagnose",
         ),
         headers: {
           "Content-Type": "application/json",

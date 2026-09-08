@@ -90,7 +90,7 @@ class OtpemailController extends GetxController {
 
     try {
       final url = Uri.parse(
-        "https://backend-capstone-snowy.vercel.app/api/auth/verify-otp",
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/verify-otp",
       );
 
       final response = await http.post(
@@ -140,7 +140,7 @@ class OtpemailController extends GetxController {
 
     try {
       final url = Uri.parse(
-        "https://backend-capstone-snowy.vercel.app/api/auth/resend-otp",
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/resend-otp",
       );
 
       final response = await http.post(

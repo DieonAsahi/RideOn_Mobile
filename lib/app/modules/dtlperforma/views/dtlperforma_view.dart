@@ -134,7 +134,7 @@ class DtlperformaView extends GetView<DtlperformaController> {
                             height: 24,
                           ),
                           offset: const Offset(0, 40),
-
+                          elevation: 4,
                           color: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),

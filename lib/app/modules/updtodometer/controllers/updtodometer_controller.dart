@@ -159,7 +159,7 @@ class UpdtodometerController extends GetxController {
       final token = box.read("token");
       var request = http.MultipartRequest(
         "POST",
-        Uri.parse("https://backend-capstone-snowy.vercel.app/api/ocr"),
+        Uri.parse("https://hireable-unelegant-linwood.ngrok-free.dev/api/ocr"),
       );
       request.headers["Authorization"] = "Bearer $token";
       request.files.add(await http.MultipartFile.fromPath("image", imageFile.path));
@@ -184,7 +184,7 @@ class UpdtodometerController extends GetxController {
       final token = box.read("token");
       var request = http.MultipartRequest(
         "POST",
-        Uri.parse("https://backend-capstone-snowy.vercel.app/api/vehicle/upload-vehicle-image"),
+        Uri.parse("https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/upload-vehicle-image"),
       );
       request.headers["Authorization"] = "Bearer $token";
       request.files.add(await http.MultipartFile.fromPath("image", file.path));
@@ -205,7 +205,7 @@ class UpdtodometerController extends GetxController {
       final token = box.read("token");
 
       final response = await http.put(
-        Uri.parse("https://backend-capstone-snowy.vercel.app/api/vehicle/update-odometer"),
+        Uri.parse("https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/update-odometer"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",

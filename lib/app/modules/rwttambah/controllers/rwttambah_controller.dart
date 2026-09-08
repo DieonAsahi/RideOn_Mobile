@@ -99,7 +99,7 @@ class RwttambahController extends GetxController {
 
     final response = await http.get(
       Uri.parse(
-        "https://backend-capstone-snowy.vercel.app/api/vehicle/master-components",
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/master-components",
       ),
       headers: {"Authorization": "Bearer $token"},
     );
@@ -119,7 +119,7 @@ class RwttambahController extends GetxController {
 
     final response = await http.get(
       Uri.parse(
-        "https://backend-capstone-snowy.vercel.app/api/vehicle/vehicle-odometer/$vehicleId",
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/vehicle-odometer/$vehicleId",
       ),
       headers: {"Authorization": "Bearer $token"},
     );
@@ -191,7 +191,7 @@ class RwttambahController extends GetxController {
 
       final response = await http.post(
         Uri.parse(
-          "https://backend-capstone-snowy.vercel.app/api/vehicle/service-history",
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/service-history",
         ),
         headers: {
           "Authorization": "Bearer $token",
@@ -269,7 +269,7 @@ class RwttambahController extends GetxController {
 
       final response = await http.put(
         Uri.parse(
-          "https://backend-capstone-snowy.vercel.app/api/vehicle/service-history/${serviceId.value}",
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/service-history/${serviceId.value}",
         ),
         headers: {
           "Authorization": "Bearer $token",

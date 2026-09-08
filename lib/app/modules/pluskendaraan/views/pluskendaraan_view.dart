@@ -165,24 +165,30 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
           },
 
           itemBuilder: (context) {
-            return controller.vehicleData.keys.map((brand) {
-              return PopupMenuItem<String>(
-                value: brand,
-                height: 45,
-                child: Text(
-                  brand,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: controller.selectedBrand.value == brand
-                        ? Colors.blue
-                        : Colors.black,
-                    fontWeight: controller.selectedBrand.value == brand
-                        ? FontWeight.w600
-                        : FontWeight.normal,
+            final brands = controller.vehicleData.keys.toList();
+
+            return [
+              for (int i = 0; i < brands.length; i++) ...[
+                PopupMenuItem<String>(
+                  value: brands[i],
+                  height: 35,
+                  child: Text(
+                    brands[i],
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: controller.selectedBrand.value == brands[i]
+                          ? Colors.blue
+                          : Colors.black,
+                      fontWeight: controller.selectedBrand.value == brands[i]
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
                   ),
                 ),
-              );
-            }).toList();
+
+                if (i < brands.length - 1) const PopupMenuDivider(),
+              ],
+            ];
           },
 
           child: Container(
@@ -223,93 +229,93 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
   }
 
   Widget _step2() {
-    return Obx(() {
-      final models =
-          controller.vehicleData[controller.selectedBrand.value] ?? [];
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Center(
-            child: Text(
-              "Masukkan model kendaraan",
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-                fontSize: 16,
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Center(
+          child: Text(
+            "Masukkan model kendaraan",
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+              fontSize: 16,
             ),
           ),
+        ),
 
-          const SizedBox(height: 35),
+        const SizedBox(height: 35),
 
-          PopupMenuButton<String>(
-            color: Colors.white,
-            offset: const Offset(0, 55),
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+        PopupMenuButton<String>(
+          color: Colors.white,
+          offset: const Offset(0, 55),
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
 
-            onSelected: (value) {
-              controller.selectedModel.value = value;
-            },
+          onSelected: (value) {
+            controller.selectedModel.value = value;
+          },
 
-            itemBuilder: (context) {
-              return models.map((model) {
-                return PopupMenuItem<String>(
-                  value: model,
-                  height: 45,
+          itemBuilder: (context) {
+            final models =
+                controller.vehicleData[controller.selectedBrand.value] ?? [];
+
+            return [
+              for (int i = 0; i < models.length; i++) ...[
+                PopupMenuItem<String>(
+                  value: models[i],
+                  height: 35,
                   child: Text(
-                    model,
+                    models[i],
                     style: TextStyle(
                       fontSize: 15,
-                      color: controller.selectedModel.value == model
+                      color: controller.selectedModel.value == models[i]
                           ? Colors.blue
                           : Colors.black,
-                      fontWeight: controller.selectedModel.value == model
+                      fontWeight: controller.selectedModel.value == models[i]
                           ? FontWeight.w600
                           : FontWeight.normal,
                     ),
                   ),
-                );
-              }).toList();
-            },
-
-            child: Container(
-              height: 55,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      controller.selectedModel.value.isEmpty
-                          ? "Pilih Model"
-                          : controller.selectedModel.value,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: controller.selectedModel.value.isEmpty
-                            ? Colors.grey
-                            : Colors.black,
-                      ),
+                ),
+                if (i < models.length - 1) const PopupMenuDivider(),
+              ],
+            ];
+          },
+          child: Container(
+            height: 55,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    controller.selectedModel.value.isEmpty
+                        ? "Pilih Model"
+                        : controller.selectedModel.value,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: controller.selectedModel.value.isEmpty
+                          ? Colors.grey
+                          : Colors.black,
                     ),
                   ),
-                  const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: Colors.grey,
-                  ),
-                ],
-              ),
+                ),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Colors.grey,
+                ),
+              ],
             ),
           ),
-        ],
-      );
-    });
+        ),
+      ],
+    );
   }
 
   Widget _step3() {
@@ -327,35 +333,77 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             ),
           ),
         ),
+
         const SizedBox(height: 35),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          decoration: BoxDecoration(
+
+        PopupMenuButton<String>(
+          color: Colors.white,
+          offset: const Offset(0, 55),
+          elevation: 4,
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: controller.selectedYear.value.isEmpty
-                  ? null
-                  : controller.selectedYear.value,
-              hint: const Text(
-                "Tahun",
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w300,
+
+          onSelected: (value) {
+            controller.selectedYear.value = value;
+          },
+
+          itemBuilder: (context) {
+            final years = ["2026", "2025", "2024"];
+
+            return [
+              for (int i = 0; i < years.length; i++) ...[
+                PopupMenuItem<String>(
+                  value: years[i],
+                  height: 35,
+                  child: Text(
+                    years[i],
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: controller.selectedYear.value == years[i]
+                          ? Colors.blue
+                          : Colors.black,
+                      fontWeight: controller.selectedYear.value == years[i]
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  ),
                 ),
-              ),
-              isExpanded: true,
-              items: [
-                "2026",
-                "2025",
-                "2024",
-              ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-              onChanged: (value) {
-                controller.selectedYear.value = value!;
-              },
+
+                if (i < years.length - 1) const PopupMenuDivider(),
+              ],
+            ];
+          },
+
+          child: Container(
+            height: 55,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    controller.selectedYear.value.isEmpty
+                        ? "Pilih Tahun"
+                        : controller.selectedYear.value,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: controller.selectedYear.value.isEmpty
+                          ? Colors.grey
+                          : Colors.black,
+                    ),
+                  ),
+                ),
+
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Colors.grey,
+                ),
+              ],
             ),
           ),
         ),

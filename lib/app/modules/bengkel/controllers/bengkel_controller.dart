@@ -65,7 +65,7 @@ class BengkelController extends GetxController {
       );
 
       final response = await dio.get(
-        "https://backend-capstone-snowy.vercel.app/api/workshop/nearest",
+        "https://hireable-unelegant-linwood.ngrok-free.dev/api/workshop/nearest",
         queryParameters: {
           "lat": position.latitude,
           "lng": position.longitude,

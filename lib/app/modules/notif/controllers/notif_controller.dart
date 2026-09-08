@@ -55,7 +55,7 @@ class NotifController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://backend-capstone-snowy.vercel.app/api/vehicle/notifications/$vehicleId",
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/notifications/$vehicleId",
         ),
         headers: {"Authorization": "Bearer $token"},
       );

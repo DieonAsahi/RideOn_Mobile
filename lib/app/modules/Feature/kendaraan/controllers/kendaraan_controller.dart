@@ -45,7 +45,7 @@ class KendaraanController extends GetxController {
 
       final response = await http.delete(
         Uri.parse(
-          "https://backend-capstone-snowy.vercel.app/api/vehicle/delete-vehicle/$id",
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/delete-vehicle/$id",
         ),
         headers: {
           "Authorization": "Bearer $token",
@@ -83,7 +83,7 @@ class KendaraanController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://backend-capstone-snowy.vercel.app/api/vehicle/my-vehicles",
+          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/my-vehicles",
         ),
         headers: {
           "Authorization": "Bearer $token",
