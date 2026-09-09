@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../services/local_notification_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class NotifModel {
   final int id;
@@ -36,6 +37,7 @@ class NotifModel {
 
 class NotifController extends GetxController {
   final box = GetStorage();
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
 
   var notifList = <NotifModel>[].obs;
   var isLoading = false.obs;
@@ -54,9 +56,7 @@ class NotifController extends GetxController {
       final vehicleId = box.read("vehicle_id");
 
       final response = await http.get(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/notifications/$vehicleId",
-        ),
+        Uri.parse("$baseUrl/api/vehicle/notifications/$vehicleId"),
         headers: {"Authorization": "Bearer $token"},
       );
 

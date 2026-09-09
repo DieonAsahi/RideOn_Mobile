@@ -960,6 +960,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
               height: 40,
               child: ElevatedButton(
                 onPressed: () async {
+                  controller.isManualOdometer.value = false;
                   await controller.initCamera();
                   controller.odometerStep.value =
                       1; // Mengaktifkan kamera stream
@@ -969,6 +970,29 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                 ),
                 child: const Text(
                   "Ambil Gambar",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: ElevatedButton(
+                onPressed: () async {
+                  controller.isManualOdometer.value = true;
+                  controller.odometerStep.value = 2;
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF006BFF),
+                ),
+                child: const Text(
+                  "Masukan Angka Odometer",
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,

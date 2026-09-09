@@ -37,6 +37,7 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
   //         IgnorePointer(
   //           child: Container(color: Colors.black.withOpacity(0.45)),
   //         ),
+
   Widget _cameraView() {
     return Obx(() {
       if (!controller.isCameraInitialized.value ||
@@ -52,7 +53,6 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
           IgnorePointer(
             child: Container(color: Colors.black.withOpacity(0.45)),
           ),
-
 
           // Area Kotak Scan Pemindai Odometer
           Center(
@@ -152,6 +152,32 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
                     fontSize: 13,
                   ),
                 ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          SizedBox(
+            width: 220,
+            height: 42,
+            child: ElevatedButton(
+              onPressed: () async {
+                // Hentikan dan bersihkan kamera
+                await controller.disposeCamera();
+
+                // Masuk ke halaman result/manual input
+                controller.pageState.value = 1;
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text(
+                "Masukan Angka Odometer",
+                style: TextStyle(fontWeight: FontWeight.w500),
               ),
             ),
           ),

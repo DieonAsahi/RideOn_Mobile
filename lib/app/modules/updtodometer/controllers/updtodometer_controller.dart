@@ -8,9 +8,12 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class UpdtodometerController extends GetxController {
   final box = GetStorage();
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+
   CameraController? cameraController;
 
   var isCameraInitialized = false.obs;
@@ -50,7 +53,7 @@ class UpdtodometerController extends GetxController {
 
       cameraController = CameraController(
         backCamera,
-        ResolutionPreset.medium, 
+        ResolutionPreset.medium,
         enableAudio: false,
       );
 
@@ -69,10 +72,14 @@ class UpdtodometerController extends GetxController {
     _isProcessing = false;
 
     // Diubah menjadi 500ms agar pemindaian odometer berjalan super cepat dan instan
-    _scanTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) async {
+    _scanTimer = Timer.periodic(const Duration(milliseconds: 500), (
+      timer,
+    ) async {
       if (_isProcessing || !isScanning.value) return;
-      
-      if (cameraController == null || !cameraController!.value.isInitialized || cameraController!.value.isTakingPicture) {
+
+      if (cameraController == null ||
+          !cameraController!.value.isInitialized ||
+          cameraController!.value.isTakingPicture) {
         return;
       }
 
@@ -88,8 +95,10 @@ class UpdtodometerController extends GetxController {
 
       // MENGGUNAKAN ISOLATE ADAPTIF YANG SAMA SEPERTI PLUS KENDARAAN
       final croppedBytes = await compute(_cropImageIsolate, bytes);
-      
-      try { await File(picture.path).delete(); } catch (_) {}
+
+      try {
+        await File(picture.path).delete();
+      } catch (_) {}
 
       if (croppedBytes == null) {
         _isProcessing = false;
@@ -103,7 +112,7 @@ class UpdtodometerController extends GetxController {
 
       // KUNCI PERBAIKAN: Batas dinaikkan menjadi 9999999 agar deteksi angka 6 Juta lolos validasi
       if (odometerValue != null && odometerValue <= 9999999) {
-        stopScanningLoop(); 
+        stopScanningLoop();
 
         odometerImage = croppedFile;
         odometerController.text = odometerValue.toString();
@@ -123,13 +132,15 @@ class UpdtodometerController extends GetxController {
     } catch (e) {
       print("Gagal memproses frame loop: $e");
     } finally {
-      _isProcessing = false; 
+      _isProcessing = false;
     }
   }
 
   // MENYELARASKAN FUNGSI ISOLATE SAMA PERSIS DENGAN MODUL TAMBAH KENDARAAN
   static Uint8List? _cropImageIsolate(Uint8List imageBytes) {
-    img.Image? original = img.decodeImage(imageBytes); // Menggunakan decodeImage, bukan decodeJpg
+    img.Image? original = img.decodeImage(
+      imageBytes,
+    ); // Menggunakan decodeImage, bukan decodeJpg
     if (original == null) return null;
 
     if (original.width > original.height) {
@@ -159,10 +170,12 @@ class UpdtodometerController extends GetxController {
       final token = box.read("token");
       var request = http.MultipartRequest(
         "POST",
-        Uri.parse("https://hireable-unelegant-linwood.ngrok-free.dev/api/ocr"),
+        Uri.parse("$baseUrl/api/ocr"),
       );
       request.headers["Authorization"] = "Bearer $token";
-      request.files.add(await http.MultipartFile.fromPath("image", imageFile.path));
+      request.files.add(
+        await http.MultipartFile.fromPath("image", imageFile.path),
+      );
 
       final response = await request.send();
       final body = await response.stream.bytesToString();
@@ -184,7 +197,7 @@ class UpdtodometerController extends GetxController {
       final token = box.read("token");
       var request = http.MultipartRequest(
         "POST",
-        Uri.parse("https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/upload-vehicle-image"),
+        Uri.parse("$baseUrl/api/vehicle/upload-vehicle-image"),
       );
       request.headers["Authorization"] = "Bearer $token";
       request.files.add(await http.MultipartFile.fromPath("image", file.path));
@@ -205,7 +218,7 @@ class UpdtodometerController extends GetxController {
       final token = box.read("token");
 
       final response = await http.put(
-        Uri.parse("https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/update-odometer"),
+        Uri.parse("$baseUrl/api/vehicle/update-odometer"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",

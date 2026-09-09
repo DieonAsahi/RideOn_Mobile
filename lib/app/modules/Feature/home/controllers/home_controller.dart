@@ -3,6 +3,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class VehicleComponent {
   final String title;
@@ -89,6 +90,8 @@ class TrendTopikModel {
 }
 
 class HomeController extends GetxController {
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+
   final namaController = ''.obs;
   late String vehicleId;
   final box = GetStorage();
@@ -280,9 +283,7 @@ class HomeController extends GetxController {
     final token = box.read("token");
 
     final response = await http.get(
-      Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/my-vehicles",
-      ),
+      Uri.parse("$baseUrl/api/vehicle/my-vehicles"),
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer $token",
@@ -322,9 +323,7 @@ class HomeController extends GetxController {
       }
 
       final response = await http.get(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/artikel?${params.join("&")}",
-        ),
+        Uri.parse("$baseUrl/api/analisis/artikel?${params.join("&")}"),
       );
       print(response.statusCode);
       print(response.body);
@@ -345,8 +344,7 @@ class HomeController extends GetxController {
   }
 
   Future<void> fetchArtikelFilter() async {
-    String url =
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/artikel-filter";
+    String url = "$baseUrl/api/analisis/artikel-filter";
 
     final params = <String>[];
 
@@ -404,9 +402,7 @@ class HomeController extends GetxController {
       }
 
       final response = await http.get(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/artikel-trend?${params.join("&")}",
-        ),
+        Uri.parse("$baseUrl/api/analisis/artikel-trend?${params.join("&")}"),
       );
       print(response.statusCode);
       print(response.body);
@@ -449,9 +445,7 @@ class HomeController extends GetxController {
       }
 
       final response = await http.get(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/tren-komponen?${params.join("&")}",
-        ),
+        Uri.parse("$baseUrl/api/analisis/tren-komponen?${params.join("&")}"),
       );
 
       // print(response.statusCode);
@@ -486,8 +480,7 @@ class HomeController extends GetxController {
   }
 
   Future<void> fetchKomponenFilter() async {
-    String url =
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/analisis/komponen-filter";
+    String url = "$baseUrl/api/analisis/komponen-filter";
 
     final params = <String>[];
 
@@ -534,9 +527,7 @@ class HomeController extends GetxController {
       final token = box.read("token");
 
       final response = await http.get(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/vehicle-health/$vehicleId",
-        ),
+        Uri.parse("$baseUrl/api/vehicle/vehicle-health/$vehicleId"),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",

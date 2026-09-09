@@ -3,8 +3,11 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class RwtservisController extends GetxController {
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+
   var selectedFilter = 'Semua'.obs;
   final box = GetStorage();
   var riwayat = <Map<String, dynamic>>[].obs;
@@ -37,9 +40,7 @@ class RwtservisController extends GetxController {
       final vehicleId = box.read("vehicle_id");
 
       final response = await http.get(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/service-history/$vehicleId",
-        ),
+        Uri.parse("$baseUrl/api/vehicle/service-history/$vehicleId"),
         headers: {"Authorization": "Bearer $token"},
       );
 
@@ -93,9 +94,7 @@ class RwtservisController extends GetxController {
       final token = box.read("token");
 
       final response = await http.delete(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/service-history/$id",
-        ),
+        Uri.parse("$baseUrl/api/vehicle/service-history/$id"),
         headers: {"Authorization": "Bearer $token"},
       );
 

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Kendaraan {
   final String id;
@@ -25,6 +26,7 @@ class Kendaraan {
 
 class KendaraanController extends GetxController {
   final box = GetStorage();
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
 
   var isLoading = false.obs;
   var kendaraanList = <Kendaraan>[].obs;
@@ -44,9 +46,7 @@ class KendaraanController extends GetxController {
       final token = box.read("token");
 
       final response = await http.delete(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/delete-vehicle/$id",
-        ),
+        Uri.parse("$baseUrl/api/vehicle/delete-vehicle/$id"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
@@ -82,9 +82,7 @@ class KendaraanController extends GetxController {
       final token = box.read("token");
 
       final response = await http.get(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/my-vehicles",
-        ),
+        Uri.parse("$baseUrl/api/vehicle/my-vehicles"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",

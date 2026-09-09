@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ProfilController extends GetxController {
   final box = GetStorage();
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
 
   var isLoading = false.obs;
 
@@ -25,9 +27,7 @@ class ProfilController extends GetxController {
       final token = box.read("token");
 
       final response = await http.get(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/profile",
-        ),
+        Uri.parse("$baseUrl/api/auth/profile"),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",

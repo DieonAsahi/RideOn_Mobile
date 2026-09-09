@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ServiceItem {
   final int id;
@@ -34,6 +35,7 @@ class ServiceItem {
 
 class ServiceController extends GetxController {
   final box = GetStorage();
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
 
   var isLoading = false.obs;
   var services = <ServiceItem>[].obs;
@@ -52,9 +54,7 @@ class ServiceController extends GetxController {
       final vehicleId = box.read("vehicle_id");
 
       final response = await http.get(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/service/$vehicleId",
-        ),
+        Uri.parse("$baseUrl/api/vehicle/service/$vehicleId"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
@@ -64,9 +64,7 @@ class ServiceController extends GetxController {
       if (response.statusCode == 200) {
         final List data = jsonDecode(response.body);
 
-        services.value = data
-            .map((e) => ServiceItem.fromJson(e))
-            .toList();
+        services.value = data.map((e) => ServiceItem.fromJson(e)).toList();
       }
     } catch (e) {
       print(e);
@@ -94,10 +92,7 @@ class ServiceController extends GetxController {
   void goToAddHistory(ServiceItem item) {
     Get.toNamed(
       '/rwttambah',
-      arguments: {
-        'jadwalkan': true,
-        'component': item,
-      },
+      arguments: {'jadwalkan': true, 'component': item},
     );
   }
 }

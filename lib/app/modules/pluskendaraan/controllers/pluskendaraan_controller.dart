@@ -10,8 +10,11 @@ import 'package:image/image.dart' as img;
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class PluskendaraanController extends GetxController {
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+
   var step = 1.obs;
   var imageStep = 0.obs;
   var odometerStep = 0.obs;
@@ -29,6 +32,7 @@ class PluskendaraanController extends GetxController {
 
   var isCameraInitialized = false.obs;
   var isScanning = false.obs; // Indikator scanning aktif
+  final isManualOdometer = false.obs;
 
   var odometerImageUrl = ''.obs;
   var odometerImagePublicId = ''.obs;
@@ -237,9 +241,7 @@ class PluskendaraanController extends GetxController {
       final token = box.read("token");
       var request = http.MultipartRequest(
         "POST",
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/upload-vehicle-image",
-        ),
+        Uri.parse("$baseUrl/api/vehicle/upload-vehicle-image"),
       );
 
       request.headers["Authorization"] = "Bearer $token";
@@ -368,9 +370,7 @@ class PluskendaraanController extends GetxController {
       };
 
       final response = await http.post(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/add-vehicle",
-        ),
+        Uri.parse("$baseUrl/api/vehicle/add-vehicle"),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
@@ -405,7 +405,7 @@ class PluskendaraanController extends GetxController {
       final token = box.read("token");
       var request = http.MultipartRequest(
         "POST",
-        Uri.parse("https://hireable-unelegant-linwood.ngrok-free.dev/api/ocr"),
+        Uri.parse("$baseUrl/api/ocr"),
       );
       request.headers["Authorization"] = "Bearer $token";
       request.files.add(

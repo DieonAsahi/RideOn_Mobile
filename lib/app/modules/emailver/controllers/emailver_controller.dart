@@ -3,8 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class EmailverController extends GetxController {
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+
   final emailController = TextEditingController();
   bool fromProfile = false;
   String fromPage = 'forgot';
@@ -24,9 +27,7 @@ class EmailverController extends GetxController {
 
     try {
       // ================= CHECK EMAIL =================
-      final checkUrl = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/check-email",
-      );
+      final checkUrl = Uri.parse("$baseUrl/api/auth/check-email");
 
       final checkResponse = await http.post(
         checkUrl,
@@ -43,9 +44,7 @@ class EmailverController extends GetxController {
       }
 
       // ================= KIRIM OTP =================
-      final resendUrl = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/resend-otp",
-      );
+      final resendUrl = Uri.parse("$baseUrl/api/auth/resend-otp");
 
       final response = await http.post(
         resendUrl,

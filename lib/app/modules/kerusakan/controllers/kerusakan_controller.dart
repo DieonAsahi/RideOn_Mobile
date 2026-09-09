@@ -2,8 +2,11 @@ import 'dart:convert';
 
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class KerusakanController extends GetxController {
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+  
   var step = 1.obs;
 
   var isLoading = false.obs;
@@ -40,10 +43,7 @@ class KerusakanController extends GetxController {
 
   Future<void> prosesDiagnosa() async {
     if (selectedGejala.isEmpty) {
-      Get.snackbar(
-        "Peringatan",
-        "Pilih minimal satu gejala",
-      );
+      Get.snackbar("Peringatan", "Pilih minimal satu gejala");
       return;
     }
 
@@ -51,37 +51,20 @@ class KerusakanController extends GetxController {
       isLoading.value = true;
 
       final response = await http.post(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/kerusakan/diagnose",
-        ),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({
-          "gejalaUser": selectedGejala,
-        }),
+        Uri.parse("$baseUrl/api/kerusakan/diagnose"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"gejalaUser": selectedGejala}),
       );
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 &&
-          data["success"] == true) {
-
-        Get.toNamed(
-          "/kerusakanhasil",
-          arguments: data["data"],
-        );
+      if (response.statusCode == 200 && data["success"] == true) {
+        Get.toNamed("/kerusakanhasil", arguments: data["data"]);
       } else {
-        Get.snackbar(
-          "Error",
-          "Gagal melakukan diagnosa",
-        );
+        Get.snackbar("Error", "Gagal melakukan diagnosa");
       }
     } catch (e) {
-      Get.snackbar(
-        "Error",
-        e.toString(),
-      );
+      Get.snackbar("Error", e.toString());
     } finally {
       isLoading.value = false;
     }

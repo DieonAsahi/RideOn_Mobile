@@ -16,6 +16,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   WidgetsBinding.instance.addObserver(AppLifecycle());
 
+  await dotenv.load(fileName: ".env");
+  
   await GetStorage.init();
 
   await initializeDateFormatting('id_ID', null);

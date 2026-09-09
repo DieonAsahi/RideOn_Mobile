@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class OtpemailController extends GetxController {
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+
   final otp = List.generate(6, (_) => ''.obs);
   final focusNodes = List.generate(6, (_) => FocusNode());
   final controllers = List.generate(6, (_) => TextEditingController());
@@ -89,9 +92,7 @@ class OtpemailController extends GetxController {
     }
 
     try {
-      final url = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/verify-otp",
-      );
+      final url = Uri.parse("$baseUrl/api/auth/verify-otp");
 
       final response = await http.post(
         url,
@@ -112,7 +113,7 @@ class OtpemailController extends GetxController {
             arguments: {
               "access_token": data['session']['access_token'],
               "refresh_token": data['session']['refresh_token'],
-              
+
               "from_profile": fromPage == 'profile',
             },
           );
@@ -139,9 +140,7 @@ class OtpemailController extends GetxController {
     }
 
     try {
-      final url = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/resend-otp",
-      );
+      final url = Uri.parse("$baseUrl/api/auth/resend-otp");
 
       final response = await http.post(
         url,

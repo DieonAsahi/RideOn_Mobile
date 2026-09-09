@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WorkshopModel {
   final int? id;
@@ -57,6 +58,8 @@ class WorkshopModel {
 
 class PetabengkelController extends GetxController {
   final Dio dio = Dio();
+
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
 
   final workshops = <WorkshopModel>[].obs;
   final selectedWorkshop = Rxn<WorkshopModel>();
@@ -146,7 +149,7 @@ class PetabengkelController extends GetxController {
       isLoading.value = true;
 
       final response = await dio.get(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/workshop/nearest",
+        "$baseUrl/api/workshop/nearest",
         queryParameters: {
           "lat": userLocation.value!.latitude,
           "lng": userLocation.value!.longitude,
@@ -196,7 +199,7 @@ class PetabengkelController extends GetxController {
   Future<void> getWorkshopDetail(int id) async {
     try {
       final response = await dio.get(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/workshop/petaDetail/$id",
+        "$baseUrl/api/workshop/petaDetail/$id",
       );
 
       final oldWorkshop = workshops.firstWhere((e) => e.id == id);

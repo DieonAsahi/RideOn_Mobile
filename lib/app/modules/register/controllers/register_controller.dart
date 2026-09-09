@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class RegisterController extends GetxController {
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+
   final emailController = TextEditingController();
   final nameController = TextEditingController();
   final passwordController = TextEditingController();
@@ -24,9 +27,7 @@ class RegisterController extends GetxController {
     }
 
     try {
-      final url = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/register",
-      );
+      final url = Uri.parse("$baseUrl/api/auth/register");
 
       final response = await http.post(
         url,

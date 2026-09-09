@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ProductModel {
   final int id;
@@ -40,6 +41,8 @@ class ProductModel {
 }
 
 class EstimasiController extends GetxController {
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+  
   RxString search = ''.obs;
   RxBool isLoading = false.obs;
 
@@ -56,9 +59,7 @@ class EstimasiController extends GetxController {
       isLoading.value = true;
 
       final response = await http.get(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/kerusakan/estimasi",
-        ),
+        Uri.parse("$baseUrl/api/kerusakan/estimasi"),
       );
 
       print("STATUS : ${response.statusCode}");

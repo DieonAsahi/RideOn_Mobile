@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ArtikelModel {
   final String source;
@@ -29,9 +30,11 @@ class ArtikelModel {
 }
 
 class EdukasiController extends GetxController {
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+
   final searchController = TextEditingController();
   final _connect = GetConnect();
-  
+
   RxString search = ''.obs;
   RxList<ArtikelModel> artikelList = <ArtikelModel>[].obs;
   RxBool isLoading = false.obs;
@@ -39,30 +42,28 @@ class EdukasiController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchArtikel(); 
+    fetchArtikel();
   }
 
-Future<void> fetchArtikel() async {
-  try {
-    isLoading.value = true;
+  Future<void> fetchArtikel() async {
+    try {
+      isLoading.value = true;
 
-    final response = await _connect.get(
-      'https://hireable-unelegant-linwood.ngrok-free.dev/api/edukasi/edu',
-    );
+      final response = await _connect.get('$baseUrl/api/edukasi/edu');
 
-    if (response.statusCode == 200) {
-      final List data = response.body['data'];
+      if (response.statusCode == 200) {
+        final List data = response.body['data'];
 
-      artikelList.assignAll(
-        data.map((e) => ArtikelModel.fromJson(e)).toList(),
-      );
+        artikelList.assignAll(
+          data.map((e) => ArtikelModel.fromJson(e)).toList(),
+        );
+      }
+    } catch (e) {
+      print(e);
+    } finally {
+      isLoading.value = false;
     }
-  } catch (e) {
-    print(e);
-  } finally {
-    isLoading.value = false;
   }
-}
 
   // Fungsi untuk membuka website artikel saat kartu di-klik
   Future<void> bukaArtikel(String urlString) async {

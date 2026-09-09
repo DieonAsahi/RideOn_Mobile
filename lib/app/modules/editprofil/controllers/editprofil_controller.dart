@@ -5,9 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class EditprofilController extends GetxController {
   final box = GetStorage();
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+  
   final ImagePicker picker = ImagePicker();
 
   final nameController = TextEditingController();
@@ -44,9 +47,7 @@ class EditprofilController extends GetxController {
       final token = box.read("token");
 
       final response = await http.get(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/profile",
-        ),
+        Uri.parse("$baseUrl/api/auth/profile"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
@@ -74,9 +75,7 @@ class EditprofilController extends GetxController {
 
       var request = http.MultipartRequest(
         "PUT",
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/update-profile",
-        ),
+        Uri.parse("$baseUrl/api/auth/update-profile"),
       );
 
       request.headers["Authorization"] = "Bearer $token";

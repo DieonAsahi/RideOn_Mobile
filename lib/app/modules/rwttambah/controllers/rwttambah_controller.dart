@@ -3,8 +3,11 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class RwttambahController extends GetxController {
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+
   final detailController = TextEditingController();
   final tanggalController = TextEditingController();
   final bengkelController = TextEditingController();
@@ -98,9 +101,7 @@ class RwttambahController extends GetxController {
     final token = box.read("token");
 
     final response = await http.get(
-      Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/master-components",
-      ),
+      Uri.parse("$baseUrl/api/vehicle/master-components"),
       headers: {"Authorization": "Bearer $token"},
     );
 
@@ -118,9 +119,7 @@ class RwttambahController extends GetxController {
     print("RWTTAMBAH VEHICLE ID = $vehicleId");
 
     final response = await http.get(
-      Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/vehicle-odometer/$vehicleId",
-      ),
+      Uri.parse("$baseUrl/api/vehicle/vehicle-odometer/$vehicleId"),
       headers: {"Authorization": "Bearer $token"},
     );
 
@@ -190,9 +189,7 @@ class RwttambahController extends GetxController {
           "${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}";
 
       final response = await http.post(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/service-history",
-        ),
+        Uri.parse("$baseUrl/api/vehicle/service-history"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
@@ -268,9 +265,7 @@ class RwttambahController extends GetxController {
           "${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}";
 
       final response = await http.put(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/service-history/${serviceId.value}",
-        ),
+        Uri.parse("$baseUrl/api/vehicle/service-history/${serviceId.value}"),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",

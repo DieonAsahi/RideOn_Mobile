@@ -5,8 +5,11 @@ import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class LoginController extends GetxController {
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final box = GetStorage();
@@ -18,9 +21,7 @@ class LoginController extends GetxController {
       print(token);
 
       final response = await http.get(
-        Uri.parse(
-          "https://hireable-unelegant-linwood.ngrok-free.dev/api/vehicle/my-vehicle",
-        ),
+        Uri.parse("$baseUrl/api/vehicle/my-vehicle"),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
@@ -54,9 +55,7 @@ class LoginController extends GetxController {
     }
 
     try {
-      final url = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/login",
-      );
+      final url = Uri.parse("$baseUrl/api/auth/login");
 
       final response = await http.post(
         url,
@@ -142,9 +141,7 @@ class LoginController extends GetxController {
     final token = box.read("token");
 
     await http.post(
-      Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/google-sync",
-      ),
+      Uri.parse("$baseUrl/api/auth/google-sync"),
       headers: {
         "Authorization": "Bearer $token",
         "Content-Type": "application/json",

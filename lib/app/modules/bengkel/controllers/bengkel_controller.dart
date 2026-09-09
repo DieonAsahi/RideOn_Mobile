@@ -2,9 +2,12 @@ import 'package:dio/dio.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class BengkelController extends GetxController {
   final Dio dio = Dio();
+
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
 
   final bengkelList = <Map<String, dynamic>>[].obs;
 
@@ -65,7 +68,7 @@ class BengkelController extends GetxController {
       );
 
       final response = await dio.get(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/workshop/nearest",
+        "$baseUrl/api/workshop/nearest",
         queryParameters: {
           "lat": position.latitude,
           "lng": position.longitude,
@@ -95,7 +98,7 @@ class BengkelController extends GetxController {
             )
             .toList(),
       );
-      
+
       filteredBengkelList.assignAll(bengkelList);
     } catch (e) {
       Get.snackbar("Error", e.toString());

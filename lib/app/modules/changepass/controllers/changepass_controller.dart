@@ -2,8 +2,11 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ChangepassController extends GetxController {
+  final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+  
   final newPassController = TextEditingController();
 
   final confirmPassController = TextEditingController();
@@ -38,9 +41,7 @@ class ChangepassController extends GetxController {
       return;
     }
     try {
-      final url = Uri.parse(
-        "https://hireable-unelegant-linwood.ngrok-free.dev/api/auth/update-password",
-      );
+      final url = Uri.parse("$baseUrl/api/auth/update-password");
 
       final response = await http.post(
         url,
