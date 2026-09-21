@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../../services/firebase_messaging_service.dart';
 
 class LoginController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -16,6 +17,10 @@ class LoginController extends GetxController {
 
   Future<void> checkVehicle() async {
     try {
+      if (await FirebaseMessagingService.openPendingNotificationAfterLogin()) {
+        return;
+      }
+
       final token = box.read("token");
       print("TOKEN:");
       print(token);
@@ -71,7 +76,8 @@ class LoginController extends GetxController {
       if (response.statusCode == 200) {
         final token = data["session"]["access_token"];
 
-        box.write("token", token);
+        await box.write("token", token);
+        await FirebaseMessagingService.syncToken();
 
         Get.snackbar("Success", "Login berhasil");
 
@@ -127,7 +133,8 @@ class LoginController extends GetxController {
         return;
       }
 
-      box.write("token", token);
+      await box.write("token", token);
+      await FirebaseMessagingService.syncToken();
 
       await syncGoogleUser();
       await checkVehicle();

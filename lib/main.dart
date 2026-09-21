@@ -8,9 +8,14 @@ import 'app/core/app_lifecycle.dart';
 import 'app/routes/app_pages.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:timeago/src/messages/id_messages.dart';
-import 'app/services/local_notification_service.dart';
 
+import 'app/services/local_notification_service.dart';
+import 'app/services/firebase_messaging_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,11 +32,22 @@ Future<void> main() async {
     publishableKey: dotenv.env['SUPABASE_PUBLISHABLE_KEY']!,
   );
 
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // Local notification
   await LocalNotificationService.init();
+
+  // FCM
+  await FirebaseMessagingService.init();
 
   timeago.setLocaleMessages('id', IdMessages());
 
   runApp(const MyApp());
+
+  await FirebaseMessagingService.handleInitialMessage();
 }
 
 class MyApp extends StatelessWidget {

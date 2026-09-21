@@ -38,7 +38,7 @@ class HomeView extends GetView<HomeController> {
                             children: [
                               const SizedBox(height: 5),
                               const Text(
-                                "MotoCare",
+                                "RideOn",
                                 style: TextStyle(
                                   fontSize: 25,
                                   fontWeight: FontWeight.bold,

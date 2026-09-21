@@ -26,7 +26,7 @@ class PetabengkelView extends GetView<PetabengkelController> {
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'motocare.com.workshop_map',
+                  userAgentPackageName: 'com.bs.rideon',
                 ),
 
                 MarkerLayer(markers: controller.markers.toList()),

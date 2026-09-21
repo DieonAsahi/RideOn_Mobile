@@ -20,7 +20,7 @@ class NotifView extends GetView<NotifController> {
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => Get.back(),
+                    onPressed: () => Get.toNamed('/mainscreen'),
                     icon: const Icon(Icons.arrow_back_ios),
                   ),
 
@@ -88,7 +88,7 @@ class NotifView extends GetView<NotifController> {
   }
 }
 
-class NotifCard extends StatelessWidget {
+class NotifCard extends GetView<NotifController> {
   final NotifModel data;
 
   const NotifCard({super.key, required this.data});
@@ -110,7 +110,7 @@ class NotifCard extends StatelessWidget {
   }
 
   Color getBorderColor() {
-    if (data.status == "Darurat") {
+    if (!data.isRead) {
       return const Color(0xFF2782FF);
     }
 
@@ -119,21 +119,24 @@ class NotifCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () => controller.markAsRead(data),
+      child: Container(
+        padding: const EdgeInsets.all(14),
 
       decoration: BoxDecoration(
         color: Colors.white,
 
         borderRadius: BorderRadius.circular(18),
 
-        border: Border.all(
+          border: Border.all(
           color: getBorderColor(),
-          width: data.status == "Darurat" ? 2 : 1,
+          width: data.isRead ? 1 : 2,
         ),
       ),
 
-      child: Row(
+        child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// IMAGE
@@ -205,6 +208,7 @@ class NotifCard extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }

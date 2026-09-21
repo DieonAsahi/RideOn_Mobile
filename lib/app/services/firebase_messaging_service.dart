@@ -1,0 +1,184 @@
+import 'dart:convert';
+
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:http/http.dart' as http;
+
+import 'local_notification_service.dart';
+import '../../firebase_options.dart';
+
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await LocalNotificationService.init(requestPermission: false);
+  await FirebaseMessagingService.showMessageNotification(message);
+}
+
+class FirebaseMessagingService {
+  static final FirebaseMessaging messaging =
+      FirebaseMessaging.instance;
+
+  static Future<void> init() async {
+    LocalNotificationService.onNotificationTap = _openNotification;
+    // Permission
+    final settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    print(
+      'FCM permission: ${settings.authorizationStatus}',
+    );
+
+    // Ambil token
+    await syncToken();
+
+    // Foreground
+    FirebaseMessaging.onMessage.listen(
+      (RemoteMessage message) async {
+        print('FCM FOREGROUND');
+        print('Title: ${message.notification?.title}');
+        print('Body: ${message.notification?.body}');
+
+        await showMessageNotification(message);
+      },
+    );
+
+    FirebaseMessaging.onMessageOpenedApp.listen(_openRemoteMessage);
+
+    // Token berubah
+    messaging.onTokenRefresh.listen(
+      (newToken) async {
+        await syncToken(newToken);
+      },
+    );
+  }
+
+  static Future<void> handleInitialMessage() async {
+    final message = await messaging.getInitialMessage();
+    if (message != null) await _openRemoteMessage(message);
+
+    final localPayload = await LocalNotificationService.getLaunchPayload();
+    if (localPayload != null) await _openNotification(localPayload);
+  }
+
+  static Future<void> showMessageNotification(RemoteMessage message) async {
+    final notificationId = int.tryParse(message.data['notification_id'] ?? '');
+    await LocalNotificationService.show(
+      id: notificationId ??
+          DateTime.now().millisecondsSinceEpoch.remainder(1 << 31),
+      title: message.data['title'] ?? message.notification?.title ?? 'RideOn',
+      body: message.data['body'] ?? message.notification?.body ?? '',
+      payload: jsonEncode({
+        'vehicle_id': message.data['vehicle_id'],
+        'notification_id': message.data['notification_id'],
+      }),
+    );
+  }
+
+  // Dipanggil lagi setelah login agar token yang sebelumnya diperoleh saat
+  // aplikasi dibuka dapat dikaitkan ke pengguna yang baru masuk.
+  static Future<void> syncToken([String? latestToken]) async {
+    final token = latestToken ?? await messaging.getToken();
+    final accessToken = GetStorage().read<String>('token');
+    final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+
+    if (token == null || accessToken == null || baseUrl == null) return;
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/fcm/token'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode({'token': token, 'platform': 'android'}),
+      );
+      if (response.statusCode != 200) {
+        print('Gagal menyimpan token FCM: ${response.statusCode} ${response.body}');
+      }
+    } catch (_) {
+      // Token akan dicoba lagi pada pembukaan aplikasi atau refresh berikutnya.
+    }
+  }
+
+  static Future<void> _openRemoteMessage(RemoteMessage message) =>
+      _openNotification(jsonEncode({
+        'vehicle_id': message.data['vehicle_id'],
+        'notification_id': message.data['notification_id'],
+      }));
+
+  static Future<bool> openPendingNotificationAfterLogin() async {
+    final box = GetStorage();
+    final vehicleId = box.read<String>('pending_notification_vehicle_id');
+    final notificationId = box.read<String>('pending_notification_id');
+
+    if (vehicleId == null || notificationId == null) return false;
+
+    await _openTargetNotification(
+      vehicleId: vehicleId,
+      notificationId: notificationId,
+    );
+    return true;
+  }
+
+  static Future<void> _openNotification(String? payload) async {
+    if (payload == null || payload.isEmpty) return;
+
+    try {
+      final data = jsonDecode(payload) as Map<String, dynamic>;
+      final vehicleId = data['vehicle_id']?.toString();
+      final notificationId = data['notification_id']?.toString();
+      if (vehicleId == null || vehicleId.isEmpty || notificationId == null || notificationId.isEmpty) {
+        return;
+      }
+
+      final box = GetStorage();
+      final accessToken = box.read<String>('token');
+      if (accessToken == null || accessToken.isEmpty) {
+        await box.write('pending_notification_vehicle_id', vehicleId);
+        await box.write('pending_notification_id', notificationId);
+        Get.offAllNamed('/login');
+        return;
+      }
+
+      await _openTargetNotification(
+        vehicleId: vehicleId,
+        notificationId: notificationId,
+      );
+    } catch (_) {
+      // Payload tidak lengkap/tidak valid tidak boleh mengganggu navigasi aplikasi.
+    }
+  }
+
+  static Future<void> _openTargetNotification({
+    required String vehicleId,
+    required String notificationId,
+  }) async {
+    final box = GetStorage();
+    await _markNotificationRead(notificationId);
+    await box.write('vehicle_id', vehicleId);
+    await box.remove('pending_notification_vehicle_id');
+    await box.remove('pending_notification_id');
+
+    await Get.offAllNamed('/mainscreen');
+    Get.toNamed('/notif');
+  }
+
+  static Future<void> _markNotificationRead(String notificationId) async {
+    final accessToken = GetStorage().read<String>('token');
+    final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+    if (accessToken == null || baseUrl == null) return;
+
+    try {
+      await http.patch(
+        Uri.parse('$baseUrl/api/vehicle/notifications/$notificationId/read'),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+    } catch (_) {}
+  }
+}

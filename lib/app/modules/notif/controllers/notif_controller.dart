@@ -2,9 +2,8 @@ import 'package:get/get.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
-import 'package:timeago/timeago.dart' as timeago;
-import '../../../services/local_notification_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../../services/local_notification_service.dart';
 
 class NotifModel {
   final int id;
@@ -13,6 +12,7 @@ class NotifModel {
   final String title;
   final String desc;
   final String time;
+  final bool isRead;
 
   NotifModel({
     required this.id,
@@ -21,6 +21,7 @@ class NotifModel {
     required this.title,
     required this.desc,
     required this.time,
+    required this.isRead,
   });
 
   factory NotifModel.fromJson(Map<String, dynamic> json) {
@@ -30,9 +31,40 @@ class NotifModel {
       status: json["severity"],
       title: json["title"],
       desc: json["message"],
-      time: timeago.format(DateTime.parse(json["created_at"]), locale: "id"),
+      time: _formatElapsedTime(DateTime.parse(json["created_at"])),
+      isRead: json['is_read'] == true,
     );
   }
+
+  static String _formatElapsedTime(DateTime createdAt) {
+    final difference = DateTime.now().difference(createdAt.toLocal());
+    final totalMinutes = difference.isNegative ? 0 : difference.inMinutes;
+
+    if (totalMinutes < 1) return 'baru saja';
+    if (totalMinutes < 60) return '$totalMinutes menit yang lalu';
+
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    if (hours < 24) {
+      final minuteText = minutes > 0 ? ' $minutes menit' : '';
+      return '$hours jam$minuteText yang lalu';
+    }
+
+    final days = hours ~/ 24;
+    final remainingHours = hours % 24;
+    final hourText = remainingHours > 0 ? ' $remainingHours jam' : '';
+    return '$days hari$hourText yang lalu';
+  }
+
+  NotifModel copyWith({bool? isRead}) => NotifModel(
+    id: id,
+    image: image,
+    status: status,
+    title: title,
+    desc: desc,
+    time: time,
+    isRead: isRead ?? this.isRead,
+  );
 }
 
 class NotifController extends GetxController {
@@ -79,31 +111,30 @@ class NotifController extends GetxController {
           print(s);
         }
       }
-
-      await checkLocalNotification();
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<void> checkLocalNotification() async {
-    print("CHECK LOCAL");
-    print("NOTIF LIST : ${notifList.length}");
+  Future<void> markAsRead(NotifModel notification) async {
+    if (notification.isRead) return;
 
-    if (notifList.isEmpty) return;
+    final token = box.read("token");
+    try {
+      final response = await http.patch(
+        Uri.parse("$baseUrl/api/vehicle/notifications/${notification.id}/read"),
+        headers: {"Authorization": "Bearer $token"},
+      );
 
-    final newest = notifList.first;
-
-    print("NEWEST ID : ${newest.id}");
-
-    final lastId = box.read("last_notification_id");
-
-    print("LAST ID : $lastId");
-
-    if (lastId == newest.id) return;
-
-    await LocalNotificationService.show(title: newest.title, body: newest.desc);
-
-    await box.write("last_notification_id", newest.id);
+      if (response.statusCode == 200) {
+        final index = notifList.indexWhere((item) => item.id == notification.id);
+        if (index >= 0) notifList[index] = notification.copyWith(isRead: true);
+        await LocalNotificationService.cancel(notification.id);
+      } else {
+        print('Gagal menandai notifikasi dibaca: ${response.statusCode} ${response.body}');
+      }
+    } catch (error) {
+      print('Request status baca notifikasi gagal: $error');
+    }
   }
 }

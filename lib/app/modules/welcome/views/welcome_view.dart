@@ -20,7 +20,7 @@ class WelcomeView extends GetView<WelcomeController> {
               children: [
                 const Spacer(),
                 const Text(
-                  "MotoCare",
+                  "RideOn",
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,

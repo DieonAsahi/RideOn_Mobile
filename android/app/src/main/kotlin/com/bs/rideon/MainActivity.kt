@@ -1,4 +1,4 @@
-package com.hn.motocare
+package com.bs.rideon
 
 import io.flutter.embedding.android.FlutterActivity
 
