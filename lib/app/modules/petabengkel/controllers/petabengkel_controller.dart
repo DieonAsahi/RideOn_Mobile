@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../../services/location_service.dart';
 
 class WorkshopModel {
   final int? id;
@@ -56,9 +58,8 @@ class WorkshopModel {
   }
 }
 
-class PetabengkelController extends GetxController {
+class PetabengkelController extends GetxController with WidgetsBindingObserver {
   final Dio dio = Dio();
-
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
 
   final workshops = <WorkshopModel>[].obs;
@@ -68,12 +69,15 @@ class PetabengkelController extends GetxController {
   final userLocation = Rxn<LatLng>();
 
   final showBottomSheet = false.obs;
-
   final searchController = TextEditingController();
-
   final filteredWorkshops = <WorkshopModel>[].obs;
-
   final isLoading = false.obs;
+
+  // Status Lokasi & Izin
+  var isPermissionGranted = true.obs;
+  var isGpsEnabled = true.obs;
+
+  StreamSubscription<ServiceStatus>? _serviceStatusSubscription;
 
   List<WorkshopModel> get otherWorkshops {
     if (selectedWorkshop.value == null) return [];
@@ -85,11 +89,114 @@ class PetabengkelController extends GetxController {
   }
 
   @override
-  void onInit() async {
+  void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
 
-    await getCurrentLocation();
-    await getWorkshops();
+    // Stream GPS on/off realtime
+    _serviceStatusSubscription = LocationService.getServiceStatusStream().listen((status) {
+      if (status == ServiceStatus.enabled) {
+        isGpsEnabled.value = true;
+        loadMapData();
+      } else {
+        isGpsEnabled.value = false;
+      }
+    });
+
+    loadMapData();
+  }
+
+  @override
+  void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _serviceStatusSubscription?.cancel();
+    searchController.dispose();
+    super.onClose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      checkAndReload();
+    }
+  }
+
+  Future<void> checkAndReload() async {
+    final prevPermission = isPermissionGranted.value;
+    final prevGps = isGpsEnabled.value;
+
+    final permissionGranted = await LocationService.isLocationPermissionGranted();
+    isPermissionGranted.value = permissionGranted;
+
+    final serviceEnabled = await LocationService.isLocationServiceEnabled();
+    isGpsEnabled.value = serviceEnabled;
+
+    final wasRestricted = !prevPermission || !prevGps;
+    final isNowReady = permissionGranted && serviceEnabled;
+
+    if (isNowReady && (wasRestricted || workshops.isEmpty)) {
+      if (!isLoading.value) {
+        await loadMapData();
+      }
+    }
+  }
+
+  Future<void> requestLocationPermission() async {
+    LocationPermission permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse) {
+      isPermissionGranted.value = true;
+      final serviceEnabled = await LocationService.isLocationServiceEnabled();
+      isGpsEnabled.value = serviceEnabled;
+      if (serviceEnabled) {
+        await loadMapData();
+      }
+    } else if (permission == LocationPermission.deniedForever) {
+      await LocationService.openAppSettings();
+    }
+  }
+
+  Future<void> openGpsSettings() async {
+    await LocationService.openLocationSettings();
+  }
+
+  Future<void> loadMapData() async {
+    try {
+      // 1. Cek perizinan lokasi
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        isPermissionGranted.value = false;
+        return;
+      } else {
+        isPermissionGranted.value = true;
+      }
+
+      // 2. Cek apakah GPS perangkat aktif
+      bool serviceEnabled = await LocationService.isLocationServiceEnabled();
+      isGpsEnabled.value = serviceEnabled;
+      if (!serviceEnabled) {
+        return;
+      }
+
+      isLoading.value = true;
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      userLocation.value = LatLng(position.latitude, position.longitude);
+
+      await getWorkshops();
+    } catch (e) {
+      print("Error loadMapData: $e");
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void selectWorkshop(WorkshopModel workshop) {
@@ -125,29 +232,10 @@ class PetabengkelController extends GetxController {
     );
   }
 
-  Future<void> getCurrentLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-
-    if (!serviceEnabled) {
-      Get.snackbar("Lokasi", "Aktifkan GPS terlebih dahulu");
-      return;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-
-    Position position = await Geolocator.getCurrentPosition();
-
-    userLocation.value = LatLng(position.latitude, position.longitude);
-  }
-
   Future<void> getWorkshops() async {
-    try {
-      isLoading.value = true;
+    if (userLocation.value == null) return;
 
+    try {
       final response = await dio.get(
         "$baseUrl/api/workshop/nearest",
         queryParameters: {
@@ -157,19 +245,12 @@ class PetabengkelController extends GetxController {
         },
       );
 
-      print(response.data);
-
       final data = (response.data["data"] as List)
           .map((e) => WorkshopModel.fromJson(e))
           .toList();
 
       workshops.assignAll(data);
-
       filteredWorkshops.assignAll(data);
-
-      for (var w in data.take(5)) {
-        print("${w.title} -> ${w.latitude}, ${w.longitude}");
-      }
 
       markers.assignAll(
         data.map(
@@ -186,13 +267,8 @@ class PetabengkelController extends GetxController {
           ),
         ),
       );
-
-      print("Marker count: ${markers.length}");
-      print(data.length);
     } catch (e) {
-      print(e);
-    } finally {
-      isLoading.value = false;
+      print("Error getWorkshops: $e");
     }
   }
 
@@ -217,13 +293,12 @@ class PetabengkelController extends GetxController {
         imageUrl: response.data['image_url'] ?? '',
         googleMapsUrl: response.data['google_maps_url'] ?? '',
         openingHours: response.data['opening_hours'] ?? '-',
-
         distanceKm: oldWorkshop.distanceKm,
       );
 
       showBottomSheet.value = true;
     } catch (e) {
-      print(e);
+      print("Error getWorkshopDetail: $e");
     }
   }
 }

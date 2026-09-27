@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:capbatu/app/services/auth_service.dart';
 
 class ServiceItem {
   final int id;
@@ -53,6 +54,15 @@ class ServiceController extends GetxController {
       final token = box.read("token");
       final vehicleId = box.read("vehicle_id");
 
+      if (token == null) {
+        await AuthService.logout();
+        return;
+      }
+
+      if (vehicleId == null || vehicleId.toString().isEmpty) {
+        return;
+      }
+
       final response = await http.get(
         Uri.parse("$baseUrl/api/vehicle/service/$vehicleId"),
         headers: {
@@ -61,13 +71,19 @@ class ServiceController extends GetxController {
         },
       );
 
-      if (response.statusCode == 200) {
-        final List data = jsonDecode(response.body);
+      if (response.statusCode == 401) {
+        await AuthService.logout();
+        return;
+      }
 
-        services.value = data.map((e) => ServiceItem.fromJson(e)).toList();
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          services.value = data.map((e) => ServiceItem.fromJson(e)).toList();
+        }
       }
     } catch (e) {
-      print(e);
+      print("Error getServices: $e");
     } finally {
       isLoading.value = false;
     }

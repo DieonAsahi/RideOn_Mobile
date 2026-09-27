@@ -4,6 +4,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import 'package:capbatu/app/services/auth_service.dart';
+
 class ProfilController extends GetxController {
   final box = GetStorage();
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -25,6 +27,10 @@ class ProfilController extends GetxController {
       isLoading.value = true;
 
       final token = box.read("token");
+      if (token == null) {
+        await AuthService.logout();
+        return;
+      }
 
       final response = await http.get(
         Uri.parse("$baseUrl/api/auth/profile"),
@@ -34,13 +40,21 @@ class ProfilController extends GetxController {
         },
       );
 
-      final data = jsonDecode(response.body);
+      if (response.statusCode == 401) {
+        await AuthService.logout();
+        return;
+      }
 
-      name.value = data["full_name"] ?? "";
-      bio.value = data["bio"] ?? "";
-      imageUrl.value = data["image_url"] ?? "";
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) {
+          name.value = data["full_name"] ?? "";
+          bio.value = data["bio"] ?? "";
+          imageUrl.value = data["image_url"] ?? "";
+        }
+      }
     } catch (e) {
-      print(e);
+      print("Error getProfile: $e");
     } finally {
       isLoading.value = false;
     }

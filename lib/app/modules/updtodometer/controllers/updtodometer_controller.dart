@@ -9,6 +9,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dart';
 
 class UpdtodometerController extends GetxController {
   final box = GetStorage();
@@ -23,6 +24,7 @@ class UpdtodometerController extends GetxController {
   var pageState = 0.obs; // 0 = kamera, 1 = hasil OCR
   File? odometerImage;
 
+  var isManualOdometer = false.obs;
   var odometerImageUrl = ''.obs;
   var odometerImagePublicId = ''.obs;
   final odometerController = TextEditingController();
@@ -114,6 +116,7 @@ class UpdtodometerController extends GetxController {
       if (odometerValue != null && odometerValue <= 9999999) {
         stopScanningLoop();
 
+        isManualOdometer.value = false;
         odometerImage = croppedFile;
         odometerController.text = odometerValue.toString();
 
@@ -231,6 +234,13 @@ class UpdtodometerController extends GetxController {
       );
 
       if (response.statusCode == 200) {
+        final newKm = int.tryParse(odometerController.text) ?? 0;
+        if (Get.isRegistered<HomeController>()) {
+          final homeC = Get.find<HomeController>();
+          homeC.odometer.value = newKm;
+          homeC.fetchHome();
+        }
+
         Get.offNamed('/mainscreen', arguments: 0);
         Get.snackbar("Berhasil", "Odometer berhasil diperbarui");
       } else {

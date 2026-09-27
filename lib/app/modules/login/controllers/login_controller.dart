@@ -77,6 +77,7 @@ class LoginController extends GetxController {
         final token = data["session"]["access_token"];
 
         await box.write("token", token);
+        await box.write("last_closed", DateTime.now().toIso8601String());
         await FirebaseMessagingService.syncToken();
 
         Get.snackbar("Success", "Login berhasil");
@@ -95,9 +96,10 @@ class LoginController extends GetxController {
 
   Future<void> loginGoogle() async {
     try {
+      final serverClientId = dotenv.env['GOOGLE_SERVER_CLIENT_ID'] ??
+          '223603698019-imou4debdr194jicsps6aalvl22lmls1.apps.googleusercontent.com';
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        serverClientId:
-            '223603698019-imou4debdr194jicsps6aalvl22lmls1.apps.googleusercontent.com',
+        serverClientId: serverClientId,
       );
 
       // TAMBAHKAN INI
@@ -134,6 +136,7 @@ class LoginController extends GetxController {
       }
 
       await box.write("token", token);
+      await box.write("last_closed", DateTime.now().toIso8601String());
       await FirebaseMessagingService.syncToken();
 
       await syncGoogleUser();

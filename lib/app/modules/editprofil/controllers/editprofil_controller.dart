@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:capbatu/app/modules/Feature/profil/controllers/profil_controller.dart';
 
 class EditprofilController extends GetxController {
   final box = GetStorage();
@@ -90,12 +91,21 @@ class EditprofilController extends GetxController {
       }
 
       final response = await request.send();
+      final resBody = await response.stream.bytesToString();
 
       if (response.statusCode == 200) {
+        if (Get.isRegistered<ProfilController>()) {
+          Get.find<ProfilController>().getProfile();
+        }
+        Get.back();
         Get.snackbar("Berhasil", "Profil berhasil diperbarui");
-        Get.offNamed('/mainscreen', arguments: 4);
       } else {
-        Get.snackbar("Error", "Gagal update profil");
+        String errorMsg = "Gagal update profil";
+        try {
+          final errJson = jsonDecode(resBody);
+          errorMsg = errJson["error"] ?? errJson["message"] ?? errorMsg;
+        } catch (_) {}
+        Get.snackbar("Error", errorMsg);
       }
     } catch (e) {
       Get.snackbar("Error", e.toString());

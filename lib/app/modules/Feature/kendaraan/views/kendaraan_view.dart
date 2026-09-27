@@ -229,61 +229,61 @@ class KendaraanCard extends StatelessWidget {
               onSelected: (value) {
                 if (value == 'hapus') {
                   FocusScope.of(context).unfocus();
+                  final kendaraanController = Get.find<KendaraanController>();
+                  final isLast = kendaraanController.kendaraanList.length <= 1;
 
-                  Get.dialog(
-                    AlertDialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-
-                      title: const Text(
-                        "Konfirmasi",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
+                  // Delay dialog agar popup menu route selesai tertutup sempurna (menghindari popup dialog ikut ter-dismiss)
+                  Future.delayed(const Duration(milliseconds: 100), () {
+                    Get.dialog(
+                      AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                      ),
-
-                      content: const Text(
-                        "Apakah Anda yakin ingin menghapus?",
-                        style: TextStyle(fontSize: 13, color: Colors.black),
-                      ),
-
-                      actions: [
-                        OutlinedButton(
-                          onPressed: () {
-                            Get.back();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                          ),
-
-                          child: const Text(
-                            "Tidak",
-                            style: TextStyle(color: Colors.grey, fontSize: 16),
+                        title: const Text(
+                          "Konfirmasi Hapus",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-
-                        ElevatedButton(
-                          onPressed: () async {
-                            Get.back();
-
-                            await Get.find<KendaraanController>().deleteVehicle(
-                              id,
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                          ),
-                          child: const Text(
-                            "Ya",
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                          ),
+                        content: Text(
+                          isLast
+                              ? "Ini adalah satu-satunya kendaraan Anda. Jika Anda menghapus maka Anda wajib menambahkan kendaraan baru.\n\nApakah Anda yakin ingin menghapus?"
+                              : "Apakah Anda yakin ingin menghapus kendaraan ini?",
+                          style: const TextStyle(fontSize: 13, color: Colors.black),
                         ),
-                      ],
-                    ),
-                  );
+                        actions: [
+                          OutlinedButton(
+                            onPressed: () {
+                              Get.back();
+                            },
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                            ),
+                            child: const Text(
+                              "Tidak",
+                              style: TextStyle(color: Colors.grey, fontSize: 16),
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              Get.back();
+                              await kendaraanController.deleteVehicle(id);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
+                            child: const Text(
+                              "Ya",
+                              style: TextStyle(color: Colors.white, fontSize: 16),
+                            ),
+                          ),
+                        ],
+                      ),
+                      barrierDismissible: false,
+                    );
+                  });
                 }
               },
 

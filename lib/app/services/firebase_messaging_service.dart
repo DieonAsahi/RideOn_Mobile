@@ -181,4 +181,20 @@ class FirebaseMessagingService {
       );
     } catch (_) {}
   }
+
+  static Future<bool> isNotificationPermissionGranted() async {
+    final settings = await messaging.getNotificationSettings();
+    return settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+  }
+
+  static Future<bool> requestNotificationPermission() async {
+    final settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    return settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+  }
 }

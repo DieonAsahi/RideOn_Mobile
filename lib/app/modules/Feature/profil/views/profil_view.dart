@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:capbatu/app/services/auth_service.dart';
 import '../controllers/profil_controller.dart';
 
 class ProfilView extends GetView<ProfilController> {
@@ -107,11 +108,12 @@ class ProfilView extends GetView<ProfilController> {
                       height: 24,
                     ),
                     title: "Edit Profil",
-                    onTap: () {
+                    onTap: () async {
                       // tutup keyboard dulu
                       FocusScope.of(context).unfocus();
 
-                      Get.toNamed('/editprofil');
+                      await Get.toNamed('/editprofil');
+                      controller.getProfile();
                     },
                   ),
 
@@ -171,25 +173,8 @@ class ProfilView extends GetView<ProfilController> {
 
                             ElevatedButton(
                               onPressed: () async {
-                                final box = GetStorage();
-
-                                // Logout Google
-                                final googleSignIn = GoogleSignIn(
-                                  serverClientId:
-                                      '223603698019-imou4debdr194jicsps6aalvl22lmls1.apps.googleusercontent.com',
-                                );
-
-                                await googleSignIn.signOut();
-
-                                // Logout Supabase
-                                await Supabase.instance.client.auth.signOut();
-
-                                // Hapus storage lokal
-                                await box.remove("token");
-                                await box.remove("user");
-                                await box.remove("vehicle_id");
-
-                                Get.offAllNamed('/login');
+                                Get.back();
+                                await AuthService.logout();
                               },
 
                               style: ElevatedButton.styleFrom(

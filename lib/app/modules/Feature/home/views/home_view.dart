@@ -57,16 +57,52 @@ class HomeView extends GetView<HomeController> {
                               ),
                             ],
                           ),
-                          IconButton(
-                            icon: Image.asset(
-                              'assets/icon/notif.png',
-                              width: 24,
-                              height: 24,
-                            ),
-                            onPressed: () {
-                              Get.toNamed('/notif');
-                            },
-                          ),
+                          Obx(() {
+                            final count = controller.unreadNotifCount.value;
+
+                            return Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                IconButton(
+                                  icon: Image.asset(
+                                    'assets/icon/notif.png',
+                                    width: 24,
+                                    height: 24,
+                                  ),
+                                  onPressed: () async {
+                                    await Get.toNamed('/notif');
+                                    controller.fetchUnreadNotifications();
+                                  },
+                                ),
+                                if (count > 0)
+                                  Positioned(
+                                    right: 6,
+                                    top: 6,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 18,
+                                        minHeight: 18,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          count > 99 ? '99+' : count.toString(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          }),
                         ],
                       ),
                     ),

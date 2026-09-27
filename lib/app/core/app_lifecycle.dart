@@ -2,12 +2,14 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
+import 'package:capbatu/app/services/auth_service.dart';
+
 class AppLifecycle extends WidgetsBindingObserver {
   final box = GetStorage();
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
-    if (state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       box.write("last_closed", DateTime.now().toIso8601String());
     }
 
@@ -18,10 +20,11 @@ class AppLifecycle extends WidgetsBindingObserver {
         final diff = DateTime.now().difference(DateTime.parse(last));
 
         if (diff >= const Duration(hours: 8)) {
-          await box.erase();
-          Get.offAllNamed('/login');
+          await AuthService.logout();
+          return;
         }
       }
+      box.write("last_closed", DateTime.now().toIso8601String());
     }
   }
 }

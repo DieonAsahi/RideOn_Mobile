@@ -47,7 +47,6 @@ class RwtservisController extends GetxController {
       if (response.statusCode == 200) {
         final List data = jsonDecode(response.body);
 
-        // Tambahkan .cast<Map<String, dynamic>>() di akhir agar tipe datanya mutlak dan tidak bikin UI crash
         riwayat.value = data
             .map((item) {
               Color statusColor = Colors.grey;

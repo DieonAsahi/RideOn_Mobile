@@ -984,9 +984,10 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
               width: double.infinity,
               height: 40,
               child: ElevatedButton(
-                onPressed: () async {
+                onPressed: () {
                   controller.isManualOdometer.value = true;
                   controller.odometerStep.value = 2;
+                  controller.disposeCamera();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF006BFF),

@@ -1,9 +1,12 @@
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../services/local_notification_service.dart';
+import '../../../services/firebase_messaging_service.dart';
+import '../../../services/location_service.dart';
 
 class NotifModel {
   final int id;
@@ -67,17 +70,51 @@ class NotifModel {
   );
 }
 
-class NotifController extends GetxController {
+class NotifController extends GetxController with WidgetsBindingObserver {
   final box = GetStorage();
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
 
   var notifList = <NotifModel>[].obs;
   var isLoading = false.obs;
+  var isPermissionGranted = true.obs;
 
   @override
   void onInit() {
     super.onInit();
-    getNotifications();
+    WidgetsBinding.instance.addObserver(this);
+    checkPermissionAndLoad();
+  }
+
+  @override
+  void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.onClose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      checkPermissionAndLoad();
+    }
+  }
+
+  Future<void> checkPermissionAndLoad() async {
+    final granted = await FirebaseMessagingService.isNotificationPermissionGranted();
+    isPermissionGranted.value = granted;
+    if (granted) {
+      await getNotifications();
+    }
+  }
+
+  Future<void> requestPermission() async {
+    final granted = await FirebaseMessagingService.requestNotificationPermission();
+    isPermissionGranted.value = granted;
+    if (granted) {
+      await getNotifications();
+    } else {
+      // Buka pengaturan aplikasi jika ditolak secara permanen
+      await LocationService.openAppSettings();
+    }
   }
 
   Future<void> getNotifications() async {

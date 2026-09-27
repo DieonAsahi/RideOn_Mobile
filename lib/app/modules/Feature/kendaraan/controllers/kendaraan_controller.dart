@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:capbatu/app/services/auth_service.dart';
 
 class Kendaraan {
   final String id;
@@ -57,13 +58,20 @@ class KendaraanController extends GetxController {
       print("DELETE BODY: ${response.body}");
 
       if (response.statusCode == 200) {
-        // kendaraanList.removeWhere((e) => e.id == id);
+        final currentActiveId = box.read("vehicle_id");
+        if (currentActiveId == id) {
+          box.remove("vehicle_id");
+        }
+
         await getVehicles();
 
         Get.snackbar("Berhasil", "Kendaraan berhasil dihapus");
 
         if (kendaraanList.isEmpty) {
+          box.remove("vehicle_id");
           Get.offNamed('/pluskendaraan', arguments: true);
+        } else if (box.read("vehicle_id") == null && kendaraanList.isNotEmpty) {
+          box.write("vehicle_id", kendaraanList.first.id);
         }
       } else {
         Get.snackbar("Error", "Gagal menghapus kendaraan");
@@ -80,6 +88,10 @@ class KendaraanController extends GetxController {
       isLoading.value = true;
 
       final token = box.read("token");
+      if (token == null) {
+        await AuthService.logout();
+        return;
+      }
 
       final response = await http.get(
         Uri.parse("$baseUrl/api/vehicle/my-vehicles"),
@@ -92,23 +104,29 @@ class KendaraanController extends GetxController {
       print("STATUS CODE: ${response.statusCode}");
       print("BODY: ${response.body}");
 
-      if (response.statusCode == 200) {
-        final List data = jsonDecode(response.body);
+      if (response.statusCode == 401) {
+        await AuthService.logout();
+        return;
+      }
 
-        kendaraanList.value = data.map<Kendaraan>((item) {
-          return Kendaraan(
-            id: item["id"],
-            nama: "${item["brand"]} ${item["model"]}",
-            plat: item["plate_number"] ?? "-",
-            km: "${item["current_odometer"] ?? 0} km",
-            status: item["status"] ?? "Optimal",
-            image: item["vehicle_image"] ?? "",
-            performance: double.tryParse(item["performance"].toString()) ?? 100,
-          );
-        }).toList();
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          kendaraanList.value = data.map<Kendaraan>((item) {
+            return Kendaraan(
+              id: item["id"],
+              nama: "${item["brand"]} ${item["model"]}",
+              plat: item["plate_number"] ?? "-",
+              km: "${item["current_odometer"] ?? 0} km",
+              status: item["status"] ?? "Optimal",
+              image: item["vehicle_image"] ?? "",
+              performance: double.tryParse(item["performance"].toString()) ?? 100,
+            );
+          }).toList();
+        }
       }
     } catch (e) {
-      print(e);
+      print("Error getVehicles: $e");
     } finally {
       isLoading.value = false;
     }

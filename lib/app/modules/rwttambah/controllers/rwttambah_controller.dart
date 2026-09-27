@@ -52,6 +52,21 @@ class RwttambahController extends GetxController {
     if (args != null && args['jadwalkan'] == true) {
       selectedStatus.value = 'Dijadwalkan';
       isStatusLocked.value = true;
+      selectedJenis.value = 'Servis Rutin';
+
+      if (args['component'] != null) {
+        final comp = args['component'];
+        // Jika comp bertipe ServiceItem atau Map
+        try {
+          selectedComponentId.value = comp.id;
+        } catch (_) {
+          if (comp is Map && comp['id'] != null) {
+            selectedComponentId.value = comp['id'];
+          }
+        }
+      } else if (args['component_id'] != null) {
+        selectedComponentId.value = args['component_id'];
+      }
     }
 
     if (args != null && args['isEdit'] == true) {

@@ -10,6 +10,7 @@ import 'package:image/image.dart' as img;
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
+import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class PluskendaraanController extends GetxController {
@@ -322,7 +323,8 @@ class PluskendaraanController extends GetxController {
         Get.snackbar("Peringatan", "Odometer harus berupa angka valid");
         return;
       }
-      if (odometerImageUrl.value.isEmpty) {
+      // Foto odometer hanya wajib jika menggunakan mode pemindaian OCR / kamera
+      if (!isManualOdometer.value && odometerImageUrl.value.isEmpty) {
         Get.snackbar("Peringatan", "Foto odometer belum berhasil diupload");
         return;
       }
@@ -384,10 +386,20 @@ class PluskendaraanController extends GetxController {
         box.write("vehicle_id", data["vehicle"]["id"]);
         Get.snackbar("Berhasil", "Kendaraan berhasil ditambahkan");
 
+        if (Get.isRegistered<HomeController>()) {
+          final homeC = Get.find<HomeController>();
+          homeC.vehicleId = data["vehicle"]["id"].toString();
+          homeC.getVehicles();
+          homeC.fetchHome();
+        }
+
+        if (Get.isRegistered<KendaraanController>()) {
+          Get.find<KendaraanController>().getVehicles();
+        }
+
         if (isFromLogin.value) {
           Get.offNamed('/mainscreen');
         } else {
-          Get.find<KendaraanController>().getVehicles();
           Get.offNamed('/mainscreen', arguments: 1);
         }
       } else {

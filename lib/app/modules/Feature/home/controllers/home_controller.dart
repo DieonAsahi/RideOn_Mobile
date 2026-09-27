@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:capbatu/app/services/auth_service.dart';
 
 class VehicleComponent {
   final String title;
@@ -100,6 +101,7 @@ class HomeController extends GetxController {
   var isLoadingOdometer = false.obs;
   var odometer = 0.obs;
   var components = <VehicleComponent>[].obs;
+  var unreadNotifCount = 0.obs;
 
   var isLoading = false.obs;
   var tanggal = <String>[].obs;
@@ -281,26 +283,43 @@ class HomeController extends GetxController {
 
   Future<void> getVehicles() async {
     final token = box.read("token");
+    if (token == null) {
+      AuthService.logout();
+      return;
+    }
 
-    final response = await http.get(
-      Uri.parse("$baseUrl/api/vehicle/my-vehicles"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-    );
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/vehicle/my-vehicles"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      );
 
-    final data = jsonDecode(response.body);
-    vehicles.value = data;
+      if (response.statusCode == 401) {
+        await AuthService.logout();
+        return;
+      }
 
-    final selectedId = box.read("vehicle_id");
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          vehicles.value = data;
 
-    currentVehicleIndex.value = vehicles.indexWhere(
-      (e) => e["id"] == selectedId,
-    );
+          final selectedId = box.read("vehicle_id");
 
-    if (currentVehicleIndex.value < 0) {
-      currentVehicleIndex.value = 0;
+          currentVehicleIndex.value = vehicles.indexWhere(
+            (e) => e["id"] == selectedId,
+          );
+
+          if (currentVehicleIndex.value < 0) {
+            currentVehicleIndex.value = 0;
+          }
+        }
+      }
+    } catch (e) {
+      print("Error getVehicles: $e");
     }
   }
 
@@ -384,6 +403,12 @@ class HomeController extends GetxController {
   }
 
   Future<void> fetchTrendTopik() async {
+    // API backend mewajibkan tahun dan bulan terisi
+    if (selectedYearArtikel.value == 0 || selectedMonthArtikel.value == 0) {
+      trendTopik.clear();
+      return;
+    }
+
     isLoadingTrendTopik.value = true;
 
     try {
@@ -526,6 +551,11 @@ class HomeController extends GetxController {
       isLoadingOdometer.value = true;
       final token = box.read("token");
 
+      if (token == null) {
+        await AuthService.logout();
+        return;
+      }
+
       final response = await http.get(
         Uri.parse("$baseUrl/api/vehicle/vehicle-health/$vehicleId"),
         headers: {
@@ -534,51 +564,92 @@ class HomeController extends GetxController {
         },
       );
 
-      print(response.statusCode);
-      print(response.body);
+      print("STATUS CODE: ${response.statusCode}");
+      print("RESPONSE BODY: ${response.body}");
+
+      if (response.statusCode == 401) {
+        await AuthService.logout();
+        return;
+      }
+
+      if (response.statusCode != 200) {
+        return;
+      }
 
       final data = jsonDecode(response.body);
 
-      namaController.value = data['user']['full_name'];
-      vehicleImage.value = data['vehicle']['vehicle_image'];
+      if (data == null || data is! Map<String, dynamic>) {
+        return;
+      }
 
-      final history = (data['performance']['history'] as List)
-        ..sort(
-          (a, b) => DateTime.parse(
-            a['created_at'],
-          ).compareTo(DateTime.parse(b['created_at'])),
-        );
+      if (data['user'] != null && data['user'] is Map) {
+        namaController.value = data['user']['full_name']?.toString() ?? '';
+      }
 
-      tanggal.value = history.map<String>((item) {
-        final date = DateTime.parse(item['created_at']);
-        return formatTanggal(date);
-      }).toList();
+      if (data['vehicle'] != null && data['vehicle'] is Map) {
+        vehicleImage.value = data['vehicle']['vehicle_image']?.toString() ?? '';
+        odometer.value = data['vehicle']['current_odometer'] ?? 0;
+      }
 
-      performa.value = history.map<double>((item) {
-        return (item['performance_percent'] as num).toDouble();
-      }).toList();
+      if (data['performance'] != null &&
+          data['performance'] is Map &&
+          data['performance']['history'] != null &&
+          data['performance']['history'] is List) {
+        final history = (data['performance']['history'] as List)
+          ..sort(
+            (a, b) => DateTime.parse(
+              a['created_at'],
+            ).compareTo(DateTime.parse(b['created_at'])),
+          );
 
-      if (history.isEmpty) {
+        tanggal.value = history.map<String>((item) {
+          final date = DateTime.parse(item['created_at']);
+          return formatTanggal(date);
+        }).toList();
+
+        performa.value = history.map<double>((item) {
+          return (item['performance_percent'] as num).toDouble();
+        }).toList();
+      }
+
+      if (tanggal.isEmpty) {
         tanggal.value = ["-"];
         performa.value = [0];
       }
 
-      odometer.value = data['vehicle']['current_odometer'];
+      if (data['components'] != null && data['components'] is List) {
+        components.value = (data['components'] as List)
+            .map((e) => VehicleComponent.fromJson(e))
+            .toList();
+      }
 
-      components.value = (data['components'] as List)
-          .map((e) => VehicleComponent.fromJson(e))
-          .toList();
-
-      print("HOME VEHICLE ID = $vehicleId");
-      print("HOME ODOMETER = ${data['vehicle']['current_odometer']}");
-      print("STATUS CODE: ${response.statusCode}");
-      print("RESPONSE BODY:");
-      print(response.body);
+      await fetchUnreadNotifications();
     } catch (e) {
-      print(e);
+      print("Error fetchHome: $e");
     } finally {
       isLoadingOdometer.value = false;
       isLoading.value = false;
+    }
+  }
+
+  Future<void> fetchUnreadNotifications() async {
+    try {
+      final token = box.read("token");
+      final vId = box.read("vehicle_id") ?? vehicleId;
+      if (token == null || vId == null || vId.toString().isEmpty) return;
+
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/vehicle/notifications/$vId"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        final unread = data.where((item) => item['is_read'] != true).length;
+        unreadNotifCount.value = unread;
+      }
+    } catch (e) {
+      print("Error fetchUnreadNotifications: $e");
     }
   }
 }

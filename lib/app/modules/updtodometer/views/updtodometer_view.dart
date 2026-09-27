@@ -126,7 +126,8 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
             left: 20,
             child: SafeArea(
               child: GestureDetector(
-                onTap: () {
+                onTap: () async {
+                  await controller.disposeCamera();
                   Get.back();
                 },
                 child: const Icon(Icons.close, color: Colors.white, size: 32),
@@ -138,47 +139,48 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
             bottom: 100,
             left: 0,
             right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 6,
-                ),
-                child: Text(
-                  "Sejajarkan angka odometer tepat di dalam kotak",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 13,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    "Sejajarkan angka odometer tepat di dalam kotak",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 13,
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
 
-          SizedBox(
-            width: 220,
-            height: 42,
-            child: ElevatedButton(
-              onPressed: () async {
-                // Hentikan dan bersihkan kamera
-                await controller.disposeCamera();
+                const SizedBox(height: 12),
 
-                // Masuk ke halaman result/manual input
-                controller.pageState.value = 1;
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                SizedBox(
+                  width: 220,
+                  height: 42,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      controller.isManualOdometer.value = true;
+                      controller.pageState.value = 1;
+                      controller.disposeCamera();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: const Text(
+                      "Masukan Angka Odometer",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              child: const Text(
-                "Masukan Angka Odometer",
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
+              ],
             ),
           ),
         ],
