@@ -78,6 +78,20 @@ class NotifController extends GetxController with WidgetsBindingObserver {
   var isLoading = false.obs;
   var isPermissionGranted = true.obs;
 
+  final List<String> filterOptions = ['Semua', 'Belum dibaca'];
+  var selectedFilter = 'Semua'.obs;
+
+  void changeFilter(String filter) {
+    selectedFilter.value = filter;
+  }
+
+  List<NotifModel> get filteredNotifList {
+    if (selectedFilter.value == 'Belum dibaca') {
+      return notifList.where((notif) => !notif.isRead).toList();
+    }
+    return notifList;
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -99,7 +113,8 @@ class NotifController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> checkPermissionAndLoad() async {
-    final granted = await FirebaseMessagingService.isNotificationPermissionGranted();
+    final granted =
+        await FirebaseMessagingService.isNotificationPermissionGranted();
     isPermissionGranted.value = granted;
     if (granted) {
       await getNotifications();
@@ -107,7 +122,8 @@ class NotifController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> requestPermission() async {
-    final granted = await FirebaseMessagingService.requestNotificationPermission();
+    final granted =
+        await FirebaseMessagingService.requestNotificationPermission();
     isPermissionGranted.value = granted;
     if (granted) {
       await getNotifications();
@@ -164,11 +180,15 @@ class NotifController extends GetxController with WidgetsBindingObserver {
       );
 
       if (response.statusCode == 200) {
-        final index = notifList.indexWhere((item) => item.id == notification.id);
+        final index = notifList.indexWhere(
+          (item) => item.id == notification.id,
+        );
         if (index >= 0) notifList[index] = notification.copyWith(isRead: true);
         await LocalNotificationService.cancel(notification.id);
       } else {
-        print('Gagal menandai notifikasi dibaca: ${response.statusCode} ${response.body}');
+        print(
+          'Gagal menandai notifikasi dibaca: ${response.statusCode} ${response.body}',
+        );
       }
     } catch (error) {
       print('Request status baca notifikasi gagal: $error');

@@ -19,6 +19,8 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
   var isPermissionGranted = true.obs;
   var isGpsEnabled = true.obs;
 
+  var isGpsDismissed = false.obs;
+
   StreamSubscription<ServiceStatus>? _serviceStatusSubscription;
 
   @override
@@ -27,14 +29,15 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
 
     // Dengarkan perubahan status GPS secara realtime (misal user mematikan/menyalakan GPS dari status bar)
-    _serviceStatusSubscription = LocationService.getServiceStatusStream().listen((status) {
-      if (status == ServiceStatus.enabled) {
-        isGpsEnabled.value = true;
-        loadNearestWorkshop();
-      } else {
-        isGpsEnabled.value = false;
-      }
-    });
+    _serviceStatusSubscription = LocationService.getServiceStatusStream()
+        .listen((status) {
+          if (status == ServiceStatus.enabled) {
+            isGpsEnabled.value = true;
+            loadNearestWorkshop();
+          } else {
+            isGpsEnabled.value = false;
+          }
+        });
 
     loadNearestWorkshop();
   }
@@ -59,7 +62,8 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
     final prevPermission = isPermissionGranted.value;
     final prevGps = isGpsEnabled.value;
 
-    final permissionGranted = await LocationService.isLocationPermissionGranted();
+    final permissionGranted =
+        await LocationService.isLocationPermissionGranted();
     isPermissionGranted.value = permissionGranted;
 
     final serviceEnabled = await LocationService.isLocationServiceEnabled();
@@ -111,6 +115,10 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
     await LocationService.openLocationSettings();
   }
 
+  void dismissGpsDialog() {
+    isGpsDismissed.value = true;
+  }
+
   Future<void> loadNearestWorkshop() async {
     try {
       // 1. Cek Izin Lokasi
@@ -130,6 +138,11 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
       // 2. Cek apakah GPS aktif
       bool serviceEnabled = await LocationService.isLocationServiceEnabled();
       isGpsEnabled.value = serviceEnabled;
+      if (serviceEnabled) {
+        isGpsDismissed.value = false;
+        return;
+      }
+
       if (!serviceEnabled) {
         return;
       }

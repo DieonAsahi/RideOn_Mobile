@@ -87,6 +87,7 @@ flutter:
     - assets/icon/
     - assets/icons/
     - assets/logos/
+    - assets/logo/
     # - assets/images/motor.png
     # - assets/images/beat.png
     # - assets/images/tormo.jpeg

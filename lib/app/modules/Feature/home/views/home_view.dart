@@ -280,7 +280,7 @@ class HomeView extends GetView<HomeController> {
                           },
                         );
                       }),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 120),
 
                       // const TopikArtikelSection(),
 

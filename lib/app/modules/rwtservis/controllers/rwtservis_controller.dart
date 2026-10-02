@@ -8,6 +8,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class RwtservisController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
 
+  final List<String> filterOptions = ['Semua', 'Servis Rutin', 'Perbaikan'];
   var selectedFilter = 'Semua'.obs;
   final box = GetStorage();
   var riwayat = <Map<String, dynamic>>[].obs;

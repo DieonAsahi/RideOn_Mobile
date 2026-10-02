@@ -11,19 +11,23 @@ import 'package:capbatu/app/modules/Feature/profil/views/profil_view.dart';
 import 'package:capbatu/app/modules/Feature/home/views/home_view.dart';
 import 'package:capbatu/app/modules/Feature/service/views/service_view.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import '../controllers/mainscreen_controller.dart';
 
 class MainscreenView extends GetView<MainscreenController> {
   const MainscreenView({super.key});
+
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       const HomeView(),
       const KendaraanView(),
       const ServiceView(),
-      const EdukasiView(),
+      // const EdukasiView(),
       const ProfilView(),
     ];
+
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) async {
@@ -54,14 +58,15 @@ class MainscreenView extends GetView<MainscreenController> {
                 onPressed: () async {
                   final box = GetStorage();
 
-                  final googleSignIn = GoogleSignIn(
-                    serverClientId:
-                        '223603698019-imou4debdr194jicsps6aalvl22lmls1.apps.googleusercontent.com',
-                  );
-
-                  try {
-                    await googleSignIn.signOut();
-                  } catch (_) {}
+                  final serverClientId = dotenv.env['GOOGLE_SERVER_CLIENT_ID'];
+                  if (serverClientId != null) {
+                    final googleSignIn = GoogleSignIn(
+                      serverClientId: serverClientId,
+                    );
+                    try {
+                      await googleSignIn.signOut();
+                    } catch (_) {}
+                  }
 
                   try {
                     await Supabase.instance.client.auth.signOut();
@@ -72,7 +77,6 @@ class MainscreenView extends GetView<MainscreenController> {
                   await box.remove("vehicle_id");
 
                   Get.back();
-
                   SystemNavigator.pop();
                 },
                 child: const Text("Ya", style: TextStyle(color: Colors.white)),
@@ -82,59 +86,138 @@ class MainscreenView extends GetView<MainscreenController> {
         );
       },
       child: Scaffold(
-        body: Obx(
-          () => IndexedStack(
-            index: controller.currentIndex.value,
-            children: pages,
-          ),
-        ),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFFDEFF4), // Warna pink pucat sesuai gambar
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(20),
-            ), // Opsional: jika ingin melengkung
-          ),
-          child: Obx(
-            () => BottomNavigationBar(
-              currentIndex: controller.currentIndex.value,
-              onTap: controller.changePage,
-              elevation: 0, // Menghilangkan bayangan agar terlihat flat
-              backgroundColor: Colors.transparent, // Mengikuti warna Container
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: const Color(
-                0xFF9E7761,
-              ), // Warna cokelat ikon aktif
-              unselectedItemColor: Colors.grey.withOpacity(0.6),
-              selectedLabelStyle: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+        backgroundColor: Colors.white,
+
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Obx(
+                () => IndexedStack(
+                  index: controller.currentIndex.value,
+                  children: pages,
+                ),
               ),
-              unselectedLabelStyle: const TextStyle(fontSize: 12),
-              items: const [
-                BottomNavigationBarItem(
-                  icon: ImageIcon(AssetImage('assets/icon/dashboard.png')),
-                  label: 'Dashboard',
-                ),
-                BottomNavigationBarItem(
-                  icon: ImageIcon(AssetImage('assets/icon/kendaraan.png')),
-                  label: 'Kendaraan',
-                ),
-                BottomNavigationBarItem(
-                  icon: ImageIcon(AssetImage('assets/icon/service.png')),
-                  label: 'Servis',
-                ),
-                BottomNavigationBarItem(
-                  icon: ImageIcon(AssetImage('assets/icon/edukasi.png')),
-                  label: 'Edukasi',
-                ),
-                BottomNavigationBarItem(
-                  icon: ImageIcon(AssetImage('assets/icon/profil.png')),
-                  label: 'Profil',
-                ),
-              ],
             ),
-          ),
+
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
+                  ),
+                  child: Container(
+                    height: 70,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(100),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.25),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final double tabWidth =
+                            constraints.maxWidth / controller.navItems.length;
+
+                        return Obx(() {
+                          final currentIndex = controller.currentIndex.value;
+
+                          return Stack(
+                            children: [
+                              AnimatedPositioned(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.fastOutSlowIn,
+                                left: currentIndex * tabWidth,
+                                top: 0,
+                                bottom: 0,
+                                width: tabWidth,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEEF5FF),
+                                    borderRadius: BorderRadius.circular(100),
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                children: List.generate(
+                                  controller.navItems.length,
+                                  (index) {
+                                    final bool isSelected =
+                                        currentIndex == index;
+                                    final item = controller.navItems[index];
+
+                                    return Expanded(
+                                      child: GestureDetector(
+                                        onTap: () =>
+                                            controller.changePage(index),
+                                        behavior: HitTestBehavior.opaque,
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            AnimatedTheme(
+                                              data: ThemeData(
+                                                iconTheme: IconThemeData(
+                                                  color: isSelected
+                                                      ? const Color(0xFF006BFF)
+                                                      : Colors.black,
+                                                ),
+                                              ),
+                                              child: ImageIcon(
+                                                AssetImage(item['icon']!),
+                                                size: 24,
+                                                color: isSelected
+                                                    ? const Color(0xFF006BFF)
+                                                    : Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            AnimatedDefaultTextStyle(
+                                              duration: const Duration(
+                                                milliseconds: 200,
+                                              ),
+                                              style: TextStyle(
+                                                fontFamily: 'Inter',
+                                                fontSize: 12,
+                                                color: isSelected
+                                                    ? const Color(0xFF006BFF)
+                                                    : Colors.black,
+                                                fontWeight: isSelected
+                                                    ? FontWeight.w600
+                                                    : FontWeight.w400,
+                                              ),
+                                              child: Text(item['label']!),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          );
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

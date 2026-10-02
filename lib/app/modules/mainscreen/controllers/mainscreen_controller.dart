@@ -8,6 +8,14 @@ import 'package:capbatu/app/modules/Feature/profil/controllers/profil_controller
 class MainscreenController extends GetxController {
   var currentIndex = 0.obs;
 
+  final List<Map<String, String>> navItems = [
+    {'icon': 'assets/icon/dashboard.png', 'label': 'Home'},
+    {'icon': 'assets/icon/kendaraan.png', 'label': 'Kendaraan'},
+    {'icon': 'assets/icon/service.png', 'label': 'Servis'},
+    // {'icon': 'assets/icon/edukasi.png', 'label': 'Edukasi'},
+    {'icon': 'assets/icon/profil.png', 'label': 'Profil'},
+  ];
+
   void changePage(int index) {
     currentIndex.value = index;
 
@@ -24,11 +32,11 @@ class MainscreenController extends GetxController {
         Get.find<ServiceController>().getServices();
         break;
 
-      case 3:
-        Get.find<EdukasiController>().fetchArtikel();
-        break;
+      // case 3:
+      //   Get.find<EdukasiController>().fetchArtikel();
+      //   break;
 
-      case 4:
+      case 3:
         Get.find<ProfilController>().getProfile();
         break;
     }

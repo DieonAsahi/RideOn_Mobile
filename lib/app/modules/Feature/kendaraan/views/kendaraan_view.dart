@@ -10,83 +10,100 @@ class KendaraanView extends GetView<KendaraanController> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF006BFF),
-        onPressed: () async {
-          final result = await Get.toNamed('/pluskendaraan');
 
-          print("RESULT = $result");
-
-          if (result == true) {
-            await controller.getVehicles();
-          }
-        },
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            await controller.getVehicles();
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 30),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await controller.getVehicles();
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 30),
 
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Center(
-                    child: Text(
-                      "Kendaraan",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Center(
+                          child: Text(
+                            "Kendaraan",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 30),
+
+                      Obx(() {
+                        if (controller.isLoading.value) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        if (controller.kendaraanList.isEmpty) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: Text("Belum ada kendaraan"),
+                            ),
+                          );
+                        }
+
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: controller.kendaraanList.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final data = controller.kendaraanList[index];
+
+                            return KendaraanCard(
+                              id: data.id,
+                              nama: data.nama,
+                              plat: data.plat,
+                              km: data.km,
+                              status: data.status,
+                              image: data.image,
+                            );
+                          },
+                        );
+                      }),
+                      const SizedBox(height: 90),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 30),
-
-                Obx(() {
-                  if (controller.isLoading.value) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (controller.kendaraanList.isEmpty) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Text("Belum ada kendaraan"),
-                      ),
-                    );
-                  }
-
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: controller.kendaraanList.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final data = controller.kendaraanList[index];
-
-                      return KendaraanCard(
-                        id: data.id,
-                        nama: data.nama,
-                        plat: data.plat,
-                        km: data.km,
-                        status: data.status,
-                        image: data.image,
-                      );
-                    },
-                  );
-                }),
-              ],
+              ),
             ),
-          ),
+
+            Positioned(
+              right: 16,
+              bottom: 96,
+              child: FloatingActionButton(
+                heroTag:
+                    'addKendaraanFab',
+                backgroundColor: const Color(0xFF006BFF),
+                onPressed: () async {
+                  final result = await Get.toNamed('/pluskendaraan');
+
+                  print("RESULT = $result");
+
+                  if (result == true) {
+                    await controller.getVehicles();
+                  }
+                },
+                child: const Icon(Icons.add, color: Colors.white),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -251,7 +268,10 @@ class KendaraanCard extends StatelessWidget {
                           isLast
                               ? "Ini adalah satu-satunya kendaraan Anda. Jika Anda menghapus maka Anda wajib menambahkan kendaraan baru.\n\nApakah Anda yakin ingin menghapus?"
                               : "Apakah Anda yakin ingin menghapus kendaraan ini?",
-                          style: const TextStyle(fontSize: 13, color: Colors.black),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black,
+                          ),
                         ),
                         actions: [
                           OutlinedButton(
@@ -263,7 +283,10 @@ class KendaraanCard extends StatelessWidget {
                             ),
                             child: const Text(
                               "Tidak",
-                              style: TextStyle(color: Colors.grey, fontSize: 16),
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                           ElevatedButton(
@@ -276,7 +299,10 @@ class KendaraanCard extends StatelessWidget {
                             ),
                             child: const Text(
                               "Ya",
-                              style: TextStyle(color: Colors.white, fontSize: 16),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                         ],

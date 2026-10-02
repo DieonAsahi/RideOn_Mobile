@@ -199,7 +199,7 @@ class ServiceView extends GetView<ServiceController> {
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 120),
               ],
             ),
           ),
