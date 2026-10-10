@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../services/location_service.dart';
+import '../../../services/connectivity_service.dart';
 
 class WorkshopModel {
   final int? id;
@@ -194,6 +195,7 @@ class PetabengkelController extends GetxController with WidgetsBindingObserver {
       await getWorkshops();
     } catch (e) {
       print("Error loadMapData: $e");
+      ConnectivityService.handleNetworkError(e);
     } finally {
       isLoading.value = false;
     }
@@ -269,6 +271,7 @@ class PetabengkelController extends GetxController with WidgetsBindingObserver {
       );
     } catch (e) {
       print("Error getWorkshops: $e");
+      ConnectivityService.handleNetworkError(e);
     }
   }
 
@@ -299,6 +302,7 @@ class PetabengkelController extends GetxController with WidgetsBindingObserver {
       showBottomSheet.value = true;
     } catch (e) {
       print("Error getWorkshopDetail: $e");
+      ConnectivityService.handleNetworkError(e);
     }
   }
 }

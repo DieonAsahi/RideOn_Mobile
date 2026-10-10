@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/services/auth_service.dart';
+import 'package:capbatu/app/services/connectivity_service.dart';
 
 class VehicleComponent {
   final String title;
@@ -103,12 +104,16 @@ class HomeController extends GetxController {
   var components = <VehicleComponent>[].obs;
   var unreadNotifCount = 0.obs;
 
+  var isDropdownOpen = false.obs;
   var isLoading = false.obs;
   var tanggal = <String>[].obs;
   var performa = <double>[].obs;
 
   var currentVehicleIndex = 0.obs;
   var vehicles = <dynamic>[].obs;
+
+  var selectedVehicleId = "".obs;
+  var vehiclePlat = "".obs;
 
   bool get isFirstVehicle => currentVehicleIndex.value == vehicles.length - 1;
   bool get isLastVehicle => vehicles.isEmpty || currentVehicleIndex.value == 0;
@@ -209,27 +214,41 @@ class HomeController extends GetxController {
     return '${date.day} ${bulan[date.month]}';
   }
 
-  void previousVehicle() {
-    if (currentVehicleIndex.value < vehicles.length - 1) {
-      currentVehicleIndex.value++;
+  void changeVehicle(String id) {
+    final index = vehicles.indexWhere((e) => e["id"].toString() == id);
 
-      final id = vehicles[currentVehicleIndex.value]["id"];
-      box.write("vehicle_id", id);
+    if (index != -1) {
+      currentVehicleIndex.value = index;
+      selectedVehicleId.value = id;
       vehicleId = id;
-      fetchHome();
+      box.write("vehicle_id", id);
+      vehiclePlat.value = vehicles[index]["plate_number"]?.toString() ?? "-";
+
+      fetchHome(force: true);
     }
   }
 
-  void nextVehicle() {
-    if (currentVehicleIndex.value > 0) {
-      currentVehicleIndex.value--;
+  // void previousVehicle() {
+  //   if (currentVehicleIndex.value < vehicles.length - 1) {
+  //     currentVehicleIndex.value++;
 
-      final id = vehicles[currentVehicleIndex.value]["id"];
-      box.write("vehicle_id", id);
-      vehicleId = id;
-      fetchHome();
-    }
-  }
+  //     final id = vehicles[currentVehicleIndex.value]["id"];
+  //     box.write("vehicle_id", id);
+  //     vehicleId = id;
+  //     fetchHome();
+  //   }
+  // }
+
+  // void nextVehicle() {
+  //   if (currentVehicleIndex.value > 0) {
+  //     currentVehicleIndex.value--;
+
+  //     final id = vehicles[currentVehicleIndex.value]["id"];
+  //     box.write("vehicle_id", id);
+  //     vehicleId = id;
+  //     fetchHome();
+  //   }
+  // }
 
   Future<void> selectYearArtikel(int year) async {
     selectedYearArtikel.value = year;
@@ -316,10 +335,21 @@ class HomeController extends GetxController {
           if (currentVehicleIndex.value < 0) {
             currentVehicleIndex.value = 0;
           }
+          if (vehicles.isNotEmpty) {
+            selectedVehicleId.value = vehicles[currentVehicleIndex.value]["id"]
+                .toString();
+            vehicleId = selectedVehicleId.value;
+
+            vehiclePlat.value =
+                vehicles[currentVehicleIndex.value]["plate_number"]
+                    ?.toString() ??
+                "-";
+          }
         }
       }
     } catch (e) {
       print("Error getVehicles: $e");
+      ConnectivityService.handleNetworkError(e);
     }
   }
 
@@ -357,8 +387,101 @@ class HomeController extends GetxController {
       }
     } catch (e) {
       print(e);
+      ConnectivityService.handleNetworkError(e);
     } finally {
       isLoadingArtikel.value = false;
+    }
+  }
+
+  Future<void> fetchHome({bool force = false}) async {
+    if (!force && components.isNotEmpty && namaController.value.isNotEmpty) {
+      fetchUnreadNotifications();
+      return;
+    }
+    try {
+      isLoading.value = true;
+      isLoadingOdometer.value = true;
+      final token = box.read("token");
+
+      if (token == null) {
+        await AuthService.logout();
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/vehicle/vehicle-health/$vehicleId"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      print("STATUS CODE: ${response.statusCode}");
+      print("RESPONSE BODY: ${response.body}");
+
+      if (response.statusCode == 401) {
+        await AuthService.logout();
+        return;
+      }
+
+      if (response.statusCode != 200) {
+        return;
+      }
+
+      final data = jsonDecode(response.body);
+
+      if (data == null || data is! Map<String, dynamic>) {
+        return;
+      }
+
+      if (data['user'] != null && data['user'] is Map) {
+        namaController.value = data['user']['full_name']?.toString() ?? '';
+      }
+
+      if (data['vehicle'] != null && data['vehicle'] is Map) {
+        vehicleImage.value = data['vehicle']['vehicle_image']?.toString() ?? '';
+        odometer.value = data['vehicle']['current_odometer'] ?? 0;
+      }
+
+      if (data['performance'] != null &&
+          data['performance'] is Map &&
+          data['performance']['history'] != null &&
+          data['performance']['history'] is List) {
+        final history = (data['performance']['history'] as List)
+          ..sort(
+            (a, b) => DateTime.parse(
+              a['created_at'],
+            ).compareTo(DateTime.parse(b['created_at'])),
+          );
+
+        tanggal.value = history.map<String>((item) {
+          final date = DateTime.parse(item['created_at']);
+          return formatTanggal(date);
+        }).toList();
+
+        performa.value = history.map<double>((item) {
+          return (item['performance_percent'] as num).toDouble();
+        }).toList();
+      }
+
+      if (tanggal.isEmpty) {
+        tanggal.value = ["-"];
+        performa.value = [0];
+      }
+
+      if (data['components'] != null && data['components'] is List) {
+        components.value = (data['components'] as List)
+            .map((e) => VehicleComponent.fromJson(e))
+            .toList();
+      }
+
+      await fetchUnreadNotifications();
+    } catch (e) {
+      print("Error fetchHome: $e");
+      ConnectivityService.handleNetworkError(e);
+    } finally {
+      isLoadingOdometer.value = false;
+      isLoading.value = false;
     }
   }
 
@@ -499,6 +622,7 @@ class HomeController extends GetxController {
     } catch (e, stack) {
       print(e);
       print(stack);
+      ConnectivityService.handleNetworkError(e);
     } finally {
       isLoadingKomponen.value = false;
     }
@@ -542,93 +666,6 @@ class HomeController extends GetxController {
 
     if (selectedYearKomponen.value == 0 && yearsKomponen.isNotEmpty) {
       selectedYearKomponen.value = yearsKomponen.first;
-    }
-  }
-
-  Future<void> fetchHome() async {
-    try {
-      isLoading.value = true;
-      isLoadingOdometer.value = true;
-      final token = box.read("token");
-
-      if (token == null) {
-        await AuthService.logout();
-        return;
-      }
-
-      final response = await http.get(
-        Uri.parse("$baseUrl/api/vehicle/vehicle-health/$vehicleId"),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-      );
-
-      print("STATUS CODE: ${response.statusCode}");
-      print("RESPONSE BODY: ${response.body}");
-
-      if (response.statusCode == 401) {
-        await AuthService.logout();
-        return;
-      }
-
-      if (response.statusCode != 200) {
-        return;
-      }
-
-      final data = jsonDecode(response.body);
-
-      if (data == null || data is! Map<String, dynamic>) {
-        return;
-      }
-
-      if (data['user'] != null && data['user'] is Map) {
-        namaController.value = data['user']['full_name']?.toString() ?? '';
-      }
-
-      if (data['vehicle'] != null && data['vehicle'] is Map) {
-        vehicleImage.value = data['vehicle']['vehicle_image']?.toString() ?? '';
-        odometer.value = data['vehicle']['current_odometer'] ?? 0;
-      }
-
-      if (data['performance'] != null &&
-          data['performance'] is Map &&
-          data['performance']['history'] != null &&
-          data['performance']['history'] is List) {
-        final history = (data['performance']['history'] as List)
-          ..sort(
-            (a, b) => DateTime.parse(
-              a['created_at'],
-            ).compareTo(DateTime.parse(b['created_at'])),
-          );
-
-        tanggal.value = history.map<String>((item) {
-          final date = DateTime.parse(item['created_at']);
-          return formatTanggal(date);
-        }).toList();
-
-        performa.value = history.map<double>((item) {
-          return (item['performance_percent'] as num).toDouble();
-        }).toList();
-      }
-
-      if (tanggal.isEmpty) {
-        tanggal.value = ["-"];
-        performa.value = [0];
-      }
-
-      if (data['components'] != null && data['components'] is List) {
-        components.value = (data['components'] as List)
-            .map((e) => VehicleComponent.fromJson(e))
-            .toList();
-      }
-
-      await fetchUnreadNotifications();
-    } catch (e) {
-      print("Error fetchHome: $e");
-    } finally {
-      isLoadingOdometer.value = false;
-      isLoading.value = false;
     }
   }
 

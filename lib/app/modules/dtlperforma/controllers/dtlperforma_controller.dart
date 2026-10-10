@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../../services/connectivity_service.dart';
 
 class DtlperformaController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -195,6 +196,7 @@ class DtlperformaController extends GetxController {
       print(history);
     } catch (e) {
       print(e);
+      ConnectivityService.handleNetworkError(e);
     } finally {
       isLoading.value = false;
     }

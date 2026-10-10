@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_connect/http/src/utils/utils.dart';
 
 import '../controllers/rwtservis_controller.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 
 class RwtservisView extends GetView<RwtservisController> {
   const RwtservisView({super.key});
@@ -12,7 +12,7 @@ class RwtservisView extends GetView<RwtservisController> {
     return Scaffold(
       backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF006BFF),
+        backgroundColor: AppColors.primaryBlue,
         onPressed: () {
           Get.toNamed('/rwttambah');
         },
@@ -42,7 +42,7 @@ class RwtservisView extends GetView<RwtservisController> {
                           "Riwayat Servis",
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -151,8 +151,47 @@ class RwtservisView extends GetView<RwtservisController> {
 
                   const SizedBox(height: 20),
 
-                  Obx(
-                    () => ListView.builder(
+                  Obx(() {
+                    if (controller.filteredData.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.only(
+                          top: 60,
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.asset(
+                                'assets/logo/empty_notification.png',
+                                width: 160,
+                                height: 160,
+                              ),
+                              const SizedBox(height: 24),
+                              const Text(
+                                "Belum Ada Riwayat Servis",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                "Riwayat servis yang telah dicatat akan ditampilkan di sini.",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: controller.filteredData.length,
@@ -163,8 +202,13 @@ class RwtservisView extends GetView<RwtservisController> {
                           margin: const EdgeInsets.only(bottom: 15),
                           padding: const EdgeInsets.all(15),
                           decoration: BoxDecoration(
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: Colors.grey.shade300),
+                            border: Border.all(
+                              color: AppColors.cardBorder,
+                              width: 1.0,
+                            ),
+                            boxShadow: [AppColors.cardShadow],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +230,7 @@ class RwtservisView extends GetView<RwtservisController> {
                                           Text(
                                             item['jenis'] ?? "-",
                                             style: const TextStyle(
-                                              color: Color(0xFF006BFF),
+                                              color: Color(0xFF2196F3),
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
                                             ),
@@ -533,36 +577,11 @@ class RwtservisView extends GetView<RwtservisController> {
                           ),
                         );
                       },
-                    ),
-                  ),
+                    );
+                  }),
                 ],
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _filterButton({
-    required String title,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFF006BFF) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            fontSize: 12,
-            color: selected ? Colors.white : Colors.grey,
           ),
         ),
       ),

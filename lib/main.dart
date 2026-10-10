@@ -7,11 +7,13 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'app/core/app_lifecycle.dart';
 import 'app/routes/app_pages.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'package:timeago/src/messages/id_messages.dart';
 
 import 'app/services/local_notification_service.dart';
 import 'app/services/firebase_messaging_service.dart';
 import 'app/services/location_service.dart';
+import 'app/services/connectivity_service.dart';
+import 'app/widgets/no_internet_widget.dart';
+import 'app/core/theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -23,8 +25,11 @@ Future<void> main() async {
   WidgetsBinding.instance.addObserver(AppLifecycle());
 
   await dotenv.load(fileName: ".env");
-  
+
   await GetStorage.init();
+
+  // Inisialisasi ConnectivityService secara global
+  Get.put(ConnectivityService(), permanent: true);
 
   await initializeDateFormatting('id_ID', null);
 
@@ -44,10 +49,10 @@ Future<void> main() async {
   // FCM
   await FirebaseMessagingService.init();
 
-  // Request location permission at app startup (seperti perizinan notifikasi)
+  // Request location permission at app startup
   await LocationService.requestLocationPermission();
 
-  timeago.setLocaleMessages('id', IdMessages());
+  timeago.setLocaleMessages('id', timeago.IdMessages());
 
   runApp(const MyApp());
 
@@ -61,8 +66,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
       initialRoute: Routes.WELCOME,
       getPages: AppPages.routes,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            child ?? const SizedBox.shrink(),
+            const GlobalNoInternetOverlay(),
+          ],
+        );
+      },
     );
   }
 }

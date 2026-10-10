@@ -27,7 +27,7 @@ class EdukasiView extends GetView<EdukasiController> {
                   child: const Text(
                     "Edukasi",
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                     ),

@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:capbatu/app/services/connectivity_service.dart';
+import 'package:capbatu/app/widgets/app_snackbar.dart';
+import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dart';
+import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
 
 class RwttambahController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -113,42 +117,51 @@ class RwttambahController extends GetxController {
   }
 
   Future<void> loadMasterComponents() async {
-    final token = box.read("token");
+    try {
+      final token = box.read("token");
 
-    final response = await http.get(
-      Uri.parse("$baseUrl/api/vehicle/master-components"),
-      headers: {"Authorization": "Bearer $token"},
-    );
-
-    if (response.statusCode == 200) {
-      components.value = List<Map<String, dynamic>>.from(
-        jsonDecode(response.body),
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/vehicle/master-components"),
+        headers: {"Authorization": "Bearer $token"},
       );
+
+      if (response.statusCode == 200) {
+        components.value = List<Map<String, dynamic>>.from(
+          jsonDecode(response.body),
+        );
+      }
+    } catch (e) {
+      ConnectivityService.handleNetworkError(e);
     }
   }
 
   Future<void> loadVehicleOdometer() async {
-    final token = box.read("token");
-    final vehicleId = box.read("vehicle_id");
+    try {
+      final token = box.read("token");
+      final vehicleId = box.read("vehicle_id");
 
-    print("RWTTAMBAH VEHICLE ID = $vehicleId");
+      if (vehicleId == null || vehicleId.toString().isEmpty) return;
 
-    final response = await http.get(
-      Uri.parse("$baseUrl/api/vehicle/vehicle-odometer/$vehicleId"),
-      headers: {"Authorization": "Bearer $token"},
-    );
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/vehicle/vehicle-odometer/$vehicleId"),
+        headers: {"Authorization": "Bearer $token"},
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      currentOdometer.value = data["current_odometer"];
+        currentOdometer.value = data["current_odometer"] ?? 0;
 
-      print("RWTTAMBAH ODOMETER = ${data["current_odometer"]}");
+        if (data["last_odometer_update"] != null) {
+          final updatedAt =
+              DateTime.parse(data["last_odometer_update"]).toLocal();
 
-      final updatedAt = DateTime.parse(data["last_odometer_update"]).toLocal();
-
-      odometerUpdatedToday.value =
-          DateTime.now().difference(updatedAt).inDays == 0;
+          odometerUpdatedToday.value =
+              DateTime.now().difference(updatedAt).inDays == 0;
+        }
+      }
+    } catch (e) {
+      ConnectivityService.handleNetworkError(e);
     }
   }
 
@@ -229,16 +242,30 @@ class RwttambahController extends GetxController {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar("Berhasil", "Riwayat servis berhasil disimpan");
+        if (Get.isRegistered<HomeController>()) {
+          Get.find<HomeController>().fetchHome(force: true);
+        }
+        if (Get.isRegistered<KendaraanController>()) {
+          Get.find<KendaraanController>().getVehicles(force: true);
+        }
+
+        AppSnackbar.success("Data berhasil disimpan.");
 
         Get.offNamed('/rwtservis');
       } else {
-        print(response.body);
-
-        Get.snackbar("Error", response.body);
+        String msg = "Gagal menyimpan riwayat servis";
+        try {
+          final err = jsonDecode(response.body);
+          if (err is Map && (err['message'] != null || err['error'] != null)) {
+            msg = err['message'] ?? err['error'];
+          }
+        } catch (_) {}
+        Get.snackbar("Error", msg);
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar("Error", "Gagal menyimpan riwayat servis");
+      }
     } finally {
       isLoading.value = false;
     }
@@ -305,19 +332,44 @@ class RwttambahController extends GetxController {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar("Berhasil", "Riwayat servis berhasil disimpan");
+        if (Get.isRegistered<HomeController>()) {
+          Get.find<HomeController>().fetchHome(force: true);
+        }
+        if (Get.isRegistered<KendaraanController>()) {
+          Get.find<KendaraanController>().getVehicles(force: true);
+        }
+
+        AppSnackbar.success("Data berhasil diperbarui.");
 
         Get.offNamed('/rwtservis');
       } else {
-        print(response.body);
-
-        Get.snackbar("Error", response.body);
+        String msg = "Gagal menyimpan riwayat servis";
+        try {
+          final err = jsonDecode(response.body);
+          if (err is Map && (err['message'] != null || err['error'] != null)) {
+            msg = err['message'] ?? err['error'];
+          }
+        } catch (_) {}
+        Get.snackbar("Error", msg);
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar("Error", "Gagal memperbarui riwayat servis");
+      }
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void resetForm() {
+    detailController.clear();
+    tanggalController.clear();
+    bengkelController.clear();
+    biayaController.clear();
+    selectedDate = null;
+    selectedComponentId.value = 0;
+    selectedJenis.value = "Servis Rutin";
+    selectedStatus.value = "Dijadwalkan";
   }
 
   @override

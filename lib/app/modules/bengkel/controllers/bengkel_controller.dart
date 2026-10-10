@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../services/location_service.dart';
+import '../../../services/connectivity_service.dart';
 
 class BengkelController extends GetxController with WidgetsBindingObserver {
   final Dio dio = Dio();
@@ -138,14 +139,10 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
       // 2. Cek apakah GPS aktif
       bool serviceEnabled = await LocationService.isLocationServiceEnabled();
       isGpsEnabled.value = serviceEnabled;
-      if (serviceEnabled) {
-        isGpsDismissed.value = false;
-        return;
-      }
-
       if (!serviceEnabled) {
         return;
       }
+      isGpsDismissed.value = false;
 
       isLoading.value = true;
 
@@ -188,6 +185,7 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
       filteredBengkelList.assignAll(bengkelList);
     } catch (e) {
       print("Error loadNearestWorkshop: $e");
+      ConnectivityService.handleNetworkError(e);
     } finally {
       isLoading.value = false;
     }

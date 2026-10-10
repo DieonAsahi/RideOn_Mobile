@@ -15,28 +15,32 @@ class NotifView extends GetView<NotifController> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
-
-              child: Row(
+              padding: const EdgeInsets.all(12),
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  IconButton(
-                    onPressed: () => Get.toNamed('/mainscreen'),
-                    icon: const Icon(Icons.arrow_back_ios),
-                  ),
-
-                  const Expanded(
-                    child: Text(
-                      "Notifikasi",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      onPressed: () {
+                        if (Navigator.of(context).canPop()) {
+                          Get.back();
+                        } else {
+                          Get.offNamed('/mainscreen');
+                        }
+                      },
+                      icon: const Icon(Icons.arrow_back_ios),
                     ),
                   ),
 
-                  const SizedBox(width: 40),
+                  const Text(
+                    "Notifikasi",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -57,7 +61,7 @@ class NotifView extends GetView<NotifController> {
               final screenHeight = Get.height;
 
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Center(
                   child: Container(
                     constraints: BoxConstraints(
@@ -153,58 +157,65 @@ class NotifView extends GetView<NotifController> {
             Expanded(
               child: Obx(() {
                 if (!controller.isPermissionGranted.value) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.notifications_off_outlined,
-                            size: 64,
-                            color: Colors.grey.shade400,
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            "Perizinan Notifikasi Dinonaktifkan",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                  return Align(
+                    alignment: const Alignment(0.0, -0.2),
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset(
+                              'assets/logo/izin_notif.png',
+                              width: 160,
+                              height: 160,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Aktifkan perizinan notifikasi untuk menerima pengingat servis dan update kendaraan Anda.",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: () => controller.requestPermission(),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF006BFF),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                            ),
-                            child: const Text(
-                              "Aktifkan Perizinan Notifikasi",
+                            const SizedBox(height: 16),
+                            const Text(
+                              "Izin Notifikasi Diperlukan",
+                              textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.white,
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 10),
+                            Text(
+                              "Izinkan notifikasi agar Anda mendapatkan pengingat servis dan informasi penting lainnya.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: () => controller.requestPermission(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2196F3),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                              ),
+                              child: const Text(
+                                "Izinkan Notifikasi",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -217,9 +228,19 @@ class NotifView extends GetView<NotifController> {
                 final displayList = controller.filteredNotifList;
 
                 if (displayList.isEmpty) {
+                  String titleText = "Belum Ada Notifikasi";
+                  String descText =
+                      "Notifikasi akan muncul di sini jika ada pembaruan terbaru.";
+
+                  if (controller.selectedFilter == 'Belum dibaca' &&
+                      controller.filterOptions.isNotEmpty) {
+                    titleText = "Semua Notifikasi Sudah Dibaca";
+                    descText =
+                        "Anda belum memiliki notifikasi baru yang belum dibaca.";
+                  }
                   return RefreshIndicator(
                     onRefresh: () async {
-                      await controller.getNotifications();
+                      await controller.getNotifications(silent: true);
                     },
                     child: CustomScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
@@ -230,10 +251,8 @@ class NotifView extends GetView<NotifController> {
                             padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Align(
                               alignment: const Alignment(0.0, -0.3),
-
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
-
                                 children: [
                                   Image.asset(
                                     'assets/logo/empty_notification.png',
@@ -241,8 +260,8 @@ class NotifView extends GetView<NotifController> {
                                     height: 160,
                                   ),
                                   const SizedBox(height: 24),
-                                  const Text(
-                                    "Belum ada notifikasi",
+                                  Text(
+                                    titleText,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 16,
@@ -251,8 +270,8 @@ class NotifView extends GetView<NotifController> {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  const Text(
-                                    "Notifikasi akan muncul di sini jika ada pembaruan terbaru.",
+                                  Text(
+                                    descText,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 13,
@@ -271,7 +290,7 @@ class NotifView extends GetView<NotifController> {
 
                 return RefreshIndicator(
                   onRefresh: () async {
-                    await controller.getNotifications();
+                    await controller.getNotifications(silent: true);
                   },
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
@@ -302,10 +321,10 @@ class NotifCard extends GetView<NotifController> {
   Color getStatusColor() {
     switch (data.status) {
       case "Darurat":
-        return const Color(0xFFFF4D4F);
+        return const Color(0xFFFF0000);
 
       case "Mendesak":
-        return const Color(0xFFFF8A00);
+        return const Color(0xFFFF6200);
 
       case "Segera":
         return const Color(0xFFFFC107);
@@ -317,10 +336,18 @@ class NotifCard extends GetView<NotifController> {
 
   Color getBorderColor() {
     if (!data.isRead) {
-      return const Color(0xFF2782FF);
+      return const Color(0xFF2196F3);
     }
 
     return Colors.grey.shade300;
+  }
+
+  Color getBackgroundColor() {
+    if (!data.isRead) {
+      return const Color(0xFFF0F8FF);
+    }
+
+    return Colors.white;
   }
 
   @override
@@ -332,13 +359,13 @@ class NotifCard extends GetView<NotifController> {
         padding: const EdgeInsets.all(14),
 
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: getBackgroundColor(),
 
           borderRadius: BorderRadius.circular(18),
 
           border: Border.all(
             color: getBorderColor(),
-            width: data.isRead ? 1 : 2,
+            width: 1.2, //data.isRead ? 1 : 2,
           ),
         ),
 
@@ -375,7 +402,7 @@ class NotifCard extends GetView<NotifController> {
                           style: TextStyle(
                             fontSize: 10,
                             color: getStatusColor(),
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -385,7 +412,7 @@ class NotifCard extends GetView<NotifController> {
                       Text(
                         data.time,
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 8,
                           color: Colors.grey.shade500,
                         ),
                       ),
@@ -398,17 +425,19 @@ class NotifCard extends GetView<NotifController> {
                   Text(
                     data.title,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
 
-                  const SizedBox(height: 4),
-
                   /// DESC
                   Text(
                     data.desc,
-                    style: const TextStyle(fontSize: 13, height: 1.4),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.4,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ],
               ),

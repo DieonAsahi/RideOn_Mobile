@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/estimasi_controller.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 
 class EstimasiView extends GetView<EstimasiController> {
   const EstimasiView({super.key});
@@ -113,7 +114,7 @@ class EstimasiView extends GetView<EstimasiController> {
             onPressed: () {},
             style: ElevatedButton.styleFrom(
               elevation: 0,
-              backgroundColor: const Color(0xFF006BFF),
+              backgroundColor: const Color(0xFF2196F3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
@@ -160,7 +161,10 @@ class ProductCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade300),
+            border: Border.all(color: AppColors.cardBorder, width: 1.0),
+            boxShadow: [
+              AppColors.cardShadow,
+            ],
           ),
 
           child: Column(
@@ -191,11 +195,11 @@ class ProductCard extends StatelessWidget {
                       height: 20,
                       decoration: BoxDecoration(
                         color: item.isSelected.value
-                            ? const Color(0xFF006BFF)
+                            ? AppColors.primaryBlue
                             : Colors.white,
 
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.grey.shade400),
+                        border: Border.all(color: AppColors.cardBorder),
                       ),
                       child: item.isSelected.value
                           ? const Icon(

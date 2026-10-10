@@ -25,7 +25,7 @@ class KerusakanView extends GetView<KerusakanController> {
                 const Center(
                   child: Text(
                     "Cek Kerusakan",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
 
@@ -48,7 +48,7 @@ class KerusakanView extends GetView<KerusakanController> {
                   value: progress,
                   minHeight: 5,
                   backgroundColor: Colors.grey.shade300,
-                  valueColor: const AlwaysStoppedAnimation(Color(0xFF006BFF)),
+                  valueColor: const AlwaysStoppedAnimation(Color(0xFF2196F3)),
                 ),
 
                 const SizedBox(height: 40),
@@ -100,7 +100,7 @@ class KerusakanView extends GetView<KerusakanController> {
                             onPressed: controller.nextStep,
 
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF006BFF),
+                              backgroundColor: const Color(0xFF2196F3),
 
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),

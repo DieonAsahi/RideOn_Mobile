@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/rwttambah_controller.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 
 class RwttambahView extends GetView<RwttambahController> {
   const RwttambahView({super.key});
@@ -28,7 +29,7 @@ class RwttambahView extends GetView<RwttambahController> {
                         "Tambah Riwayat Servis",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -250,7 +251,7 @@ class RwttambahView extends GetView<RwttambahController> {
 
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF006BFF),
+                        backgroundColor: const Color(0xFF2196F3),
 
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
@@ -312,9 +313,11 @@ class RwttambahView extends GetView<RwttambahController> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF006BFF) : Colors.white,
+          color: selected ? AppColors.primaryBlue : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(
+            color: selected ? AppColors.primaryBlue : AppColors.cardBorder,
+          ),
         ),
         child: Text(
           title,

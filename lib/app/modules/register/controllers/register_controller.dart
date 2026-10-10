@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:capbatu/app/services/connectivity_service.dart';
+import 'package:capbatu/app/widgets/app_snackbar.dart';
 
 class RegisterController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -43,7 +45,7 @@ class RegisterController extends GetxController {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        Get.snackbar("Success", data['message'] ?? "Register berhasil");
+        AppSnackbar.success(data['message'] ?? "Register berhasil.");
 
         Get.toNamed(
           '/otpemail',
@@ -53,7 +55,9 @@ class RegisterController extends GetxController {
         Get.snackbar("Error", data['error'] ?? "Register gagal");
       }
     } catch (e) {
-      Get.snackbar("Error", "Tidak bisa konek ke server");
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar("Error", "Tidak bisa konek ke server");
+      }
       print(e);
     }
   }

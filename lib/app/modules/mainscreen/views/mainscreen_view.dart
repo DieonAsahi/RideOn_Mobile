@@ -172,15 +172,23 @@ class MainscreenView extends GetView<MainscreenController> {
                                               data: ThemeData(
                                                 iconTheme: IconThemeData(
                                                   color: isSelected
-                                                      ? const Color(0xFF006BFF)
+                                                      ? const Color(0xFF2196F3)
                                                       : Colors.black,
                                                 ),
                                               ),
                                               child: ImageIcon(
-                                                AssetImage(item['icon']!),
+                                                AssetImage(
+                                                  isSelected
+                                                      ? item['icon']!
+                                                            .replaceAll(
+                                                              '.png',
+                                                              '_fill.png',
+                                                            )
+                                                      : item['icon']!,
+                                                ),
                                                 size: 24,
                                                 color: isSelected
-                                                    ? const Color(0xFF006BFF)
+                                                    ? const Color(0xFF2196F3)
                                                     : Colors.black,
                                               ),
                                             ),
@@ -190,10 +198,10 @@ class MainscreenView extends GetView<MainscreenController> {
                                                 milliseconds: 200,
                                               ),
                                               style: TextStyle(
-                                                fontFamily: 'Inter',
+                                                fontFamily: 'Poppins',
                                                 fontSize: 12,
                                                 color: isSelected
-                                                    ? const Color(0xFF006BFF)
+                                                    ? const Color(0xFF2196F3)
                                                     : Colors.black,
                                                 fontWeight: isSelected
                                                     ? FontWeight.w600

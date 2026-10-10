@@ -1,6 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Dibutuhkan untuk FilteringTextInputFormatter
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../controllers/updtodometer_controller.dart';
 
@@ -10,7 +10,6 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Mencegah layout ketarik/rusak saat keyboard muncul di form hasil
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       body: Obx(() {
@@ -22,39 +21,28 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
     );
   }
 
-  // Widget _cameraView() {
-  //   return Obx(() {
-  //     if (!controller.isCameraInitialized.value) {
-  //       return const Center(child: CircularProgressIndicator());
-  //     }
-
-  //     return Stack(
-  //       children: [
-  //         // Pratinjau kamera memenuhi seluruh area sensitif layar
-  //         SizedBox.expand(child: CameraPreview(controller.cameraController!)),
-
-  //         // Lapisan overlay transparan gelap luar kotak target
-  //         IgnorePointer(
-  //           child: Container(color: Colors.black.withOpacity(0.45)),
-  //         ),
-
   Widget _cameraView() {
     return Obx(() {
+      final cam = controller.cameraController;
       if (!controller.isCameraInitialized.value ||
-          controller.cameraController == null) {
-        return const Center(child: CircularProgressIndicator());
+          cam == null ||
+          !cam.value.isInitialized) {
+        return Container(
+          color: Colors.black,
+          child: const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
+        );
       }
 
       return Stack(
         children: [
-          SizedBox.expand(child: CameraPreview(controller.cameraController!)),
+          SizedBox.expand(child: CameraPreview(cam)),
 
-          // Lapisan overlay transparan gelap luar kotak target
           IgnorePointer(
             child: Container(color: Colors.black.withOpacity(0.45)),
           ),
 
-          // Area Kotak Scan Pemindai Odometer
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -81,7 +69,6 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Keterangan status scan computer vision
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
@@ -104,7 +91,7 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Text(
                         "Memindai odometer otomatis...",
                         style: TextStyle(
@@ -120,14 +107,12 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
             ),
           ),
 
-          // Tombol Kembali dibungkus SafeArea agar posisinya pas di bawah poni/notch HP
           Positioned(
             top: 40,
             left: 20,
             child: SafeArea(
               child: GestureDetector(
-                onTap: () async {
-                  await controller.disposeCamera();
+                onTap: () {
                   Get.back();
                 },
                 child: const Icon(Icons.close, color: Colors.white, size: 32),
@@ -174,8 +159,10 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
                     ),
                     child: const Text(
                       "Masukan Angka Odometer",
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w400,
+                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -213,7 +200,6 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
               child: TextField(
                 controller: controller.odometerController,
                 keyboardType: TextInputType.number,
-                // PENYEMPURNAAN: Memaksa input hanya menerima angka bulat murni
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 style: const TextStyle(color: Colors.black),
                 decoration: const InputDecoration(
@@ -230,10 +216,8 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
                   child: ElevatedButton(
                     onPressed: () async {
                       controller.pageState.value = 0;
-                      await controller
-                          .disposeCamera(); // Bersihkan instance lama
-                      await controller
-                          .initCamera(); // Jalankan ulang kamera baru & timernya
+                      await controller.disposeCamera();
+                      await controller.initCamera();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey[200],

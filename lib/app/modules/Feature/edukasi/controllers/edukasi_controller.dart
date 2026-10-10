@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../../../services/connectivity_service.dart';
 
 class ArtikelModel {
   final String source;
@@ -60,6 +61,7 @@ class EdukasiController extends GetxController {
       }
     } catch (e) {
       print(e);
+      ConnectivityService.handleNetworkError(e);
     } finally {
       isLoading.value = false;
     }

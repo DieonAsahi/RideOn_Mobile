@@ -9,7 +9,7 @@ class OtpemailView extends GetView<OtpemailController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF006BFF),
+      backgroundColor: const Color(0xFF2196F3),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -21,7 +21,7 @@ class OtpemailView extends GetView<OtpemailController> {
                 const Text(
                   "OTP Verification",
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.yellow,
                   ),

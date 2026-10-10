@@ -12,6 +12,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
 import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:capbatu/app/services/connectivity_service.dart';
+import 'package:capbatu/app/widgets/app_snackbar.dart';
 
 class PluskendaraanController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -275,7 +277,9 @@ class PluskendaraanController extends GetxController {
       imageStep.value = 1;
       Get.snackbar("Berhasil", "Gambar berhasil diupload");
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar("Error", "Gagal mengupload gambar");
+      }
     } finally {
       isUploading.value = false;
     }
@@ -384,18 +388,19 @@ class PluskendaraanController extends GetxController {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         box.write("vehicle_id", data["vehicle"]["id"]);
-        Get.snackbar("Berhasil", "Kendaraan berhasil ditambahkan");
 
         if (Get.isRegistered<HomeController>()) {
           final homeC = Get.find<HomeController>();
           homeC.vehicleId = data["vehicle"]["id"].toString();
           homeC.getVehicles();
-          homeC.fetchHome();
+          homeC.fetchHome(force: true);
         }
 
         if (Get.isRegistered<KendaraanController>()) {
-          Get.find<KendaraanController>().getVehicles();
+          Get.find<KendaraanController>().getVehicles(force: true);
         }
+
+        AppSnackbar.success("Kendaraan berhasil ditambahkan.");
 
         if (isFromLogin.value) {
           Get.offNamed('/mainscreen');
@@ -406,7 +411,9 @@ class PluskendaraanController extends GetxController {
         Get.snackbar("Error", data['message'] ?? "Terjadi kesalahan");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar("Error", "Gagal menambahkan kendaraan");
+      }
     } finally {
       isLoading.value = false;
     }

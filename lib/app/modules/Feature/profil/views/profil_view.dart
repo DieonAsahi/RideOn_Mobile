@@ -1,10 +1,9 @@
+import "package:capbatu/app/widgets/skeleton_widget.dart";
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:capbatu/app/services/auth_service.dart';
 import '../controllers/profil_controller.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 
 class ProfilView extends GetView<ProfilController> {
   const ProfilView({super.key});
@@ -20,26 +19,26 @@ class ProfilView extends GetView<ProfilController> {
           onRefresh: () async {
             await controller.getProfile();
           },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Obx(() {
-              if (controller.isLoading.value) {
-                return SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.7,
-                  child: const Center(child: CircularProgressIndicator()),
-                );
-              }
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: Obx(() {
+                  if (controller.isLoading.value) {
+                    return const ProfileSkeleton();
+                  }
 
-              return Column(
-                children: [
-                  const SizedBox(height: 30),
+                  return Column(
+                    children: [
+                      const SizedBox(height: 20),
 
                   const Center(
                     child: Text(
                       "Profil",
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
@@ -113,7 +112,7 @@ class ProfilView extends GetView<ProfilController> {
                       FocusScope.of(context).unfocus();
 
                       await Get.toNamed('/editprofil');
-                      controller.getProfile();
+                      controller.getProfile(force: true);
                     },
                   ),
 
@@ -195,11 +194,13 @@ class ProfilView extends GetView<ProfilController> {
                     },
                   ),
 
-                  // tambahan supaya aman di hp kecil
-                  const SizedBox(height: 30),
+                  // Ruang bawah agar menu logout tidak tertutup bottom navigation bar
+                  const SizedBox(height: 110),
                 ],
-              );
-            }),
+                  );
+                }),
+              ),
+            ),
           ),
         ),
       ),
@@ -232,9 +233,12 @@ class ProfileMenuTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
 
         decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: AppColors.cardBorder, width: 1.0),
+          boxShadow: [
+            AppColors.cardShadow,
+          ],
         ),
 
         child: Row(

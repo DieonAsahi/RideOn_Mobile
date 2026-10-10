@@ -32,6 +32,8 @@ import '../modules/mainscreen/bindings/mainscreen_binding.dart';
 import '../modules/mainscreen/views/mainscreen_view.dart';
 import '../modules/notif/bindings/notif_binding.dart';
 import '../modules/notif/views/notif_view.dart';
+import '../modules/onboarding/bindings/onboarding_binding.dart';
+import '../modules/onboarding/views/onboarding_view.dart';
 import '../modules/otpemail/bindings/otpemail_binding.dart';
 import '../modules/otpemail/views/otpemail_view.dart';
 import '../modules/petabengkel/bindings/petabengkel_binding.dart';
@@ -176,6 +178,11 @@ class AppPages {
       name: _Paths.UPDTODOMETER,
       page: () => const UpdtodometerView(),
       binding: UpdtodometerBinding(),
+    ),
+    GetPage(
+      name: _Paths.ONBOARDING,
+      page: () => const OnboardingView(),
+      binding: OnboardingBinding(),
     ),
   ];
 }

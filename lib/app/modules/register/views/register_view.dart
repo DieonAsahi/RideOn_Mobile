@@ -8,37 +8,35 @@ class RegisterView extends GetView<RegisterController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          SizedBox(
-            height: 900,
-            width: double.infinity,
-            child: ClipRect(
-              child: Transform.translate(
-                offset: const Offset(0, -150),
-                child: Image.asset(
-                  'assets/images/backlog.png',
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: 300,
-                ),
-              ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 260,
+            child: Image.asset(
+              'assets/images/backlog.png',
+              fit: BoxFit.cover,
             ),
           ),
 
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  const SizedBox(height: 30),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 24),
 
                   const Text(
                     "Register",
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.yellow,
                     ),
@@ -226,7 +224,7 @@ class RegisterView extends GetView<RegisterController> {
                     height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF006BFF),
+                        backgroundColor: const Color(0xFF2196F3),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
@@ -276,8 +274,10 @@ class RegisterView extends GetView<RegisterController> {
               ),
             ),
           ),
-        ],
+        ),
       ),
-    );
+    ],
+  ),
+);
   }
 }

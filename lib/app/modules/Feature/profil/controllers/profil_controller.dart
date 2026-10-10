@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:capbatu/app/services/auth_service.dart';
+import 'package:capbatu/app/services/connectivity_service.dart';
 
 class ProfilController extends GetxController {
   final box = GetStorage();
@@ -22,7 +23,8 @@ class ProfilController extends GetxController {
     getProfile();
   }
 
-  Future<void> getProfile() async {
+  Future<void> getProfile({bool force = false}) async {
+    if (!force && name.value.isNotEmpty) return;
     try {
       isLoading.value = true;
 
@@ -55,6 +57,7 @@ class ProfilController extends GetxController {
       }
     } catch (e) {
       print("Error getProfile: $e");
+      ConnectivityService.handleNetworkError(e);
     } finally {
       isLoading.value = false;
     }

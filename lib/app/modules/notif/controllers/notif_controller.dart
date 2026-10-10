@@ -7,6 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../services/local_notification_service.dart';
 import '../../../services/firebase_messaging_service.dart';
 import '../../../services/location_service.dart';
+import '../../../services/connectivity_service.dart';
 
 class NotifModel {
   final int id;
@@ -106,9 +107,18 @@ class NotifController extends GetxController with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state == AppLifecycleState.resumed) {
-      checkPermissionAndLoad();
+      // Saat notifikasi HP ditarik / drawer ditutup, jangan auto refresh
+      // Hanya cek izin jika sebelumnya izin ditolak
+      if (!isPermissionGranted.value) {
+        final granted =
+            await FirebaseMessagingService.isNotificationPermissionGranted();
+        if (granted) {
+          isPermissionGranted.value = true;
+          await getNotifications(silent: true);
+        }
+      }
     }
   }
 
@@ -133,10 +143,14 @@ class NotifController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  Future<void> getNotifications() async {
-    try {
+  Future<void> getNotifications({bool silent = false}) async {
+    // Jika data sudah ada, jangan tampilkan full-screen loading agar tidak kedap-kedip
+    final shouldShowLoading = !silent && notifList.isEmpty;
+    if (shouldShowLoading) {
       isLoading.value = true;
+    }
 
+    try {
       final token = box.read("token");
       final vehicleId = box.read("vehicle_id");
 
@@ -151,22 +165,39 @@ class NotifController extends GetxController with WidgetsBindingObserver {
       if (response.statusCode == 200) {
         try {
           final List data = jsonDecode(response.body);
+          final newList = data.map((e) => NotifModel.fromJson(e)).toList();
 
-          print("DATA LENGTH : ${data.length}");
-          print("DATA : $data");
-
-          notifList.value = data.map((e) => NotifModel.fromJson(e)).toList();
-
-          print("NOTIF LENGTH : ${notifList.length}");
+          // Refresh hanya jika benar-benar ada data update baru dari backend
+          if (_hasDataChanged(newList)) {
+            notifList.value = newList;
+          }
         } catch (e, s) {
-          print("FROM JSON ERROR");
-          print(e);
+          print("FROM JSON ERROR: $e");
           print(s);
         }
       }
+    } catch (e) {
+      print("Error fetchNotifications: $e");
+      ConnectivityService.handleNetworkError(e);
     } finally {
-      isLoading.value = false;
+      if (shouldShowLoading) {
+        isLoading.value = false;
+      }
     }
+  }
+
+  /// Cek apakah data notifikasi dari backend benar-benar memiliki perubahan
+  bool _hasDataChanged(List<NotifModel> newList) {
+    if (newList.length != notifList.length) return true;
+    for (int i = 0; i < newList.length; i++) {
+      if (newList[i].id != notifList[i].id ||
+          newList[i].isRead != notifList[i].isRead ||
+          newList[i].title != notifList[i].title ||
+          newList[i].desc != notifList[i].desc) {
+        return true;
+      }
+    }
+    return false;
   }
 
   Future<void> markAsRead(NotifModel notification) async {

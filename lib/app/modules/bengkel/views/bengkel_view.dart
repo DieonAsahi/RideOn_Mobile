@@ -22,7 +22,7 @@ class BengkelView extends GetView<BengkelController> {
         }
 
         return FloatingActionButton.extended(
-          backgroundColor: const Color(0xFF006BFF),
+          backgroundColor: const Color(0xFF2196F3),
           onPressed: () {
             Get.toNamed('/petabengkel');
           },
@@ -72,56 +72,66 @@ class BengkelView extends GetView<BengkelController> {
                       if (!controller.isPermissionGranted.value) {
                         return Align(
                           alignment: const Alignment(0.0, -0.2),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Image.asset(
-                                'assets/logo/missing_lokasi.png',
-                                height: 160,
+                          child: SingleChildScrollView(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 16,
                               ),
-                              const SizedBox(height: 24),
-                              const Text(
-                                "Izin lokasi diperlukan",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                "Izinkan akses lokasi agar kami dapat menemukan bengkel terdekat dari lokasi Anda.",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade600,
-                                  height: 1.4,
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              ElevatedButton(
-                                onPressed: () =>
-                                    controller.requestLocationPermission(),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF006BFF),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.asset(
+                                    'assets/logo/izin_lokasi.png',
+                                    width: 160,
+                                    height: 160,
+                                  ),  
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    "Izin Lokasi Diperlukan",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    "Izinkan akses lokasi agar kami dapat menemukan bengkel terdekat dari lokasi Anda.",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade600,
+                                      height: 1.4,
+                                    ),
                                   ),
-                                ),
-                                child: const Text(
-                                  "Izinkan Lokasi",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                  const SizedBox(height: 20),
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        controller.requestLocationPermission(),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF2196F3),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      "Izinkan Lokasi",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: 16,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         );
                       }
@@ -182,18 +192,40 @@ class BengkelView extends GetView<BengkelController> {
                               }
 
                               if (controller.filteredBengkelList.isEmpty) {
+                                String emptyTitle = "";
+                                String emptyDesc = "";
+                                String emptyImage =
+                                    'assets/logo/missing_lokasi.png';
+
+                                if (!controller.isGpsEnabled.value) {
+                                  emptyTitle = "Lokasi Perangkat Tidak Aktif";
+                                  emptyDesc =
+                                      "Aktifkan layanan lokasi perangkat untuk menemukan bengkel terdekat dari lokasi Anda.";
+                                } else if (controller
+                                    .searchController
+                                    .text
+                                    .isNotEmpty) {
+                                  emptyTitle = "Bengkel Tidak Ditemukan";
+                                  emptyDesc =
+                                      "Tidak ada bengkel yang sesuai dengan pencarian Anda.";
+                                } else {
+                                  emptyTitle = "Belum Ada Bengkel";
+                                  emptyDesc =
+                                      "Saat ini belum ada data bengkel yang tersedia di sekitar Anda.";
+                                }
                                 return Align(
                                   alignment: const Alignment(0.0, -0.3),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Image.asset(
-                                        'assets/logo/missing_lokasi.png',
+                                        emptyImage,
                                         height: 160,
+                                        width: 160,
                                       ),
                                       const SizedBox(height: 24),
-                                      const Text(
-                                        "Bengkel tidak ditemukan",
+                                      Text(
+                                        emptyTitle,
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontSize: 16,
@@ -203,13 +235,41 @@ class BengkelView extends GetView<BengkelController> {
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        "Tidak ada bengkel yang sesuai dengan pencarian Anda.",
+                                        emptyDesc,
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
-                                          fontSize: 13,
+                                          fontSize: 14,
                                           color: Colors.grey.shade600,
                                         ),
                                       ),
+                                      if (!controller.isGpsEnabled.value) ...[
+                                        const SizedBox(height: 20),
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              controller.openGpsSettings(),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFF2196F3,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 24,
+                                              vertical: 12,
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            "Aktifkan GPS",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 );
@@ -223,7 +283,140 @@ class BengkelView extends GetView<BengkelController> {
                                       controller.filteredBengkelList[index];
                                   return Container(
                                     margin: const EdgeInsets.only(bottom: 18),
-                                    // ... (KODE DESAIN CARD LIST BENGKEL ANDA TETAP SAMA SEPERTI SEBELUMNYA)
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(
+                                        color: const Color(0xFFE1E1E1),
+                                        width: 1,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: const BorderRadius.only(
+                                            topLeft: Radius.circular(18),
+                                            topRight: Radius.circular(18),
+                                          ),
+                                          child: Image.network(
+                                            item['image'] ?? '',
+                                            height: 150,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) {
+                                              return Container(
+                                                height: 150,
+                                                color: Colors.grey.shade200,
+                                                child: const Icon(Icons.image),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(14),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          item['nama'] ?? '',
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 16,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 4,
+                                                        ),
+                                                        Text(
+                                                          item['jenis'] ?? '',
+                                                          style:
+                                                              const TextStyle(
+                                                                color: Colors
+                                                                    .black87,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      Get.toNamed(
+                                                        '/rwttambah',
+                                                        arguments: {
+                                                          "nama_bengkel":
+                                                              item['nama'],
+                                                        },
+                                                      );
+                                                    },
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                            7,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        border: Border.all(
+                                                          color: const Color(
+                                                            0xFF2196F3,
+                                                          ),
+                                                        ),
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: Image.asset(
+                                                        "assets/icon/bagikan.png",
+                                                        width: 18,
+                                                        height: 18,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 10),
+                                              Row(
+                                                children: [
+                                                  Text(item['jarak'] ?? ''),
+                                                  const SizedBox(width: 10),
+                                                  const Icon(
+                                                    Icons.star,
+                                                    color: Colors.amber,
+                                                    size: 18,
+                                                  ),
+                                                  const SizedBox(width: 3),
+                                                  Text(item['rating'] ?? ''),
+                                                  const SizedBox(width: 3),
+                                                  Text(
+                                                    item['ulasan'] ?? '',
+                                                    style: const TextStyle(
+                                                      color: Colors.black54,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   );
                                 },
                               );
@@ -297,13 +490,14 @@ class BengkelView extends GetView<BengkelController> {
                               Image.asset(
                                 'assets/logo/missing_lokasi.png',
                                 height: 120,
+                                width: 120,
                               ),
                               const SizedBox(height: 20),
                               const Text(
-                                "Lokasi perangkat tidak aktif",
+                                "Lokasi Perangkat Tidak Aktif",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black,
                                 ),
@@ -328,7 +522,7 @@ class BengkelView extends GetView<BengkelController> {
                                       },
                                       style: OutlinedButton.styleFrom(
                                         side: const BorderSide(
-                                          color: Color(0xFF006BFF),
+                                          color: Color(0xFF2196F3),
                                           width: 1.5,
                                         ),
                                         shape: RoundedRectangleBorder(
@@ -343,9 +537,9 @@ class BengkelView extends GetView<BengkelController> {
                                       child: const Text(
                                         "Nanti",
                                         style: TextStyle(
-                                          color: Color(0xFF006BFF),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
+                                          color: Color(0xFF2196F3),
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 16,
                                         ),
                                       ),
                                     ),
@@ -357,7 +551,7 @@ class BengkelView extends GetView<BengkelController> {
                                           controller.openGpsSettings(),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color(
-                                          0xFF006BFF,
+                                          0xFF2196F3,
                                         ),
                                         elevation: 0,
                                         shape: RoundedRectangleBorder(
@@ -373,8 +567,8 @@ class BengkelView extends GetView<BengkelController> {
                                         "Aktifkan",
                                         style: TextStyle(
                                           color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 16,
                                         ),
                                       ),
                                     ),

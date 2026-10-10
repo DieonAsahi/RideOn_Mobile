@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:capbatu/app/services/connectivity_service.dart';
+import 'package:capbatu/app/widgets/app_snackbar.dart';
+import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dart';
+import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
 
 class RwtservisController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -81,7 +85,9 @@ class RwtservisController extends GetxController {
       }
     } catch (e) {
       print("ERROR RIWAYAT UI: $e");
-      Get.snackbar("Error", e.toString());
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar("Error", "Gagal memuat riwayat servis");
+      }
     } finally {
       isLoading.value = false;
     }
@@ -99,14 +105,31 @@ class RwtservisController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        Get.snackbar("Berhasil", "Riwayat servis berhasil dihapus");
-
+        riwayat.removeWhere((item) => item['id'] == id);
         await loadServiceHistory();
+
+        if (Get.isRegistered<HomeController>()) {
+          Get.find<HomeController>().fetchHome(force: true);
+        }
+        if (Get.isRegistered<KendaraanController>()) {
+          Get.find<KendaraanController>().getVehicles(force: true);
+        }
+
+        AppSnackbar.success("Riwayat servis berhasil dihapus.");
       } else {
-        Get.snackbar("Error", response.body);
+        String msg = "Gagal menghapus riwayat servis";
+        try {
+          final err = jsonDecode(response.body);
+          if (err is Map && (err['message'] != null || err['error'] != null)) {
+            msg = err['message'] ?? err['error'];
+          }
+        } catch (_) {}
+        Get.snackbar("Error", msg);
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar("Error", "Gagal menghapus riwayat servis");
+      }
     } finally {
       isLoading.value = false;
     }

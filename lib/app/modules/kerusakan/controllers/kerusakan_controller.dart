@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:capbatu/app/services/connectivity_service.dart';
 
 class KerusakanController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -64,7 +65,9 @@ class KerusakanController extends GetxController {
         Get.snackbar("Error", "Gagal melakukan diagnosa");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar("Error", "Gagal melakukan diagnosa");
+      }
     } finally {
       isLoading.value = false;
     }

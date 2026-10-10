@@ -20,7 +20,7 @@ class ChangepassView extends GetView<ChangepassController> {
                 const Text(
                   "Change Password",
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
@@ -106,7 +106,7 @@ class ChangepassView extends GetView<ChangepassController> {
                     height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF006BFF),
+                        backgroundColor: const Color(0xFF2196F3),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),

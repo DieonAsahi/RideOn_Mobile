@@ -9,11 +9,11 @@ class MainscreenController extends GetxController {
   var currentIndex = 0.obs;
 
   final List<Map<String, String>> navItems = [
-    {'icon': 'assets/icon/dashboard.png', 'label': 'Home'},
-    {'icon': 'assets/icon/kendaraan.png', 'label': 'Kendaraan'},
-    {'icon': 'assets/icon/service.png', 'label': 'Servis'},
+    {'icon': 'assets/icons/home.png', 'label': 'Home'},
+    {'icon': 'assets/icons/vehicle.png', 'label': 'Kendaraan'},
+    {'icon': 'assets/icons/service.png', 'label': 'Servis'},
     // {'icon': 'assets/icon/edukasi.png', 'label': 'Edukasi'},
-    {'icon': 'assets/icon/profil.png', 'label': 'Profil'},
+    {'icon': 'assets/icons/person.png', 'label': 'Profil'},
   ];
 
   void changePage(int index) {

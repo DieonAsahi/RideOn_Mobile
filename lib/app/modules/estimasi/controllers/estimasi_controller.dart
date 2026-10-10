@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:capbatu/app/services/connectivity_service.dart';
 
 class ProductModel {
   final int id;
@@ -78,7 +79,9 @@ class EstimasiController extends GetxController {
       }
     } catch (e) {
       print(e);
-      Get.snackbar("Error", e.toString());
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar("Error", "Gagal mengambil data estimasi");
+      }
     } finally {
       isLoading.value = false;
     }

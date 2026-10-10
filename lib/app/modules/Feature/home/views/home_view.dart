@@ -1,7 +1,8 @@
+import "package:capbatu/app/widgets/skeleton_widget.dart";
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../controllers/home_controller.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
@@ -22,101 +23,128 @@ class HomeView extends GetView<HomeController> {
               children: [
                 Stack(
                   children: [
-                    Image.asset(
-                      'assets/images/kotak.png',
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: 175,
-                    ),
                     Padding(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.only(
+                        right: 10,
+                        left: 10,
+                        top: 20,
+                        bottom: 10,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const SizedBox(height: 5),
-                              const Text(
-                                "RideOn",
-                                style: TextStyle(
-                                  fontSize: 25,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.yellow,
-                                ),
+                              Image.asset(
+                                'assets/logo/rideon_title.png',
+                                height: 45,
+                                fit: BoxFit.contain,
+                                alignment: Alignment.centerLeft,
                               ),
-                              const SizedBox(height: 5),
-                              Obx(
-                                () => Text(
-                                  'Halo, ${controller.namaController.value}',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 10),
+                                child: Obx(() {
+                                  if (controller.namaController.value.isEmpty) {
+                                    return const Padding(
+                                      padding: EdgeInsets.only(top: 4),
+                                      child: SkeletonBox(
+                                        width: 120,
+                                        height: 16,
+                                        borderRadius: 4,
+                                      ),
+                                    );
+                                  }
+
+                                  return Text(
+                                    'Halo, ${controller.namaController.value}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  );
+                                }),
                               ),
                             ],
                           ),
-                          Obx(() {
-                            final count = controller.unreadNotifCount.value;
 
-                            return Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                IconButton(
-                                  icon: Image.asset(
-                                    'assets/icon/notif.png',
-                                    width: 24,
-                                    height: 24,
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              right: 10,
+                            ), // Sesuaikan jaraknya
+                            child: Obx(() {
+                              final count = controller.unreadNotifCount.value;
+
+                              return Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  IconButton(
+                                    icon: Image.asset(
+                                      'assets/icons/notif.png',
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                    onPressed: () async {
+                                      await Get.toNamed('/notif');
+                                      controller.fetchUnreadNotifications();
+                                    },
                                   ),
-                                  onPressed: () async {
-                                    await Get.toNamed('/notif');
-                                    controller.fetchUnreadNotifications();
-                                  },
-                                ),
-                                if (count > 0)
-                                  Positioned(
-                                    right: 6,
-                                    top: 6,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.red,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      constraints: const BoxConstraints(
-                                        minWidth: 18,
-                                        minHeight: 18,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          count > 99 ? '99+' : count.toString(),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.bold,
+                                  if (count > 0)
+                                    Positioned(
+                                      right: 6,
+                                      top: 6,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 18,
+                                          minHeight: 18,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            count > 99
+                                                ? '99+'
+                                                : count.toString(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                              ],
-                            );
-                          }),
+                                ],
+                              );
+                            }),
+                          ),
                         ],
                       ),
                     ),
                   ],
                 ),
 
-                Transform.translate(
-                  offset: const Offset(0, -60),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: OdometerCard(),
-                  ),
+                const SizedBox(height: 5),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: const OdometerCard(),
                 ),
 
+                const SizedBox(height: 30),
+
+                // Transform.translate(
+                //   offset: const Offset(0, -60),
+                //   child: Padding(
+                //     padding: const EdgeInsets.symmetric(horizontal: 20),
+                //     child: OdometerCard(),
+                //   ),
+                // ),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -128,87 +156,45 @@ class HomeView extends GetView<HomeController> {
                   ),
                   child: Column(
                     children: [
-                      Row(
-                        children: [
-                          Obx(
-                            () => IconButton(
-                              onPressed: controller.isFirstVehicle
-                                  ? null
-                                  : controller.previousVehicle,
-                              icon: Image.asset(
-                                controller.isFirstVehicle
-                                    ? "assets/icon/prev_grey.png"
-                                    : "assets/icon/prev_blue.png",
-                                width: 40,
-                              ),
-                            ),
-                          ),
+                      Container(
+                        height: 250,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Obx(() {
+                          if (controller.isLoading.value ||
+                              controller.vehicleImage.value.isEmpty) {
+                            return const HomeVehicleSkeleton();
+                          }
 
-                          Expanded(
-                            child: Container(
-                              height: 250,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Obx(() {
-                                if (controller.vehicleImage.value.isEmpty) {
-                                  return ClipRRect(
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Container(
-                                      color: Colors.grey.shade200,
-                                      child: const Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    ),
-                                  );
-                                }
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.network(
+                              controller.vehicleImage.value,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, progress) {
+                                if (progress == null) return child;
 
-                                return ClipRRect(
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: Image.network(
-                                    controller.vehicleImage.value,
-                                    fit: BoxFit.cover,
-                                    loadingBuilder: (context, child, progress) {
-                                      if (progress == null) return child;
-
-                                      return Container(
-                                        color: Colors.grey.shade200,
-                                        child: const Center(
-                                          child: CircularProgressIndicator(),
-                                        ),
-                                      );
-                                    },
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        color: Colors.grey.shade200,
-                                        child: const Icon(
-                                          Icons.image_not_supported,
-                                          size: 50,
-                                        ),
-                                      );
-                                    },
+                                return Container(
+                                  color: Colors.grey.shade200,
+                                  child: const Center(
+                                    child: CircularProgressIndicator(),
                                   ),
                                 );
-                              }),
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey.shade200,
+                                  child: const Icon(
+                                    Icons.image_not_supported,
+                                    size: 50,
+                                  ),
+                                );
+                              },
                             ),
-                          ),
-
-                          Obx(
-                            () => IconButton(
-                              onPressed: controller.isLastVehicle
-                                  ? null
-                                  : controller.nextVehicle,
-                              icon: Image.asset(
-                                controller.isLastVehicle
-                                    ? "assets/icon/next_grey.png"
-                                    : "assets/icon/next_blue.png",
-                                width: 40,
-                              ),
-                            ),
-                          ),
-                        ],
+                          );
+                        }),
                       ),
-
                       const SizedBox(height: 30),
 
                       const PerformaSection(),
@@ -233,9 +219,7 @@ class HomeView extends GetView<HomeController> {
 
                       Obx(() {
                         if (controller.isLoading.value) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
+                          return const HomeComponentsSkeleton();
                         }
 
                         return LayoutBuilder(
@@ -257,7 +241,7 @@ class HomeView extends GetView<HomeController> {
                                     mainAxisSpacing: 10,
                                     childAspectRatio: constraints.maxWidth > 700
                                         ? 0.82
-                                        : 0.68,
+                                        : 0.63,
                                   ),
 
                               itemBuilder: (context, index) {
@@ -287,7 +271,7 @@ class HomeView extends GetView<HomeController> {
                       // const SizedBox(height: 30),
 
                       // const TrendTopikSection(),
-                      
+
                       // const SizedBox(height: 30),
 
                       // const TopikKomponenSection(),
@@ -340,17 +324,15 @@ class FeatureCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFFA79277);
-
     double kmProgress = (currentKm / maxKm).clamp(0.0, 1.0);
     double dayProgress = (currentDays / maxDays).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black, width: 0.5),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: AppColors.cardBorder, width: 1.0),
+        boxShadow: [AppColors.cardShadow],
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
@@ -373,13 +355,11 @@ class FeatureCard extends StatelessWidget {
             Flexible(
               child: Image.asset(
                 imagePath,
-                width: 80,
-                height: 80,
+                width: 95,
+                height: 95,
                 fit: BoxFit.contain,
               ),
             ),
-
-            const SizedBox(height: 12),
 
             Expanded(
               child: Column(
@@ -390,7 +370,7 @@ class FeatureCard extends StatelessWidget {
                     children: [
                       Text(
                         "${currentKm.toInt()}/${maxKm.toInt()} km",
-                        style: const TextStyle(fontSize: 11),
+                        style: const TextStyle(fontSize: 9),
                       ),
                       const SizedBox(height: 4),
                       ClipRRect(
@@ -398,7 +378,7 @@ class FeatureCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: kmProgress,
                           minHeight: 6,
-                          backgroundColor: Colors.grey.shade300,
+                          backgroundColor: AppColors.bar,
                           valueColor: AlwaysStoppedAnimation(
                             getProgressColor(kmProgress),
                           ),
@@ -414,7 +394,7 @@ class FeatureCard extends StatelessWidget {
                     children: [
                       Text(
                         "${currentDays.toInt()}/${maxDays.toInt()} hari",
-                        style: const TextStyle(fontSize: 11),
+                        style: const TextStyle(fontSize: 9),
                       ),
                       const SizedBox(height: 4),
                       ClipRRect(
@@ -422,7 +402,7 @@ class FeatureCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: dayProgress,
                           minHeight: 6,
-                          backgroundColor: Colors.grey.shade300,
+                          backgroundColor: AppColors.bar,
                           valueColor: AlwaysStoppedAnimation(
                             getProgressColor(dayProgress),
                           ),
@@ -445,81 +425,147 @@ class OdometerCard extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black, width: 0.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(width: 5),
-          const Text(
-            "Odometer",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 10),
+    return Obx(() {
+      final isLoading =
+          controller.vehicles.isEmpty || controller.isLoadingOdometer.value;
 
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    border: Border.all(color: Colors.black, width: 0.5),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/icon/odometer.png',
-                        width: 30,
-                        height: 30,
-                      ),
-                      const SizedBox(width: 10),
-                      Obx(() {
-                        if (controller.isLoadingOdometer.value) {
-                          return const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          );
-                        }
+      if (isLoading) {
+        return const OdometerCardSkeleton();
+      }
 
-                        return Text(
-                          "${controller.odometer.value} km",
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
+      return Container(
+        padding: const EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 15,
+          bottom: 15,
+        ),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF90CAF9), Color(0xFFEBF6FF)],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [AppColors.cardShadow],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: PopupMenuButton<String>(
+                    offset: const Offset(0, 40),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    color: Colors.white,
+                    onOpened: () {
+                      controller.isDropdownOpen.value = true;
+                    },
+                    onCanceled: () {
+                      controller.isDropdownOpen.value = false;
+                    },
+                    onSelected: (value) {
+                      controller.isDropdownOpen.value = false;
+                      controller.changeVehicle(value);
+                    },
+                    itemBuilder: (context) {
+                      return controller.vehicles.map((vehicle) {
+                        final String namaMotor =
+                            "${vehicle["brand"] ?? ''} ${vehicle["model"] ?? ''}"
+                                .trim();
+
+                        return PopupMenuItem<String>(
+                          value: vehicle["id"].toString(),
+                          child: Text(
+                            namaMotor.isEmpty ? "Kendaraan" : namaMotor,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                              fontSize: 14,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         );
-                      }),
-                    ],
+                      }).toList();
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Obx(() {
+                            final currentVehicle = controller.vehicles
+                                .firstWhere(
+                                  (e) =>
+                                      e["id"].toString() ==
+                                      controller.selectedVehicleId.value,
+                                  orElse: () => {},
+                                );
+                            final String namaMotor =
+                                "${currentVehicle["brand"] ?? ''} ${currentVehicle["model"] ?? ''}"
+                                    .trim();
+
+                            return Text(
+                              namaMotor.isEmpty ? "Pilih Kendaraan" : namaMotor,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            );
+                          }),
+                        ),
+                        const SizedBox(width: 8),
+                        Obx(
+                          () => Image.asset(
+                            controller.isDropdownOpen.value
+                                ? 'assets/icons/up.png'
+                                : 'assets/icons/down.png',
+                            width: 24,
+                            height: 24,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-
-              const SizedBox(width: 10),
-
-              ElevatedButton(
+                const SizedBox(width: 10),
+                Text(
+                  controller.vehiclePlat.value,
+                  style: const TextStyle(
+                    color: Color(0xFF7A7A7A),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Image.asset('assets/icons/odometer.png', width: 30, height: 30),
+                const SizedBox(width: 10),
+                Text(
+                  "${controller.odometer.value} Km",
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
                 onPressed: () async {
                   final result = await Get.toNamed(
                     '/updtodometer',
@@ -531,17 +577,17 @@ class OdometerCard extends GetView<HomeController> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF006BFF),
+                  backgroundColor: const Color(0xFF2196F3),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 12,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: const Text(
-                  "Update",
+                  "Update Odometer",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -549,11 +595,11 @@ class OdometerCard extends GetView<HomeController> {
                   ),
                 ),
               ),
-            ],
-          ),
-        ],
-      ),
-    );
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -563,205 +609,336 @@ class PerformaSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final data = controller.performa;
-      final dates = controller.tanggal;
+      if (controller.isLoading.value) {
+        return const PerformaSkeleton();
+      }
+      final dataPerforma = controller.performa;
 
-      final dataCount = data.length;
-      const maxChartHeight = 210.0;
-      const bottomAreaHeight = 30.0;
+      final double latestScoreDouble = dataPerforma.isNotEmpty
+          ? dataPerforma.last
+          : 0.0;
 
-      final isFewData = dataCount < 8;
+      final int score = latestScoreDouble.round();
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Performa",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Get.toNamed('/dtlperforma');
-                },
+      final double progressValue = score / 100;
 
-                child: const Text(
-                  "Lihat Detail",
-                  style: TextStyle(color: Color(0xFF006BFF), fontSize: 12),
-                ),
-              ),
-            ],
-          ),
+      String status;
+      Color progressColor;
 
-          const SizedBox(height: 15),
+      if (score >= 75) {
+        status = "Baik";
+        progressColor = Colors.green;
+      } else if (score >= 50) {
+        status = "Cukup";
+        progressColor = Colors.orange;
+      } else if (score > 0) {
+        status = "Buruk";
+        progressColor = Colors.red;
+      } else {
+        status = "Belum ada data";
+        progressColor = Colors.grey;
+      }
 
-          SizedBox(
-            height: maxChartHeight + bottomAreaHeight,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: SizedBox(
-                    height: maxChartHeight,
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text("100"),
-                              Text("80"),
-                              Text("60"),
-                              Text("40"),
-                              Text("20"),
-                              Text("0"),
-                            ],
-                          ),
-                        ),
-                      ],
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: progressColor, width: 1),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 50,
+              height: 50,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CircularProgressIndicator(
+                    value: progressValue,
+                    strokeWidth: 5,
+                    backgroundColor: Colors.grey.shade200,
+                    valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                  ),
+                  Center(
+                    child: Text(
+                      "$score%",
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
-                ),
-
-                const SizedBox(width: 5),
-
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Container(
-                    width: 1,
-                    height: maxChartHeight,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(width: 1),
-
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      double itemWidth = 30;
-                      double totalWidth = dataCount * itemWidth;
-                      double chartWidth =
-                          (isFewData ? constraints.maxWidth : totalWidth) + 5;
-
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: SizedBox(
-                          width: chartWidth,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              SizedBox(
-                                height: maxChartHeight,
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: List.generate(dataCount, (index) {
-                                    final value = data[index];
-                                    final barHeight =
-                                        (value / 100) * maxChartHeight;
-
-                                    if (isFewData) {
-                                      return SizedBox(
-                                        width: constraints.maxWidth / dataCount,
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            Container(
-                                              width: 12,
-                                              height: barHeight,
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFF006BFF),
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    } else {
-                                      return SizedBox(
-                                        width: itemWidth,
-                                        child: Align(
-                                          alignment: Alignment.bottomCenter,
-                                          child: Container(
-                                            width: 12,
-                                            height: barHeight,
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFF006BFF),
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  }),
-                                ),
-                              ),
-
-                              Container(
-                                width: isFewData
-                                    ? constraints.maxWidth
-                                    : totalWidth,
-                                height: 1,
-                                color: Colors.grey,
-                              ),
-
-                              SizedBox(
-                                height: 20,
-                                child: Row(
-                                  children: [
-                                    ...List.generate(dataCount, (index) {
-                                      if (isFewData) {
-                                        return SizedBox(
-                                          width:
-                                              constraints.maxWidth / dataCount,
-                                          child: Text(
-                                            dates[index],
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                            ),
-                                          ),
-                                        );
-                                      } else {
-                                        return SizedBox(
-                                          width: itemWidth,
-                                          child: Text(
-                                            dates[index],
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    }),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+
+            const SizedBox(width: 16),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "Kondisi kendaraan",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: progressColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            OutlinedButton(
+              onPressed: () {
+                Get.toNamed('/dtlperforma');
+              },
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                minimumSize: Size.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                side: BorderSide(color: Colors.grey.shade300, width: 1),
+              ),
+              child: const Text(
+                "Lihat Detail",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     });
   }
 }
+
+// class PerformaSection extends GetView<HomeController> {
+//   const PerformaSection({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Obx(() {
+//       final data = controller.performa;
+//       final dates = controller.tanggal;
+
+//       final dataCount = data.length;
+//       const maxChartHeight = 210.0;
+//       const bottomAreaHeight = 30.0;
+
+//       final isFewData = dataCount < 8;
+
+//       return Column(
+//         crossAxisAlignment: CrossAxisAlignment.end,
+//         children: [
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//             children: [
+//               const Text(
+//                 "Performa",
+//                 style: TextStyle(
+//                   fontSize: 16,
+//                   fontWeight: FontWeight.bold,
+//                   color: Colors.black,
+//                 ),
+//               ),
+//               GestureDetector(
+//                 onTap: () {
+//                   Get.toNamed('/dtlperforma');
+//                 },
+
+//                 child: const Text(
+//                   "Lihat Detail",
+//                   style: TextStyle(color: Color(0xFF2196F3), fontSize: 12),
+//                 ),
+//               ),
+//             ],
+//           ),
+
+//           const SizedBox(height: 15),
+
+//           SizedBox(
+//             height: maxChartHeight + bottomAreaHeight,
+//             child: Row(
+//               crossAxisAlignment: CrossAxisAlignment.end,
+//               children: [
+//                 Padding(
+//                   padding: const EdgeInsets.only(bottom: 20),
+//                   child: SizedBox(
+//                     height: maxChartHeight,
+//                     child: Column(
+//                       children: [
+//                         Expanded(
+//                           child: Column(
+//                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                             children: const [
+//                               Text("100"),
+//                               Text("80"),
+//                               Text("60"),
+//                               Text("40"),
+//                               Text("20"),
+//                               Text("0"),
+//                             ],
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                 ),
+
+//                 const SizedBox(width: 5),
+
+//                 Padding(
+//                   padding: const EdgeInsets.only(bottom: 20),
+//                   child: Container(
+//                     width: 1,
+//                     height: maxChartHeight,
+//                     color: Colors.grey,
+//                   ),
+//                 ),
+//                 const SizedBox(width: 1),
+
+//                 Expanded(
+//                   child: LayoutBuilder(
+//                     builder: (context, constraints) {
+//                       double itemWidth = 30;
+//                       double totalWidth = dataCount * itemWidth;
+//                       double chartWidth =
+//                           (isFewData ? constraints.maxWidth : totalWidth) + 5;
+
+//                       return SingleChildScrollView(
+//                         scrollDirection: Axis.horizontal,
+//                         child: SizedBox(
+//                           width: chartWidth,
+//                           child: Column(
+//                             mainAxisAlignment: MainAxisAlignment.end,
+//                             children: [
+//                               SizedBox(
+//                                 height: maxChartHeight,
+//                                 child: Row(
+//                                   crossAxisAlignment: CrossAxisAlignment.end,
+//                                   children: List.generate(dataCount, (index) {
+//                                     final value = data[index];
+//                                     final barHeight =
+//                                         (value / 100) * maxChartHeight;
+
+//                                     if (isFewData) {
+//                                       return SizedBox(
+//                                         width: constraints.maxWidth / dataCount,
+//                                         child: Column(
+//                                           mainAxisAlignment:
+//                                               MainAxisAlignment.end,
+//                                           children: [
+//                                             Container(
+//                                               width: 12,
+//                                               height: barHeight,
+//                                               decoration: BoxDecoration(
+//                                                 color: const Color(0xFF2196F3),
+//                                                 borderRadius:
+//                                                     BorderRadius.circular(10),
+//                                               ),
+//                                             ),
+//                                           ],
+//                                         ),
+//                                       );
+//                                     } else {
+//                                       return SizedBox(
+//                                         width: itemWidth,
+//                                         child: Align(
+//                                           alignment: Alignment.bottomCenter,
+//                                           child: Container(
+//                                             width: 12,
+//                                             height: barHeight,
+//                                             decoration: BoxDecoration(
+//                                               color: const Color(0xFF2196F3),
+//                                               borderRadius:
+//                                                   BorderRadius.circular(10),
+//                                             ),
+//                                           ),
+//                                         ),
+//                                       );
+//                                     }
+//                                   }),
+//                                 ),
+//                               ),
+
+//                               Container(
+//                                 width: isFewData
+//                                     ? constraints.maxWidth
+//                                     : totalWidth,
+//                                 height: 1,
+//                                 color: Colors.grey,
+//                               ),
+
+//                               SizedBox(
+//                                 height: 20,
+//                                 child: Row(
+//                                   children: [
+//                                     ...List.generate(dataCount, (index) {
+//                                       if (isFewData) {
+//                                         return SizedBox(
+//                                           width:
+//                                               constraints.maxWidth / dataCount,
+//                                           child: Text(
+//                                             dates[index],
+//                                             textAlign: TextAlign.center,
+//                                             style: const TextStyle(
+//                                               fontSize: 10,
+//                                             ),
+//                                           ),
+//                                         );
+//                                       } else {
+//                                         return SizedBox(
+//                                           width: itemWidth,
+//                                           child: Text(
+//                                             dates[index],
+//                                             textAlign: TextAlign.center,
+//                                             style: const TextStyle(
+//                                               fontSize: 10,
+//                                             ),
+//                                           ),
+//                                         );
+//                                       }
+//                                     }),
+//                                   ],
+//                                 ),
+//                               ),
+//                             ],
+//                           ),
+//                         ),
+//                       );
+//                     },
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       );
+//     });
+//   }
+// }
 
 // class TopikArtikelSection extends GetView<HomeController> {
 //   const TopikArtikelSection({super.key});
@@ -827,7 +1004,7 @@ class PerformaSection extends GetView<HomeController> {
 //                     ),
 //                     focusedBorder: OutlineInputBorder(
 //                       borderRadius: BorderRadius.circular(12),
-//                       borderSide: const BorderSide(color: Color(0xFF006BFF)),
+//                       borderSide: const BorderSide(color: Color(0xFF2196F3)),
 //                     ),
 //                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
 //                   ),
@@ -874,7 +1051,7 @@ class PerformaSection extends GetView<HomeController> {
 //                     ),
 //                     focusedBorder: OutlineInputBorder(
 //                       borderRadius: BorderRadius.circular(12),
-//                       borderSide: const BorderSide(color: Color(0xFF006BFF)),
+//                       borderSide: const BorderSide(color: Color(0xFF2196F3)),
 //                     ),
 //                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
 //                   ),
@@ -923,7 +1100,7 @@ class PerformaSection extends GetView<HomeController> {
 //                     ),
 //                     focusedBorder: OutlineInputBorder(
 //                       borderRadius: BorderRadius.circular(12),
-//                       borderSide: const BorderSide(color: Color(0xFF006BFF)),
+//                       borderSide: const BorderSide(color: Color(0xFF2196F3)),
 //                     ),
 //                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
 //                   ),
@@ -991,7 +1168,7 @@ class PerformaSection extends GetView<HomeController> {
 //                         minHeight: 7,
 //                         backgroundColor: Colors.grey.shade200,
 //                         valueColor: const AlwaysStoppedAnimation(
-//                           Color(0xFF006BFF),
+//                           Color(0xFF2196F3),
 //                         ),
 //                       ),
 //                     ),
@@ -1106,7 +1283,7 @@ class PerformaSection extends GetView<HomeController> {
 //                     ),
 //                     focusedBorder: OutlineInputBorder(
 //                       borderRadius: BorderRadius.circular(12),
-//                       borderSide: const BorderSide(color: Color(0xFF006BFF)),
+//                       borderSide: const BorderSide(color: Color(0xFF2196F3)),
 //                     ),
 //                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
 //                   ),
@@ -1150,7 +1327,7 @@ class PerformaSection extends GetView<HomeController> {
 //                     ),
 //                     focusedBorder: OutlineInputBorder(
 //                       borderRadius: BorderRadius.circular(12),
-//                       borderSide: const BorderSide(color: Color(0xFF006BFF)),
+//                       borderSide: const BorderSide(color: Color(0xFF2196F3)),
 //                     ),
 //                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
 //                   ),
@@ -1196,7 +1373,7 @@ class PerformaSection extends GetView<HomeController> {
 //                     ),
 //                     focusedBorder: OutlineInputBorder(
 //                       borderRadius: BorderRadius.circular(12),
-//                       borderSide: const BorderSide(color: Color(0xFF006BFF)),
+//                       borderSide: const BorderSide(color: Color(0xFF2196F3)),
 //                     ),
 //                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
 //                   ),
@@ -1263,7 +1440,7 @@ class PerformaSection extends GetView<HomeController> {
 //                         minHeight: 7,
 //                         backgroundColor: Colors.grey.shade200,
 //                         valueColor: const AlwaysStoppedAnimation(
-//                           Color(0xFF006BFF),
+//                           Color(0xFF2196F3),
 //                         ),
 //                       ),
 //                     ),

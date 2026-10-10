@@ -308,7 +308,7 @@ class DtlperformaView extends GetView<DtlperformaController> {
                                                           height: barHeight,
                                                           decoration: BoxDecoration(
                                                             color: const Color(
-                                                              0xFF006BFF,
+                                                              0xFF2196F3,
                                                             ),
                                                             borderRadius:
                                                                 BorderRadius.circular(
@@ -330,7 +330,7 @@ class DtlperformaView extends GetView<DtlperformaController> {
                                                         height: barHeight,
                                                         decoration: BoxDecoration(
                                                           color: const Color(
-                                                            0xFF006BFF,
+                                                            0xFF2196F3,
                                                           ),
                                                           borderRadius:
                                                               BorderRadius.circular(

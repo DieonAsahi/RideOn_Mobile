@@ -7,6 +7,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/modules/Feature/profil/controllers/profil_controller.dart';
+import 'package:capbatu/app/services/connectivity_service.dart';
+import 'package:capbatu/app/widgets/app_snackbar.dart';
 
 class EditprofilController extends GetxController {
   final box = GetStorage();
@@ -95,10 +97,10 @@ class EditprofilController extends GetxController {
 
       if (response.statusCode == 200) {
         if (Get.isRegistered<ProfilController>()) {
-          Get.find<ProfilController>().getProfile();
+          Get.find<ProfilController>().getProfile(force: true);
         }
         Get.back();
-        Get.snackbar("Berhasil", "Profil berhasil diperbarui");
+        AppSnackbar.success("Profil berhasil diperbarui.");
       } else {
         String errorMsg = "Gagal update profil";
         try {
@@ -108,7 +110,9 @@ class EditprofilController extends GetxController {
         Get.snackbar("Error", errorMsg);
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar("Error", "Gagal memperbarui profil");
+      }
     } finally {
       isSaving.value = false;
     }

@@ -20,17 +20,14 @@ class EditprofilView extends GetView<EditprofilController> {
         }
 
         return SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Center(
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height - 100,
-              ),
-
-              child: IntrinsicHeight(
+              constraints: const BoxConstraints(maxWidth: 550),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: [
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
 
                     /// HEADER
                     Row(
@@ -91,7 +88,7 @@ class EditprofilView extends GetView<EditprofilController> {
                             child: Container(
                               padding: const EdgeInsets.all(6),
                               decoration: const BoxDecoration(
-                                color: Color(0xFF006BFF),
+                                color: Color(0xFF2196F3),
                                 shape: BoxShape.circle,
                               ),
                               child: Image.asset(
@@ -135,7 +132,7 @@ class EditprofilView extends GetView<EditprofilController> {
                       maxLines: 3,
                     ),
 
-                    const Spacer(),
+                    const SizedBox(height: 35),
 
                     SizedBox(
                       width: double.infinity,
@@ -149,7 +146,7 @@ class EditprofilView extends GetView<EditprofilController> {
 
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
-                          backgroundColor: const Color(0xFF006BFF),
+                          backgroundColor: const Color(0xFF2196F3),
 
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
@@ -254,7 +251,7 @@ class CustomTextField extends StatelessWidget {
 
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFF006BFF)),
+              borderSide: const BorderSide(color: Color(0xFF2196F3)),
             ),
           ),
         ),

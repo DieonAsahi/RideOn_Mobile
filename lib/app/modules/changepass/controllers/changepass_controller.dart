@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../../services/connectivity_service.dart';
+import '../../../widgets/app_snackbar.dart';
 
 class ChangepassController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -64,7 +66,7 @@ class ChangepassController extends GetxController {
       } catch (_) {}
 
       if (response.statusCode == 200) {
-        Get.snackbar("Success", data['message'] ?? "Password berhasil diubah");
+        AppSnackbar.success(data['message'] ?? "Password berhasil diubah.");
 
         if (Get.arguments?['from_profile'] == true) {
           Get.offNamed('/profil');
@@ -76,7 +78,9 @@ class ChangepassController extends GetxController {
       }
     } catch (e) {
       print("Error update password: $e");
-      Get.snackbar("Error", "Tidak bisa konek ke server. Silakan coba lagi.");
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar("Error", "Tidak bisa konek ke server. Silakan coba lagi.");
+      }
     } finally {
       isLoading.value = false;
     }

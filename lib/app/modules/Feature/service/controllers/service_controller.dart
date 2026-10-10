@@ -4,6 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/services/auth_service.dart';
+import 'package:capbatu/app/services/connectivity_service.dart';
 
 class ServiceItem {
   final int id;
@@ -47,7 +48,8 @@ class ServiceController extends GetxController {
     getServices();
   }
 
-  Future<void> getServices() async {
+  Future<void> getServices({bool force = false}) async {
+    if (!force && services.isNotEmpty) return;
     try {
       isLoading.value = true;
 
@@ -84,6 +86,7 @@ class ServiceController extends GetxController {
       }
     } catch (e) {
       print("Error getServices: $e");
+      ConnectivityService.handleNetworkError(e);
     } finally {
       isLoading.value = false;
     }

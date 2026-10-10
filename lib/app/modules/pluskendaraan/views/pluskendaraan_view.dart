@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
 import '../controllers/pluskendaraan_controller.dart';
 import 'package:camera/camera.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 
 class PluskendaraanView extends GetView<PluskendaraanController> {
   const PluskendaraanView({super.key});
@@ -22,7 +23,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             children: [
               // KONTEN UTAMA MULTI-STEP
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -31,7 +32,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                       child: Text(
                         "Tambah Kendaraan Baru",
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),
@@ -56,7 +57,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                       minHeight: 6,
                       backgroundColor: Colors.grey.shade300,
                       valueColor: const AlwaysStoppedAnimation(
-                        Color(0xFF006BFF),
+                        Color(0xFF2196F3),
                       ),
                     ),
                     if (!isCameraFullScreen) const SizedBox(height: 50),
@@ -197,7 +198,10 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: AppColors.cardBorder),
+              boxShadow: [
+                AppColors.cardShadow,
+              ],
             ),
             child: Row(
               children: [
@@ -289,7 +293,10 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: AppColors.cardBorder),
+              boxShadow: [
+                AppColors.cardShadow,
+              ],
             ),
             child: Row(
               children: [
@@ -381,7 +388,10 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: AppColors.cardBorder),
+              boxShadow: [
+                AppColors.cardShadow,
+              ],
             ),
             child: Row(
               children: [
@@ -515,7 +525,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF006BFF),
+                    backgroundColor: const Color(0xFF2196F3),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -576,7 +586,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.refresh, color: Color(0xFF006BFF)),
+                  child: const Icon(Icons.refresh, color: Color(0xFF2196F3)),
                 ),
               ),
             ),
@@ -658,8 +668,18 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
   // DIUBAH MENJADI FULLSCREEN OVERLAY DENGAN MENGGUNAKAN INDIKATOR RADAR SCAN REALTIME
   Widget _step7Camera() {
     return Obx(() {
-      if (!controller.isCameraInitialized.value) {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      final cam = controller.cameraController;
+      if (!controller.isCameraInitialized.value ||
+          cam == null ||
+          !cam.value.isInitialized) {
+        return Positioned.fill(
+          child: Container(
+            color: Colors.black,
+            child: const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+          ),
+        );
       }
 
       return Positioned.fill(
@@ -668,7 +688,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
           child: Stack(
             children: [
               SizedBox.expand(
-                child: CameraPreview(controller.cameraController!),
+                child: CameraPreview(cam),
               ),
               IgnorePointer(
                 child: Container(color: Colors.black.withOpacity(0.45)),
@@ -913,7 +933,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
             child: ElevatedButton(
               onPressed: controller.nextStep,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF006BFF),
+                backgroundColor: const Color(0xFF2196F3),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -966,7 +986,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                       1; // Mengaktifkan kamera stream
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF006BFF),
+                  backgroundColor: const Color(0xFF2196F3),
                 ),
                 child: const Text(
                   "Ambil Gambar",
@@ -990,7 +1010,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                   controller.disposeCamera();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF006BFF),
+                  backgroundColor: const Color(0xFF2196F3),
                 ),
                 child: const Text(
                   "Masukan Angka Odometer",
@@ -1042,7 +1062,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                   controller.odometerStep.value = 0;
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF006BFF),
+                  backgroundColor: const Color(0xFF2196F3),
                 ),
                 child: const Text(
                   "Lanjut",
@@ -1085,7 +1105,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                     ? null
                     : controller.nextStep,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF006BFF),
+                  backgroundColor: const Color(0xFF2196F3),
                 ),
                 child: Obx(() {
                   if (controller.isLoading.value) {

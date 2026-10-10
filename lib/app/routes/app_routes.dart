@@ -29,6 +29,7 @@ abstract class Routes {
   static const EDITPROFIL = _Paths.EDITPROFIL;
   static const DTLPERFORMA = _Paths.DTLPERFORMA;
   static const UPDTODOMETER = _Paths.UPDTODOMETER;
+  static const ONBOARDING = _Paths.ONBOARDING;
 }
 
 abstract class _Paths {
@@ -59,4 +60,5 @@ abstract class _Paths {
   static const EDITPROFIL = '/editprofil';
   static const DTLPERFORMA = '/dtlperforma';
   static const UPDTODOMETER = '/updtodometer';
+  static const ONBOARDING = '/onboarding';
 }

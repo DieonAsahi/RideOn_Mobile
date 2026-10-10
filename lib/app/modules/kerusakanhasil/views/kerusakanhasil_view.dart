@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/kerusakanhasil_controller.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 
 class KerusakanhasilView extends GetView<KerusakanhasilController> {
   const KerusakanhasilView({super.key});
@@ -13,14 +14,13 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
       backgroundColor: Colors.white,
 
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-
-            children: [
-              SizedBox(height: 30),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
               Row(
                 children: [
                   IconButton(
@@ -33,7 +33,7 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
                       "Hasil Prediksi Kerusakan",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -50,8 +50,12 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
                 padding: const EdgeInsets.all(18),
 
                 decoration: BoxDecoration(
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: AppColors.cardBorder, width: 1.0),
+                  boxShadow: [
+                    AppColors.cardShadow,
+                  ],
                 ),
 
                 child: Column(
@@ -90,7 +94,7 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
                           child: CircularProgressIndicator(
                             value: (controller.hasil["confidence"] ?? 0) / 100,
                             strokeWidth: 3,
-                            color: const Color(0xFF006BFF),
+                            color: const Color(0xFF2196F3),
                           ),
                         ),
 
@@ -120,10 +124,10 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
                 style: const TextStyle(fontSize: 14, height: 1.5),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 35),
 
               Padding(
-                padding: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.only(bottom: 25),
 
                 child: SizedBox(
                   width: double.infinity,
@@ -133,7 +137,7 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
                     onPressed: controller.jadwalkanServis,
 
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF006BFF),
+                      backgroundColor: const Color(0xFF2196F3),
 
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -155,6 +159,7 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

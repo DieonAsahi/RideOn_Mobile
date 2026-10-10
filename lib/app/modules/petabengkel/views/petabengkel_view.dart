@@ -17,57 +17,63 @@ class PetabengkelView extends GetView<PetabengkelController> {
             // 1. Izin lokasi belum diberikan
             if (!controller.isPermissionGranted.value) {
               return Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.location_off_outlined,
-                        size: 64,
-                        color: Colors.grey.shade400,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Perizinan Lokasi Dinonaktifkan",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/logo/izin_lokasi.png',
+                          width: 160,
+                          height: 160,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Aktifkan perizinan lokasi untuk melihat peta bengkel di sekitar Anda.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: () => controller.requestLocationPermission(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF006BFF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                        ),
-                        child: const Text(
-                          "Aktifkan Perizinan Lokasi",
+                        const SizedBox(height: 16),
+                        const Text(
+                          "Izin Lokasi Diperlukan",
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Colors.white,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: Colors.black,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        Text(
+                          "Izinkan akses lokasi agar kami dapat menemukan bengkel terdekat dari lokasi Anda.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () =>
+                              controller.requestLocationPermission(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2196F3),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                          ),
+                          child: const Text(
+                            "Aktifkan Perizinan Lokasi",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -76,63 +82,69 @@ class PetabengkelView extends GetView<PetabengkelController> {
             // 2. GPS / Layanan lokasi mati
             if (!controller.isGpsEnabled.value) {
               return Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.gps_off_rounded,
-                        size: 64,
-                        color: Colors.amber.shade700,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Tidak ada akses koneksi, nyalakan maps",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.gps_off_rounded,
+                          size: 64,
+                          color: Colors.amber.shade700,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "GPS / Layanan lokasi perangkat Anda sedang mati. Nyalakan lokasi untuk memuat peta bengkel.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: () => controller.openGpsSettings(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF006BFF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                        ),
-                        child: const Text(
-                          "Nyalakan Lokasi",
+                        const SizedBox(height: 16),
+                        const Text(
+                          "Tidak ada akses koneksi, nyalakan maps",
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Colors.white,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: Colors.black,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        Text(
+                          "GPS / Layanan lokasi perangkat Anda sedang mati. Nyalakan lokasi untuk memuat peta bengkel.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () => controller.openGpsSettings(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2196F3),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                          ),
+                          child: const Text(
+                            "Nyalakan Lokasi",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
             }
 
-            if (controller.userLocation.value == null || controller.isLoading.value) {
+            if (controller.userLocation.value == null ||
+                controller.isLoading.value) {
               return const Center(child: CircularProgressIndicator());
             }
 
@@ -618,7 +630,7 @@ class PetabengkelView extends GetView<PetabengkelController> {
                                                               decoration: BoxDecoration(
                                                                 border: Border.all(
                                                                   color: const Color(
-                                                                    0xFF006BFF,
+                                                                    0xFF2196F3,
                                                                   ),
                                                                 ),
                                                                 shape: BoxShape

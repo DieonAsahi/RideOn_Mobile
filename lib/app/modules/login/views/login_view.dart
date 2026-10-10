@@ -1,45 +1,42 @@
 import 'package:flutter/material.dart';
-
 import 'package:get/get.dart';
-
 import '../controllers/login_controller.dart';
 
 class LoginView extends GetView<LoginController> {
   const LoginView({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          SizedBox(
-            height: 900,
-            width: double.infinity,
-            child: ClipRect(
-              child: Transform.translate(
-                offset: const Offset(0, -150),
-                child: Image.asset(
-                  'assets/images/backlog.png',
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: 300,
-                ),
-              ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 260,
+            child: Image.asset(
+              'assets/images/backlog.png',
+              fit: BoxFit.cover,
             ),
           ),
 
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  const SizedBox(height: 30),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 24),
 
                   const Text(
                     "Login",
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.yellow,
                     ),
@@ -59,8 +56,8 @@ class LoginView extends GetView<LoginController> {
 
                   const SizedBox(height: 35),
 
-                  Padding(
-                    padding: const EdgeInsets.only(left: 1),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 1),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -94,15 +91,15 @@ class LoginView extends GetView<LoginController> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: Colors.blue, width: 2),
+                        borderSide: const BorderSide(color: Colors.blue, width: 2),
                       ),
                     ),
                   ),
 
                   const SizedBox(height: 15),
 
-                  Padding(
-                    padding: const EdgeInsets.only(left: 1),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 1),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -127,7 +124,7 @@ class LoginView extends GetView<LoginController> {
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                       ),
-                      hintText: "Enter Your Password",
+                      hintText: "your password",
                       prefixIcon: const Icon(Icons.lock),
                       filled: true,
                       fillColor: Colors.grey.shade200,
@@ -137,21 +134,29 @@ class LoginView extends GetView<LoginController> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: Colors.blue, width: 2),
+                        borderSide: const BorderSide(color: Colors.blue, width: 2),
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 5),
 
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                       onPressed: () {
-                        Get.toNamed("/emailver", arguments: {"from": "forgot"});
+                        Get.toNamed(
+                          '/emailver',
+                          arguments: {'from': 'forgot_password'},
+                        );
                       },
                       child: const Text(
-                        "Forgot password?",
-                        style: TextStyle(color: Colors.blue, fontSize: 14),
+                        "Forgot Password?",
+                        style: TextStyle(color: Colors.blue, fontSize: 12),
                       ),
                     ),
                   ),
@@ -163,7 +168,7 @@ class LoginView extends GetView<LoginController> {
                     height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF006BFF),
+                        backgroundColor: const Color(0xFF2196F3),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
@@ -190,9 +195,8 @@ class LoginView extends GetView<LoginController> {
                           thickness: 1,
                         ),
                       ),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
                         child: Text(
                           "OR",
                           style: TextStyle(
@@ -201,7 +205,6 @@ class LoginView extends GetView<LoginController> {
                           ),
                         ),
                       ),
-
                       Expanded(
                         child: Divider(
                           color: Colors.grey.shade500,
@@ -278,7 +281,136 @@ class LoginView extends GetView<LoginController> {
               ),
             ),
           ),
+        ),
+      ),
+
+          // OVERLAY LOADING TENGAH DENGAN ANIMASI TITIK NYALA BERURUTAN
+          Obx(() {
+            if (controller.isLoggingIn.value) {
+              return Container(
+                color: Colors.black.withOpacity(0.4),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 36,
+                      vertical: 28,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SequentialDotsLoading(),
+                        SizedBox(height: 14),
+                        Text(
+                          "Melakukan proses login",
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
         ],
+      ),
+    );
+  }
+}
+
+class SequentialDotsLoading extends StatefulWidget {
+  const SequentialDotsLoading({super.key});
+
+  @override
+  State<SequentialDotsLoading> createState() => _SequentialDotsLoadingState();
+}
+
+class _SequentialDotsLoadingState extends State<SequentialDotsLoading>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final val = _controller.value;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildDot(0, val),
+            const SizedBox(width: 10),
+            _buildDot(1, val),
+            const SizedBox(width: 10),
+            _buildDot(2, val),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDot(int index, double progress) {
+    final start = index * 0.33;
+    final end = start + 0.33;
+    final isActive = progress >= start && progress < end;
+
+    String assetPath;
+    if (isActive) {
+      assetPath = 'assets/icons/Ellipse 11.png';
+    } else if ((progress >= (start - 0.15) && progress < start) ||
+        (progress >= end && progress < (end + 0.15))) {
+      assetPath = 'assets/icons/Ellipse 10.png';
+    } else {
+      assetPath = 'assets/icons/Ellipse 9.png';
+    }
+
+    return AnimatedScale(
+      scale: isActive ? 1.35 : 1.0,
+      duration: const Duration(milliseconds: 200),
+      child: Image.asset(
+        assetPath,
+        width: 18,
+        height: 18,
+        errorBuilder: (_, __, ___) => Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isActive
+                ? const Color(0xFF0085FF)
+                : const Color(0xFFB3D9FF),
+          ),
+        ),
       ),
     );
   }

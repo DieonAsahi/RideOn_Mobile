@@ -10,6 +10,9 @@ import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dart';
+import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
+import 'package:capbatu/app/services/connectivity_service.dart';
+import 'package:capbatu/app/widgets/app_snackbar.dart';
 
 class UpdtodometerController extends GetxController {
   final box = GetStorage();
@@ -238,16 +241,22 @@ class UpdtodometerController extends GetxController {
         if (Get.isRegistered<HomeController>()) {
           final homeC = Get.find<HomeController>();
           homeC.odometer.value = newKm;
-          homeC.fetchHome();
+          homeC.fetchHome(force: true);
+        }
+
+        if (Get.isRegistered<KendaraanController>()) {
+          Get.find<KendaraanController>().getVehicles(force: true);
         }
 
         Get.offNamed('/mainscreen', arguments: 0);
-        Get.snackbar("Berhasil", "Odometer berhasil diperbarui");
+        AppSnackbar.success("Odometer berhasil diperbarui.");
       } else {
         Get.snackbar("Error", "Gagal memperbarui odometer");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar("Error", "Gagal memperbarui odometer");
+      }
     } finally {
       isLoading.value = false;
     }
