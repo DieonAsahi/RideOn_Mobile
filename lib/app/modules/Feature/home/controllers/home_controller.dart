@@ -228,6 +228,13 @@ class HomeController extends GetxController {
     }
   }
 
+  void syncVehicleFromStorage() {
+    final storedId = box.read("vehicle_id")?.toString();
+    if (storedId != null && storedId.isNotEmpty && storedId != vehicleId) {
+      changeVehicle(storedId);
+    }
+  }
+
   // void previousVehicle() {
   //   if (currentVehicleIndex.value < vehicles.length - 1) {
   //     currentVehicleIndex.value++;
@@ -402,6 +409,18 @@ class HomeController extends GetxController {
       isLoading.value = true;
       isLoadingOdometer.value = true;
       final token = box.read("token");
+      final storedVehicleId = box.read("vehicle_id")?.toString();
+      if (storedVehicleId != null &&
+          storedVehicleId.isNotEmpty &&
+          storedVehicleId != vehicleId) {
+        vehicleId = storedVehicleId;
+        selectedVehicleId.value = storedVehicleId;
+        final idx = vehicles.indexWhere((e) => e["id"].toString() == storedVehicleId);
+        if (idx != -1) {
+          currentVehicleIndex.value = idx;
+          vehiclePlat.value = vehicles[idx]["plate_number"]?.toString() ?? "-";
+        }
+      }
 
       if (token == null) {
         await AuthService.logout();

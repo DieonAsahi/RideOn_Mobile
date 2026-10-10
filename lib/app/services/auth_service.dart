@@ -2,8 +2,10 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import 'firebase_messaging_service.dart';
+import 'local_notification_service.dart';
 
 class AuthService {
   static bool _isLoggingOut = false;
@@ -14,6 +16,18 @@ class AuthService {
 
     try {
       final box = GetStorage();
+
+      // 1. Hapus FCM Token dari database backend dan hapus token instance perangkat
+      try {
+        await FirebaseMessagingService.deleteTokenFromServer();
+      } catch (e) {
+        print('Error deleting FCM token during logout: $e');
+      }
+
+      // 2. Batalkan local notification inactivity jika ada
+      try {
+        await LocalNotificationService.cancelInactivityReminder();
+      } catch (_) {}
 
       try {
         final serverClientId = dotenv.env['GOOGLE_SERVER_CLIENT_ID'];

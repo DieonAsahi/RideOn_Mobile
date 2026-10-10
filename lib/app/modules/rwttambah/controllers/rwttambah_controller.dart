@@ -40,10 +40,14 @@ class RwttambahController extends GetxController {
   void onInit() {
     super.onInit();
 
+    final args = Get.arguments;
+
+    if (args != null && args['vehicle_id'] != null) {
+      box.write('vehicle_id', args['vehicle_id'].toString());
+    }
+
     loadVehicleOdometer();
     loadMasterComponents();
-
-    final args = Get.arguments;
 
     if (args != null && args['jenis'] == 'Perbaikan') {
       selectedJenis.value = 'Perbaikan';
@@ -378,6 +382,9 @@ class RwttambahController extends GetxController {
     tanggalController.dispose();
     bengkelController.dispose();
     biayaController.dispose();
+    if (Get.isRegistered<HomeController>()) {
+      Get.find<HomeController>().syncVehicleFromStorage();
+    }
     super.onClose();
   }
 }

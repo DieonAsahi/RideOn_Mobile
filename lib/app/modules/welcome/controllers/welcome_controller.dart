@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:capbatu/app/services/auth_service.dart';
+import 'package:capbatu/app/services/local_notification_service.dart';
 
 class WelcomeController extends GetxController
     with GetSingleTickerProviderStateMixin {
@@ -100,12 +101,15 @@ class WelcomeController extends GetxController
       final lastClosed = DateTime.tryParse(lastClosedStr);
       if (lastClosed != null) {
         final diff = DateTime.now().difference(lastClosed);
-        if (diff >= const Duration(hours: 8)) {
+        if (diff >= const Duration(hours: 24)) {
           AuthService.logout();
           return;
         }
       }
     }
+
+    // Aplikasi dibuka kembali, batalkan inactivity reminder
+    LocalNotificationService.cancelInactivityReminder();
 
     if (isFirstInstall) {
       Get.offAllNamed("/onboarding");

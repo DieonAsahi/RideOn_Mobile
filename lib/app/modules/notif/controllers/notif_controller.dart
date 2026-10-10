@@ -8,34 +8,77 @@ import '../../../services/local_notification_service.dart';
 import '../../../services/firebase_messaging_service.dart';
 import '../../../services/location_service.dart';
 import '../../../services/connectivity_service.dart';
+import '../../Feature/home/controllers/home_controller.dart';
 
 class NotifModel {
   final int id;
+  final String vehicleId;
+  final String vehicleName;
+  final String vehiclePlate;
+  final int? componentId;
+  final String type; // 'schedule_reminder' atau 'daily_warning'
+  final String notificationType; // 'Pengingat Jadwal' atau 'Peringatan Cek Harian'
   final String image;
   final String status;
   final String title;
   final String desc;
   final String time;
+  final DateTime createdAt;
   final bool isRead;
 
   NotifModel({
     required this.id,
+    required this.vehicleId,
+    required this.vehicleName,
+    required this.vehiclePlate,
+    this.componentId,
+    required this.type,
+    required this.notificationType,
     required this.image,
     required this.status,
     required this.title,
     required this.desc,
     required this.time,
+    required this.createdAt,
     required this.isRead,
   });
 
   factory NotifModel.fromJson(Map<String, dynamic> json) {
+    final componentIcon = json["master_components"]?["icon"];
+    final img = (componentIcon != null && componentIcon.toString().isNotEmpty)
+        ? "assets/icons/$componentIcon.png"
+        : "assets/icons/service.png";
+
+    final created =
+        DateTime.tryParse(json["created_at"]?.toString() ?? '') ??
+            DateTime.now();
+
+    final isSchedule = json["severity"] == "Pengingat" ||
+        (json["title"]?.toString().toLowerCase().contains("jadwal") ?? false) ||
+        json["type"] == "schedule_reminder";
+
     return NotifModel(
-      id: json["id"],
-      image: "assets/icons/${json["master_components"]["icon"]}.png",
-      status: json["severity"],
-      title: json["title"],
-      desc: json["message"],
-      time: _formatElapsedTime(DateTime.parse(json["created_at"])),
+      id: json["id"] ?? 0,
+      vehicleId: json["vehicle_id"]?.toString() ?? "",
+      vehicleName: json["vehicle_name"]?.toString() ??
+          (json["vehicles"] != null
+              ? "${json["vehicles"]["brand"] ?? ""} ${json["vehicles"]["model"] ?? ""}".trim()
+              : "Kendaraan"),
+      vehiclePlate: json["vehicle_plate"]?.toString() ??
+          (json["vehicles"]?["plate_number"]?.toString() ?? "-"),
+      componentId: json["component_id"] != null
+          ? int.tryParse(json["component_id"].toString())
+          : null,
+      type: json["type"]?.toString() ??
+          (isSchedule ? "schedule_reminder" : "daily_warning"),
+      notificationType: json["notification_type"]?.toString() ??
+          (isSchedule ? "Pengingat Jadwal" : "Peringatan Cek Harian"),
+      image: img,
+      status: json["severity"] ?? (isSchedule ? "Pengingat" : "Darurat"),
+      title: json["title"] ?? "Notifikasi Servis",
+      desc: json["message"] ?? "",
+      time: _formatElapsedTime(created),
+      createdAt: created,
       isRead: json['is_read'] == true,
     );
   }
@@ -62,13 +105,48 @@ class NotifModel {
 
   NotifModel copyWith({bool? isRead}) => NotifModel(
     id: id,
+    vehicleId: vehicleId,
+    vehicleName: vehicleName,
+    vehiclePlate: vehiclePlate,
+    componentId: componentId,
+    type: type,
+    notificationType: notificationType,
     image: image,
     status: status,
     title: title,
     desc: desc,
     time: time,
+    createdAt: createdAt,
     isRead: isRead ?? this.isRead,
   );
+}
+
+class VehicleNotifGroup {
+  final String vehicleId;
+  final String vehicleName;
+  final String vehiclePlate;
+  final List<NotifModel> scheduleReminders; // H-1 Pengingat Jadwal Servis
+  final List<NotifModel> dailyWarnings; // Peringatan Cek/Tambah Servis Harian
+
+  VehicleNotifGroup({
+    required this.vehicleId,
+    required this.vehicleName,
+    required this.vehiclePlate,
+    required this.scheduleReminders,
+    required this.dailyWarnings,
+  });
+
+  int get totalCount => scheduleReminders.length + dailyWarnings.length;
+}
+
+class TimeSectionGroup {
+  final String title; // "Hari Ini", "Minggu Ini", "Lebih Lama"
+  final List<VehicleNotifGroup> vehicleGroups;
+
+  TimeSectionGroup({
+    required this.title,
+    required this.vehicleGroups,
+  });
 }
 
 class NotifController extends GetxController with WidgetsBindingObserver {
@@ -79,18 +157,118 @@ class NotifController extends GetxController with WidgetsBindingObserver {
   var isLoading = false.obs;
   var isPermissionGranted = true.obs;
 
-  final List<String> filterOptions = ['Semua', 'Belum dibaca'];
+  final List<String> filterOptions = ['Semua', 'Belum di Baca'];
   var selectedFilter = 'Semua'.obs;
+
+  // Status expand/collapse tiap kendaraan: vehicleId -> bool
+  var expandedVehicles = <String, bool>{}.obs;
+
+  bool isVehicleExpanded(String vehicleId) {
+    return expandedVehicles[vehicleId] ?? true;
+  }
+
+  void toggleVehicleExpanded(String vehicleId) {
+    final current = isVehicleExpanded(vehicleId);
+    expandedVehicles[vehicleId] = !current;
+  }
 
   void changeFilter(String filter) {
     selectedFilter.value = filter;
   }
 
   List<NotifModel> get filteredNotifList {
-    if (selectedFilter.value == 'Belum dibaca') {
+    if (selectedFilter.value == 'Belum di Baca') {
       return notifList.where((notif) => !notif.isRead).toList();
     }
     return notifList;
+  }
+
+  /// Kelompokkan notifikasi berdasarkan rentang waktu: Hari Ini, Minggu Ini, Lebih Lama
+  List<TimeSectionGroup> get groupedTimeSections {
+    final list = filteredNotifList;
+    if (list.isEmpty) return [];
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final List<NotifModel> hariIniList = [];
+    final List<NotifModel> mingguIniList = [];
+    final List<NotifModel> lebihLamaList = [];
+
+    for (final notif in list) {
+      final notifDate = DateTime(
+        notif.createdAt.year,
+        notif.createdAt.month,
+        notif.createdAt.day,
+      );
+      final diffDays = today.difference(notifDate).inDays;
+
+      if (diffDays <= 0) {
+        hariIniList.add(notif);
+      } else if (diffDays <= 7) {
+        mingguIniList.add(notif);
+      } else {
+        lebihLamaList.add(notif);
+      }
+    }
+
+    final sections = <TimeSectionGroup>[];
+
+    if (hariIniList.isNotEmpty) {
+      sections.add(TimeSectionGroup(
+        title: "Hari Ini",
+        vehicleGroups: _groupByVehicle(hariIniList),
+      ));
+    }
+    if (mingguIniList.isNotEmpty) {
+      sections.add(TimeSectionGroup(
+        title: "Minggu Ini",
+        vehicleGroups: _groupByVehicle(mingguIniList),
+      ));
+    }
+    if (lebihLamaList.isNotEmpty) {
+      sections.add(TimeSectionGroup(
+        title: "Lebih Lama",
+        vehicleGroups: _groupByVehicle(lebihLamaList),
+      ));
+    }
+
+    return sections;
+  }
+
+  List<VehicleNotifGroup> _groupByVehicle(List<NotifModel> items) {
+    final Map<String, List<NotifModel>> byVehicle = {};
+    for (final item in items) {
+      final key = item.vehicleId.isNotEmpty ? item.vehicleId : "default_vehicle";
+      byVehicle.putIfAbsent(key, () => []).add(item);
+    }
+
+    final result = <VehicleNotifGroup>[];
+    for (final entry in byVehicle.entries) {
+      final vItems = entry.value;
+      final first = vItems.first;
+
+      final scheduleReminders = vItems
+          .where((it) =>
+              it.type == 'schedule_reminder' || it.status == 'Pengingat')
+          .toList();
+
+      final dailyWarnings = vItems
+          .where((it) =>
+              it.type != 'schedule_reminder' && it.status != 'Pengingat')
+          .toList();
+
+      result.add(VehicleNotifGroup(
+        vehicleId: entry.key,
+        vehicleName:
+            first.vehicleName.isNotEmpty ? first.vehicleName : "Kendaraan",
+        vehiclePlate: first.vehiclePlate,
+        scheduleReminders: scheduleReminders,
+        dailyWarnings: dailyWarnings,
+      ));
+    }
+
+    return result;
   }
 
   @override
@@ -109,8 +287,6 @@ class NotifController extends GetxController with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state == AppLifecycleState.resumed) {
-      // Saat notifikasi HP ditarik / drawer ditutup, jangan auto refresh
-      // Hanya cek izin jika sebelumnya izin ditolak
       if (!isPermissionGranted.value) {
         final granted =
             await FirebaseMessagingService.isNotificationPermissionGranted();
@@ -138,13 +314,11 @@ class NotifController extends GetxController with WidgetsBindingObserver {
     if (granted) {
       await getNotifications();
     } else {
-      // Buka pengaturan aplikasi jika ditolak secara permanen
       await LocationService.openAppSettings();
     }
   }
 
   Future<void> getNotifications({bool silent = false}) async {
-    // Jika data sudah ada, jangan tampilkan full-screen loading agar tidak kedap-kedip
     final shouldShowLoading = !silent && notifList.isEmpty;
     if (shouldShowLoading) {
       isLoading.value = true;
@@ -152,7 +326,7 @@ class NotifController extends GetxController with WidgetsBindingObserver {
 
     try {
       final token = box.read("token");
-      final vehicleId = box.read("vehicle_id");
+      final vehicleId = box.read("vehicle_id") ?? "all";
 
       final response = await http.get(
         Uri.parse("$baseUrl/api/vehicle/notifications/$vehicleId"),
@@ -160,17 +334,16 @@ class NotifController extends GetxController with WidgetsBindingObserver {
       );
 
       print("STATUS CODE : ${response.statusCode}");
-      print("RESPONSE BODY : ${response.body}");
 
       if (response.statusCode == 200) {
         try {
           final List data = jsonDecode(response.body);
           final newList = data.map((e) => NotifModel.fromJson(e)).toList();
 
-          // Refresh hanya jika benar-benar ada data update baru dari backend
           if (_hasDataChanged(newList)) {
             notifList.value = newList;
           }
+          updateUnreadBadge();
         } catch (e, s) {
           print("FROM JSON ERROR: $e");
           print(s);
@@ -186,7 +359,6 @@ class NotifController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  /// Cek apakah data notifikasi dari backend benar-benar memiliki perubahan
   bool _hasDataChanged(List<NotifModel> newList) {
     if (newList.length != notifList.length) return true;
     for (int i = 0; i < newList.length; i++) {
@@ -198,6 +370,13 @@ class NotifController extends GetxController with WidgetsBindingObserver {
       }
     }
     return false;
+  }
+
+  void updateUnreadBadge() {
+    final unread = notifList.where((n) => !n.isRead).length;
+    if (Get.isRegistered<HomeController>()) {
+      Get.find<HomeController>().unreadNotifCount.value = unread;
+    }
   }
 
   Future<void> markAsRead(NotifModel notification) async {
@@ -214,15 +393,42 @@ class NotifController extends GetxController with WidgetsBindingObserver {
         final index = notifList.indexWhere(
           (item) => item.id == notification.id,
         );
-        if (index >= 0) notifList[index] = notification.copyWith(isRead: true);
+        if (index >= 0) {
+          notifList[index] = notification.copyWith(isRead: true);
+        }
         await LocalNotificationService.cancel(notification.id);
-      } else {
-        print(
-          'Gagal menandai notifikasi dibaca: ${response.statusCode} ${response.body}',
-        );
+        updateUnreadBadge();
       }
     } catch (error) {
       print('Request status baca notifikasi gagal: $error');
     }
+  }
+
+  /// Aksi Klik "Jadwalkan Servis":
+  /// Arahkan user ke halaman Tambah Riwayat dengan vehicleId terkait.
+  /// Saat user kembali/back ke Home, pastikan Home memuat data kendaraan yang sesuai.
+  void onJadwalkanServis(NotifModel notif) {
+    markAsRead(notif);
+
+    if (notif.vehicleId.isNotEmpty) {
+      box.write('vehicle_id', notif.vehicleId);
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().syncVehicleFromStorage();
+      }
+    }
+
+    Get.toNamed(
+      '/rwttambah',
+      arguments: {
+        'jadwalkan': true,
+        'component_id': notif.componentId,
+        'vehicle_id': notif.vehicleId,
+      },
+    )?.then((_) {
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().syncVehicleFromStorage();
+      }
+      getNotifications(silent: true);
+    });
   }
 }

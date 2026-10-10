@@ -8,6 +8,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 
 import 'local_notification_service.dart';
+import '../widgets/in_app_notification_banner.dart';
 import '../../firebase_options.dart';
 
 @pragma('vm:entry-point')
@@ -45,6 +46,7 @@ class FirebaseMessagingService {
         print('Body: ${message.notification?.body}');
 
         await showMessageNotification(message);
+        InAppNotificationBanner.show(message);
       },
     );
 
@@ -106,6 +108,39 @@ class FirebaseMessagingService {
     }
   }
 
+  /// Hapus FCM token di database backend dan hapus token instance pada perangkat
+  static Future<void> deleteTokenFromServer() async {
+    final accessToken = GetStorage().read<String>('token');
+    final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+    String? token;
+
+    try {
+      token = await messaging.getToken();
+    } catch (_) {}
+
+    if (accessToken != null && baseUrl != null) {
+      try {
+        await http.delete(
+          Uri.parse('$baseUrl/api/fcm/token'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $accessToken',
+          },
+          body: jsonEncode({'token': token ?? ''}),
+        );
+      } catch (e) {
+        print('Gagal menghapus token FCM dari backend: $e');
+      }
+    }
+
+    try {
+      await messaging.deleteToken();
+    } catch (e) {
+      print('Gagal deleteToken dari FCM instance: $e');
+    }
+  }
+
+
   static Future<void> _openRemoteMessage(RemoteMessage message) =>
       _openNotification(jsonEncode({
         'vehicle_id': message.data['vehicle_id'],
@@ -160,7 +195,7 @@ class FirebaseMessagingService {
     required String notificationId,
   }) async {
     final box = GetStorage();
-    await _markNotificationRead(notificationId);
+    await markNotificationRead(notificationId);
     await box.write('vehicle_id', vehicleId);
     await box.remove('pending_notification_vehicle_id');
     await box.remove('pending_notification_id');
@@ -169,7 +204,7 @@ class FirebaseMessagingService {
     Get.toNamed('/notif');
   }
 
-  static Future<void> _markNotificationRead(String notificationId) async {
+  static Future<void> markNotificationRead(String notificationId) async {
     final accessToken = GetStorage().read<String>('token');
     final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
     if (accessToken == null || baseUrl == null) return;

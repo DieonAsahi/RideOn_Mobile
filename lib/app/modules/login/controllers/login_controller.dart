@@ -7,6 +7,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../services/firebase_messaging_service.dart';
+import '../../../services/local_notification_service.dart';
 import '../../../services/connectivity_service.dart';
 
 class LoginController extends GetxController {
@@ -73,6 +74,7 @@ class LoginController extends GetxController {
 
         await box.write("token", token);
         await box.write("last_closed", DateTime.now().toIso8601String());
+        await LocalNotificationService.cancelInactivityReminder();
         await FirebaseMessagingService.syncToken();
 
         await checkVehicle();
@@ -132,6 +134,7 @@ class LoginController extends GetxController {
 
       await box.write("token", token);
       await box.write("last_closed", DateTime.now().toIso8601String());
+      await LocalNotificationService.cancelInactivityReminder();
       await FirebaseMessagingService.syncToken();
 
       await syncGoogleUser();
