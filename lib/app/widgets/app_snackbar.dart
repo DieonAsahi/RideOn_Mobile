@@ -13,18 +13,29 @@ class AppSnackbar {
   }
 
   static void show(String message) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showInternal(message);
+    });
+  }
+
+  static void _showInternal(String message) {
     // Tutup snackbar GetX lama jika ada
     if (Get.isSnackbarOpen) {
       Get.closeAllSnackbars();
     }
 
     _dismissTimer?.cancel();
-    _currentEntry?.remove();
+    try {
+      _currentEntry?.remove();
+    } catch (_) {}
     _currentEntry = null;
 
-    final overlay = Get.overlayContext != null
-        ? Overlay.maybeOf(Get.overlayContext!)
-        : (Get.key.currentState?.overlay);
+    // Prioritaskan Root Navigator Overlay agar snackbar tidak terhapus saat dialog ditutup / route berganti
+    final overlay = Get.key.currentState?.overlay ??
+        (Get.overlayContext != null
+            ? Overlay.maybeOf(Get.overlayContext!)
+            : null) ??
+        (Get.context != null ? Overlay.maybeOf(Get.context!) : null);
 
     if (overlay == null) {
       Get.rawSnackbar(
@@ -51,7 +62,9 @@ class AppSnackbar {
         message: message,
         onDismiss: () {
           if (_currentEntry == entry) {
-            _currentEntry?.remove();
+            try {
+              _currentEntry?.remove();
+            } catch (_) {}
             _currentEntry = null;
           }
         },

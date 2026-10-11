@@ -15,7 +15,10 @@ class HomeView extends GetView<HomeController> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            await controller.fetchHome();
+            await controller.getVehicles();
+            await controller.fetchHome(force: true);
+            await controller.fetchKomponenFilter();
+            await controller.fetchDashboardArtikel();
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -369,7 +372,7 @@ class FeatureCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        "${currentKm.toInt()}/${maxKm.toInt()} km",
+                        "${currentKm < 0 ? 0 : currentKm.toInt()}/${maxKm.toInt()} km",
                         style: const TextStyle(fontSize: 9),
                       ),
                       const SizedBox(height: 4),
@@ -393,7 +396,7 @@ class FeatureCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        "${currentDays.toInt()}/${maxDays.toInt()} hari",
+                        "${currentDays < 0 ? 0 : currentDays.toInt()}/${maxDays.toInt()} hari",
                         style: const TextStyle(fontSize: 9),
                       ),
                       const SizedBox(height: 4),
@@ -524,8 +527,8 @@ class OdometerCard extends GetView<HomeController> {
                         Obx(
                           () => Image.asset(
                             controller.isDropdownOpen.value
-                                ? 'assets/icons/up.png'
-                                : 'assets/icons/down.png',
+                                ? 'assets/icons/up_home.png'
+                                : 'assets/icons/down_home.png',
                             width: 24,
                             height: 24,
                           ),

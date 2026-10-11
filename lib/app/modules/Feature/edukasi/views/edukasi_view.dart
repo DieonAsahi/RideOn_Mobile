@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/edukasi_controller.dart';
+import 'package:capbatu/app/widgets/skeleton_widget.dart';
 
 class EdukasiView extends GetView<EdukasiController> {
   const EdukasiView({super.key});
@@ -81,7 +82,7 @@ class EdukasiView extends GetView<EdukasiController> {
                 const SizedBox(height: 16),
                 Obx(() {
                   if (controller.isLoading.value) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const EdukasiSkeleton();
                   }
                   return ListView.separated(
                     shrinkWrap: true,

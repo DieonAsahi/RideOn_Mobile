@@ -17,7 +17,7 @@ class KendaraanView extends GetView<KendaraanController> {
             Positioned.fill(
               child: RefreshIndicator(
                 onRefresh: () async {
-                  await controller.getVehicles();
+                  await controller.getVehicles(force: true);
                 },
                 child: Align(
                   alignment: Alignment.topCenter,
@@ -89,9 +89,6 @@ class KendaraanView extends GetView<KendaraanController> {
                                   nextServiceComponent:
                                       data.nextServiceComponent,
                                   isActive: isActive,
-                                  onTap: () {
-                                    controller.setActiveVehicle(data.id);
-                                  },
                                 );
                               },
                             );
@@ -146,7 +143,6 @@ class KendaraanCard extends StatelessWidget {
   final String lastServiceDate;
   final String nextServiceComponent;
   final bool isActive;
-  final VoidCallback onTap;
 
   const KendaraanCard({
     super.key,
@@ -159,7 +155,6 @@ class KendaraanCard extends StatelessWidget {
     required this.lastServiceDate,
     required this.nextServiceComponent,
     required this.isActive,
-    required this.onTap,
   });
 
   @override
@@ -178,9 +173,7 @@ class KendaraanCard extends StatelessWidget {
       statusIcon = "assets/icon/optimal.png";
     }
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
+    return Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -557,7 +550,6 @@ class KendaraanCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }

@@ -70,11 +70,23 @@ class FirebaseMessagingService {
 
   static Future<void> showMessageNotification(RemoteMessage message) async {
     final notificationId = int.tryParse(message.data['notification_id'] ?? '');
+    final vehicleId = message.data['vehicle_id']?.toString() ?? '';
+    final category = message.data['category']?.toString() ??
+        (message.data['type'] == 'service_update' ||
+                message.data['type'] == 'schedule_reminder'
+            ? 'status'
+            : 'component');
+
+    final groupKey = category == 'component' && vehicleId.isNotEmpty
+        ? 'vehicle_comp_$vehicleId'
+        : null;
+
     await LocalNotificationService.show(
       id: notificationId ??
           DateTime.now().millisecondsSinceEpoch.remainder(1 << 31),
       title: message.data['title'] ?? message.notification?.title ?? 'RideOn',
       body: message.data['body'] ?? message.notification?.body ?? '',
+      groupKey: groupKey,
       payload: jsonEncode({
         'vehicle_id': message.data['vehicle_id'],
         'notification_id': message.data['notification_id'],

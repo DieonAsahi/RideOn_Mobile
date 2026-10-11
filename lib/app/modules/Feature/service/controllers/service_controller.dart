@@ -12,6 +12,7 @@ class ServiceItem {
   final String icon;
   final bool isScheduled;
   final String status;
+  final String? severity;
   final String message;
 
   ServiceItem({
@@ -20,6 +21,7 @@ class ServiceItem {
     required this.icon,
     required this.isScheduled,
     required this.status,
+    this.severity,
     required this.message,
   });
 
@@ -30,6 +32,7 @@ class ServiceItem {
       icon: json["icon"],
       isScheduled: json["isScheduled"] ?? false,
       status: json["status"],
+      severity: json["severity"],
       message: json["message"],
     );
   }

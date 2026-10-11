@@ -18,7 +18,7 @@ class ServiceView extends GetView<ServiceController> {
             Positioned.fill(
               child: RefreshIndicator(
                 onRefresh: () async {
-                  await controller.getServices();
+                  await controller.getServices(force: true);
                 },
                 child: Align(
                   alignment: Alignment.topCenter,
@@ -189,15 +189,60 @@ class ServiceView extends GetView<ServiceController> {
                             }
 
                             if (controller.services.isEmpty) {
-                              return const Center(
-                                child: Text(
-                                  "Tidak ada komponen yang perlu diservis",
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 60),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Image.asset(
+                                        'assets/logo/empty_rwtservice.png',
+                                        width: 160,
+                                        height: 160,
+                                      ),
+                                      const SizedBox(height: 24),
+                                      const Text(
+                                        "Komponen dalam Kondisi Baik",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        "Anda belum memiliki komponen yang perlu di service.",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               );
                             }
 
                             return Column(
                               children: controller.services.map((item) {
+                                String badgeText;
+                                Color badgeColor;
+
+                                if (item.status == "danger" ||
+                                    item.severity == "Darurat") {
+                                  badgeText = "Darurat";
+                                  badgeColor = AppColors.red;
+                                } else if (item.status == "warning" ||
+                                    item.severity == "Mendesak") {
+                                  badgeText = "Mendesak";
+                                  badgeColor = AppColors.orange;
+                                } else {
+                                  badgeText = "Segera";
+                                  badgeColor = const Color(0xFFFFB800);
+                                }
+
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 12),
                                   child: _serviceCard(
@@ -209,12 +254,8 @@ class ServiceView extends GetView<ServiceController> {
                                     ),
                                     title: item.name,
                                     subtitle: item.message,
-                                    badge: item.status == "danger"
-                                        ? "Darurat"
-                                        : "Mendesak",
-                                    badgeColor: item.status == "danger"
-                                        ? AppColors.red
-                                        : AppColors.orange,
+                                    badge: badgeText,
+                                    badgeColor: badgeColor,
                                     isScheduled: item.isScheduled,
                                     onSchedule: () =>
                                         controller.goToAddHistory(item),

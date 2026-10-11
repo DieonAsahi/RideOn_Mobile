@@ -8,6 +8,7 @@ import 'package:capbatu/app/services/connectivity_service.dart';
 import 'package:capbatu/app/widgets/app_snackbar.dart';
 import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dart';
 import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
+import 'package:capbatu/app/modules/Feature/service/controllers/service_controller.dart';
 
 class RwttambahController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -20,9 +21,11 @@ class RwttambahController extends GetxController {
   DateTime? selectedDate;
 
   var isEdit = false.obs;
+  var originalStatus = ''.obs;
   var serviceId = 0.obs;
 
   var currentOdometer = 0.obs;
+  var existingOdometer = 0.obs;
   var odometerUpdatedToday = false.obs;
 
   var selectedComponentId = 0.obs;
@@ -35,6 +38,35 @@ class RwttambahController extends GetxController {
   final box = GetStorage();
 
   var isLoading = false.obs;
+
+  /// State Machine Pilihan Status
+  List<String> get availableStatusOptions {
+    if (!isEdit.value) {
+      // Create: Pilihan dropdown hanya "Dijadwalkan" dan "Proses"
+      return ['Dijadwalkan', 'Proses'];
+    }
+    // Edit (dari Dijadwalkan): Pilihan hanya "Proses"
+    if (originalStatus.value == 'Dijadwalkan') {
+      return ['Proses'];
+    }
+    // Edit (dari Proses): Pilihan hanya "Selesai"
+    if (originalStatus.value == 'Proses' || originalStatus.value == 'Diproses') {
+      return ['Selesai'];
+    }
+    return ['Selesai'];
+  }
+
+  bool get isStatusDropdownEnabled {
+    // Pada create bisa memilih antara Dijadwalkan atau Proses
+    // Pada edit, opsinya sudah fixed ke langkah berikutnya sehingga tidak perlu dipilih ulang
+    return !isEdit.value;
+  }
+
+  /// Restriksi Form Edit: Jika edit, field Komponen di-disable agar tidak merusak kalkulasi reset umur komponen
+  bool get isComponentEnabled => !isEdit.value;
+  bool get isJenisEnabled => !isEdit.value;
+  bool get isDetailEnabled =>
+      !isEdit.value || originalStatus.value != 'Selesai';
 
   @override
   void onInit() {
@@ -59,12 +91,10 @@ class RwttambahController extends GetxController {
 
     if (args != null && args['jadwalkan'] == true) {
       selectedStatus.value = 'Dijadwalkan';
-      isStatusLocked.value = true;
       selectedJenis.value = 'Servis Rutin';
 
       if (args['component'] != null) {
         final comp = args['component'];
-        // Jika comp bertipe ServiceItem atau Map
         try {
           selectedComponentId.value = comp.id;
         } catch (_) {
@@ -81,34 +111,57 @@ class RwttambahController extends GetxController {
       isEdit.value = true;
 
       final data = args['data'];
-
       serviceId.value = data['id'];
+
+      final rawStatus = data['status']?.toString() ?? 'Dijadwalkan';
+      originalStatus.value = rawStatus == 'Diproses' ? 'Proses' : rawStatus;
+
+      // State machine status:
+      // Edit (dari Dijadwalkan): Pilihan hanya "Proses"
+      // Edit (dari Proses): Pilihan hanya "Selesai"
+      if (originalStatus.value == 'Dijadwalkan') {
+        selectedStatus.value = 'Proses';
+      } else if (originalStatus.value == 'Proses') {
+        selectedStatus.value = 'Selesai';
+      } else {
+        selectedStatus.value = 'Selesai';
+      }
 
       // isi form
-      bengkelController.text = data['bengkel'];
-      serviceId.value = data['id'];
+      bengkelController.text = data['bengkel'] ?? '';
 
       selectedJenis.value = data['jenis'] == 'SERVIS RUTIN'
           ? 'Servis Rutin'
           : 'Perbaikan';
 
-      selectedStatus.value = data['status'];
+      tanggalController.text = data['tanggal'] ?? '';
+      try {
+        selectedDate = DateTime.parse(data['tanggal']);
+      } catch (_) {
+        selectedDate = DateTime.now();
+      }
 
-      tanggalController.text = data['tanggal'];
-      selectedDate = DateTime.parse(data['tanggal']);
-
-      bengkelController.text = data['bengkel'];
-      biayaController.text = data['biaya'] == '-'
+      biayaController.text = (data['biaya'] == null || data['biaya'] == '-')
           ? ''
-          : data['biaya'].replaceAll('Rp ', '');
+          : data['biaya'].toString().replaceAll('Rp ', '').trim();
 
       detailController.text = data['jenis'] == 'PERBAIKAN'
-          ? data['detail']
+          ? (data['detail'] ?? '')
           : '';
 
       if (data['jenis'] == 'SERVIS RUTIN') {
         selectedComponentId.value = data['component_id'] ?? 0;
       }
+
+      if (data['odometer'] != null) {
+        final odoStr =
+            data['odometer'].toString().replaceAll(RegExp(r'[^0-9]'), '');
+        existingOdometer.value = int.tryParse(odoStr) ?? 0;
+      }
+    } else {
+      isEdit.value = false;
+      originalStatus.value = '';
+      selectedStatus.value = 'Dijadwalkan';
     }
   }
 
@@ -191,7 +244,7 @@ class RwttambahController extends GetxController {
       return;
     }
 
-    if (selectedStatus.value == "Selesai" && biayaController.text.isEmpty) {
+    if (selectedStatus.value == "Selesai" && biayaController.text.trim().isEmpty) {
       Get.snackbar("Error", "Biaya servis wajib diisi");
       return;
     }
@@ -217,8 +270,13 @@ class RwttambahController extends GetxController {
 
       final token = box.read("token");
       final vehicleId = box.read("vehicle_id");
+      final date = selectedDate ?? DateTime.now();
       final serviceDate =
-          "${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}";
+          "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+      final cleanCost = biayaController.text.trim().isEmpty
+          ? 0
+          : (int.tryParse(biayaController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0);
 
       final response = await http.post(
         Uri.parse("$baseUrl/api/vehicle/service-history"),
@@ -239,9 +297,7 @@ class RwttambahController extends GetxController {
           "status": selectedStatus.value,
           "service_date": serviceDate,
           "workshop_name": bengkelController.text,
-          "cost": biayaController.text.isEmpty
-              ? 0
-              : int.parse(biayaController.text),
+          "cost": cleanCost,
         }),
       );
 
@@ -251,6 +307,9 @@ class RwttambahController extends GetxController {
         }
         if (Get.isRegistered<KendaraanController>()) {
           Get.find<KendaraanController>().getVehicles(force: true);
+        }
+        if (Get.isRegistered<ServiceController>()) {
+          Get.find<ServiceController>().getServices(force: true);
         }
 
         AppSnackbar.success("Data berhasil disimpan.");
@@ -276,12 +335,7 @@ class RwttambahController extends GetxController {
   }
 
   Future<void> updateRiwayat() async {
-    if (!odometerUpdatedToday.value) {
-      Get.snackbar("Perhatian", "Update odometer terlebih dahulu");
-      return;
-    }
-
-    if (selectedStatus.value == "Selesai" && biayaController.text.isEmpty) {
+    if (selectedStatus.value == "Selesai" && biayaController.text.trim().isEmpty) {
       Get.snackbar("Error", "Biaya servis wajib diisi");
       return;
     }
@@ -307,8 +361,15 @@ class RwttambahController extends GetxController {
 
       final token = box.read("token");
       final vehicleId = box.read("vehicle_id");
+      final date = selectedDate ?? DateTime.now();
       final serviceDate =
-          "${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}";
+          "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+      final cleanCost = biayaController.text.trim().isEmpty
+          ? 0
+          : (int.tryParse(biayaController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0);
+
+      final odoToSend = existingOdometer.value > 0 ? existingOdometer.value : currentOdometer.value;
 
       final response = await http.put(
         Uri.parse("$baseUrl/api/vehicle/service-history/${serviceId.value}"),
@@ -325,13 +386,11 @@ class RwttambahController extends GetxController {
           "detail": selectedJenis.value == "Perbaikan"
               ? detailController.text
               : null,
-          "odometer": currentOdometer.value,
+          "odometer": odoToSend,
           "status": selectedStatus.value,
           "service_date": serviceDate,
           "workshop_name": bengkelController.text,
-          "cost": biayaController.text.isEmpty
-              ? 0
-              : int.parse(biayaController.text),
+          "cost": cleanCost,
         }),
       );
 
@@ -341,6 +400,9 @@ class RwttambahController extends GetxController {
         }
         if (Get.isRegistered<KendaraanController>()) {
           Get.find<KendaraanController>().getVehicles(force: true);
+        }
+        if (Get.isRegistered<ServiceController>()) {
+          Get.find<ServiceController>().getServices(force: true);
         }
 
         AppSnackbar.success("Data berhasil diperbarui.");

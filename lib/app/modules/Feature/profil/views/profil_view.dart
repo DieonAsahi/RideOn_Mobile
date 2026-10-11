@@ -17,7 +17,7 @@ class ProfilView extends GetView<ProfilController> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            await controller.getProfile();
+            await controller.getProfile(force: true);
           },
           child: Center(
             child: ConstrainedBox(

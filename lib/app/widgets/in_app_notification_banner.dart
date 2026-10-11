@@ -15,6 +15,9 @@ class InAppPushNotification {
   final String vehicleName;
   final String vehicleId;
   final int? componentId;
+  final String componentName;
+  final String category; // 'component' atau 'status'
+  final String status; // 'Dijadwalkan', 'Dibatalkan', 'Selesai', 'Diproses', dll.
   final DateTime timestamp;
 
   InAppPushNotification({
@@ -24,6 +27,9 @@ class InAppPushNotification {
     required this.vehicleName,
     required this.vehicleId,
     this.componentId,
+    required this.componentName,
+    required this.category,
+    required this.status,
     required this.timestamp,
   });
 
@@ -36,16 +42,79 @@ class InAppPushNotification {
   }
 }
 
+abstract class BannerGroupItem {
+  String get key;
+  DateTime get latestTimestamp;
+}
+
+class VehicleComponentGroup extends BannerGroupItem {
+  final String vehicleId;
+  final String vehicleName;
+  final List<InAppPushNotification> items;
+
+  VehicleComponentGroup({
+    required this.vehicleId,
+    required this.vehicleName,
+    required this.items,
+  });
+
+  @override
+  String get key => 'vehicle_${vehicleId.isNotEmpty ? vehicleId : vehicleName}';
+
+  @override
+  DateTime get latestTimestamp =>
+      items.isNotEmpty ? items.first.timestamp : DateTime.now();
+}
+
+class StatusGroup extends BannerGroupItem {
+  final InAppPushNotification item;
+
+  StatusGroup({required this.item});
+
+  @override
+  String get key => 'status_${item.id}';
+
+  @override
+  DateTime get latestTimestamp => item.timestamp;
+}
+
 class InAppNotificationBanner {
   static final List<InAppPushNotification> _notifications = [];
+  static final Set<String> _expandedGroupKeys = {};
   static OverlayEntry? _currentEntry;
   static Timer? _dismissTimer;
-  static bool _isExpanded = false;
   static void Function(void Function())? _stateSetter;
+
+  static List<BannerGroupItem> get groupedBannerItems {
+    final Map<String, VehicleComponentGroup> compGroups = {};
+    final List<BannerGroupItem> allGroups = [];
+
+    for (final notif in _notifications) {
+      if (notif.category == 'component') {
+        final key =
+            'vehicle_${notif.vehicleId.isNotEmpty ? notif.vehicleId : notif.vehicleName}';
+        if (!compGroups.containsKey(key)) {
+          final g = VehicleComponentGroup(
+            vehicleId: notif.vehicleId,
+            vehicleName: notif.vehicleName,
+            items: [],
+          );
+          compGroups[key] = g;
+          allGroups.add(g);
+        }
+        compGroups[key]!.items.add(notif);
+      } else {
+        allGroups.add(StatusGroup(item: notif));
+      }
+    }
+
+    allGroups.sort((a, b) => b.latestTimestamp.compareTo(a.latestTimestamp));
+    return allGroups;
+  }
 
   /// Tampilkan notifikasi in-app dari RemoteMessage Firebase
   static void show(RemoteMessage message) {
-    final title =
+    final rawTitle =
         message.data['title'] ?? message.notification?.title ?? 'RideOn';
     final body = message.data['body'] ?? message.notification?.body ?? '';
     final vehicleId = message.data['vehicle_id']?.toString() ?? '';
@@ -55,6 +124,14 @@ class InAppNotificationBanner {
     final componentId = int.tryParse(
       message.data['component_id']?.toString() ?? '',
     );
+
+    final category = message.data['category']?.toString() ??
+        (message.data['type'] == 'service_update' ||
+                message.data['type'] == 'schedule_reminder'
+            ? 'status'
+            : 'component');
+
+    String status = message.data['status']?.toString() ?? '';
 
     // Ambil nama kendaraan dari payload atau fallback ke controller lokal
     String vehicleName = message.data['vehicle_name']?.toString() ?? '';
@@ -80,13 +157,33 @@ class InAppNotificationBanner {
       vehicleName = "Honda Vario 125";
     }
 
+    String componentName = message.data['component_name']?.toString() ?? '';
+    if (componentName.isEmpty && category == 'component') {
+      if (vehicleName.isNotEmpty && rawTitle.contains(vehicleName)) {
+        componentName = rawTitle.replaceAll(vehicleName, '').trim();
+      } else {
+        componentName = rawTitle;
+      }
+    }
+
+    if (status.isEmpty && category == 'status') {
+      if (vehicleName.isNotEmpty && rawTitle.contains(vehicleName)) {
+        status = rawTitle.replaceAll(vehicleName, '').trim();
+      } else {
+        status = rawTitle;
+      }
+    }
+
     showNotification(
       id: notificationId,
-      title: title,
+      title: rawTitle,
       body: body,
       vehicleName: vehicleName,
       vehicleId: vehicleId,
       componentId: componentId,
+      componentName: componentName,
+      category: category,
+      status: status,
     );
   }
 
@@ -98,7 +195,28 @@ class InAppNotificationBanner {
     required String vehicleName,
     String vehicleId = '',
     int? componentId,
+    String componentName = '',
+    String category = 'component',
+    String status = '',
   }) {
+    String comp = componentName;
+    if (comp.isEmpty && category == 'component') {
+      if (vehicleName.isNotEmpty && title.contains(vehicleName)) {
+        comp = title.replaceAll(vehicleName, '').trim();
+      } else {
+        comp = title;
+      }
+    }
+
+    String st = status;
+    if (st.isEmpty && category == 'status') {
+      if (vehicleName.isNotEmpty && title.contains(vehicleName)) {
+        st = title.replaceAll(vehicleName, '').trim();
+      } else {
+        st = title;
+      }
+    }
+
     final newItem = InAppPushNotification(
       id: id,
       title: title,
@@ -106,6 +224,9 @@ class InAppNotificationBanner {
       vehicleName: vehicleName,
       vehicleId: vehicleId,
       componentId: componentId,
+      componentName: comp,
+      category: category,
+      status: st,
       timestamp: DateTime.now(),
     );
 
@@ -117,7 +238,6 @@ class InAppNotificationBanner {
     }
 
     if (_currentEntry == null) {
-      _isExpanded = false;
       _insertOverlay();
     } else {
       _stateSetter?.call(() {});
@@ -147,8 +267,8 @@ class InAppNotificationBanner {
 
   static void _resetAutoDismiss() {
     _dismissTimer?.cancel();
-    // Jika tidak sedang di-expand, banner otomatis hilang setelah 7 detik
-    if (!_isExpanded) {
+    // Jika tidak ada group yang expanded, banner otomatis hilang setelah 7 detik
+    if (_expandedGroupKeys.isEmpty) {
       _dismissTimer = Timer(const Duration(seconds: 7), () {
         dismiss();
       });
@@ -158,7 +278,7 @@ class InAppNotificationBanner {
   static void dismiss() {
     _dismissTimer?.cancel();
     _dismissTimer = null;
-    _isExpanded = false;
+    _expandedGroupKeys.clear();
     _stateSetter = null;
     _notifications.clear();
     _currentEntry?.remove();
@@ -225,10 +345,13 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
     widget.onDismiss();
   }
 
-  void _onToggleExpand() {
+  void _onToggleGroupExpand(String groupKey) {
     setState(() {
-      InAppNotificationBanner._isExpanded =
-          !InAppNotificationBanner._isExpanded;
+      if (InAppNotificationBanner._expandedGroupKeys.contains(groupKey)) {
+        InAppNotificationBanner._expandedGroupKeys.remove(groupKey);
+      } else {
+        InAppNotificationBanner._expandedGroupKeys.add(groupKey);
+      }
     });
     InAppNotificationBanner._resetAutoDismiss();
   }
@@ -270,15 +393,18 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
       FirebaseMessagingService.markNotificationRead(item.id);
     }
 
-    Get.toNamed('/notif');
+    if (item.category == 'status') {
+      Get.toNamed('/rwtservis');
+    } else {
+      Get.toNamed('/notif');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final notifications = InAppNotificationBanner._notifications;
-    if (notifications.isEmpty) return const SizedBox.shrink();
+    final groups = InAppNotificationBanner.groupedBannerItems;
+    if (groups.isEmpty) return const SizedBox.shrink();
 
-    final isExpanded = InAppNotificationBanner._isExpanded;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Positioned(
@@ -315,27 +441,11 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
                     ),
                   ),
 
-                  // Kartu Notifikasi Utama (Dark Charcoal, rounded 24)
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeInOut,
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2C2C2C),
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.35),
-                          blurRadius: 18,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: isExpanded
-                        ? _buildExpandedContent(notifications)
-                        : _buildCollapsedContent(notifications),
-                  ),
+                  // Daftar Card Banner berdasarkan Group Kendaraan dan Status
+                  for (int i = 0; i < groups.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 10),
+                    _buildGroupCard(groups[i]),
+                  ],
                 ],
               ),
             ),
@@ -345,12 +455,57 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
     );
   }
 
+  Widget _buildGroupCard(BannerGroupItem group) {
+    if (group is VehicleComponentGroup) {
+      final isExpanded =
+          InAppNotificationBanner._expandedGroupKeys.contains(group.key);
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2C2C2C),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.35),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: isExpanded
+            ? _buildExpandedVehicleContent(group)
+            : _buildCollapsedVehicleContent(group),
+      );
+    } else if (group is StatusGroup) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2C2C2C),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.35),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: _buildStatusContent(group.item),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
   /// Desain Bagian Atas (Collapsed):
-  /// Logo | Title (bold)  VehicleName  Time | [v] jika notif > 1
-  ///        Body
-  Widget _buildCollapsedContent(List<InAppPushNotification> notifications) {
-    final first = notifications.first;
-    final hasMultiple = notifications.length > 1;
+  /// Logo | [Component] (bold)  [Nama Kendaraan]  [Waktu] | [v]
+  ///        [Body]
+  Widget _buildCollapsedVehicleContent(VehicleComponentGroup group) {
+    final first = group.items.first;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -376,11 +531,13 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Baris Atas: Title (Bold) + VehicleName + Time
+                // Baris Atas: Component (Bold) + VehicleName + Time
                 Row(
                   children: [
                     Text(
-                      first.title,
+                      first.componentName.isNotEmpty
+                          ? first.componentName
+                          : first.title,
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 15,
@@ -390,7 +547,7 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        first.vehicleName,
+                        group.vehicleName,
                         style: GoogleFonts.poppins(
                           color: const Color(0xFFB0B0B0),
                           fontSize: 13,
@@ -428,83 +585,56 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
             ),
           ),
 
-          // Icon Down (V) hanya jika notifikasi lebih dari 1
-          if (hasMultiple) ...[
-            const SizedBox(width: 8),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _onToggleExpand,
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: Image.asset(
-                  'assets/icons/down.png',
-                  width: 14,
-                  height: 14,
-                  color: Colors.white,
-                ),
+          // Icon Down (v)
+          const SizedBox(width: 8),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _onToggleGroupExpand(group.key),
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: Image.asset(
+                'assets/icons/down.png',
+                width: 14,
+                height: 14,
+                color: Colors.white,
               ),
             ),
-          ],
+          ),
         ],
       ),
     );
   }
 
   /// Desain Bagian Bawah (Expanded):
-  /// Logo | RideOn  VehicleName  Time | [^]
-  ///        Title (bold)
-  ///        Body
-  ///        [Jadwalkan]
-  Widget _buildExpandedContent(List<InAppPushNotification> notifications) {
+  /// Header: Logo | RideOn  [Nama Kendaraan]  [Waktu] | [^]
+  /// Detail komponen awal dan semua komponen lainnya turun ikut di bawah:
+  ///   [Component 1]
+  ///   [Body 1]
+  ///   [Jadwalkan]
+  ///   --- Divider ---
+  ///   [Component 2] ...
+  Widget _buildExpandedVehicleContent(VehicleComponentGroup group) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (int i = 0; i < notifications.length; i++) ...[
-          if (i > 0)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Container(
-                height: 1,
-                color: Colors.white.withValues(alpha: 0.1),
+        // Header Baris Atas: Logo + "RideOn" + VehicleName + Time + Icon Up (^)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.asset(
+                'assets/logo/RideOn_app.png',
+                width: 48,
+                height: 48,
+                fit: BoxFit.cover,
               ),
             ),
-          _buildExpandedItem(
-            item: notifications[i],
-            isFirst: i == 0,
-          ),
-        ],
-      ],
-    );
-  }
+            const SizedBox(width: 14),
 
-  Widget _buildExpandedItem({
-    required InAppPushNotification item,
-    required bool isFirst,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Logo RideOn App
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Image.asset(
-            'assets/logo/RideOn_app.png',
-            width: 48,
-            height: 48,
-            fit: BoxFit.cover,
-          ),
-        ),
-        const SizedBox(width: 14),
-
-        // Detail Notifikasi
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Baris Header: RideOn + VehicleName + Time + Icon Up (^)
-              Row(
+            Expanded(
+              child: Row(
                 children: [
                   Text(
                     "RideOn",
@@ -517,7 +647,7 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      item.vehicleName,
+                      group.vehicleName,
                       style: GoogleFonts.poppins(
                         color: const Color(0xFFB0B0B0),
                         fontSize: 13,
@@ -529,82 +659,206 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    item.timeAgo,
+                    group.items.first.timeAgo,
                     style: GoogleFonts.poppins(
                       color: const Color(0xFF8E8E93),
                       fontSize: 13,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                  const Spacer(),
-
-                  // Icon Up (^) hanya ditampilkan di baris paling atas
-                  if (isFirst)
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: _onToggleExpand,
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Image.asset(
-                          'assets/icons/up.png',
-                          width: 14,
-                          height: 14,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
                 ],
               ),
-              const SizedBox(height: 6),
+            ),
 
-              // Title Komponen (Bold)
-              Text(
-                item.title,
-                style: GoogleFonts.poppins(
+            const SizedBox(width: 8),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _onToggleGroupExpand(group.key),
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: Image.asset(
+                  'assets/icons/up.png',
+                  width: 14,
+                  height: 14,
                   color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 4),
+            ),
+          ],
+        ),
 
-              // Body Pesan
-              Text(
-                item.body,
+        // Daftar detail seluruh komponen kendaraan ini
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: Get.height * 0.6,
+          ),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (int i = 0; i < group.items.length; i++) ...[
+                  if (i > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: 62,
+                        top: 14,
+                        bottom: 8,
+                      ),
+                      child: Container(
+                        height: 1,
+                        color: Colors.white.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  _buildExpandedComponentItem(
+                    item: group.items[i],
+                    isFirst: i == 0,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExpandedComponentItem({
+    required InAppPushNotification item,
+    required bool isFirst,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(left: 62, top: isFirst ? 10 : 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Judul Komponen (Bold)
+          Text(
+            item.componentName.isNotEmpty ? item.componentName : item.title,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+
+          // Body Pesan
+          Text(
+            item.body,
+            style: GoogleFonts.poppins(
+              color: const Color(0xFFD1D1D6),
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Tombol "Jadwalkan" Pill
+          GestureDetector(
+            onTap: () => _onSchedule(item),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 7,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFF424242),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                "Jadwalkan",
                 style: GoogleFonts.poppins(
-                  color: const Color(0xFFD1D1D6),
+                  color: Colors.white,
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(height: 12),
-
-              // Tombol "Jadwalkan" Pill
-              GestureDetector(
-                onTap: () => _onSchedule(item),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF424242),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    "Jadwalkan",
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  /// Desain Notifikasi Status (Dijadwalkan, Dibatalkan, Selesai, dll):
+  /// Terpisah dan mandiri tanpa up/down accordion
+  Widget _buildStatusContent(InAppPushNotification item) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _onOpenNotification(item),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Image.asset(
+              'assets/logo/RideOn_app.png',
+              width: 48,
+              height: 48,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(width: 14),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      item.status.isNotEmpty ? item.status : item.title,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        item.vehicleName,
+                        style: GoogleFonts.poppins(
+                          color: const Color(0xFFB0B0B0),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      item.timeAgo,
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFF8E8E93),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+
+                Text(
+                  item.body,
+                  style: GoogleFonts.poppins(
+                    color: const Color(0xFFD1D1D6),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

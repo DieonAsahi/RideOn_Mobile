@@ -6,6 +6,9 @@ import 'package:intl/intl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/services/auth_service.dart';
 import 'package:capbatu/app/services/connectivity_service.dart';
+import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
+import 'package:capbatu/app/modules/Feature/service/controllers/service_controller.dart';
+import 'package:capbatu/app/modules/notif/controllers/notif_controller.dart';
 
 class VehicleComponent {
   final String title;
@@ -215,16 +218,33 @@ class HomeController extends GetxController {
   }
 
   void changeVehicle(String id) {
-    final index = vehicles.indexWhere((e) => e["id"].toString() == id);
+    box.write("vehicle_id", id);
+    vehicleId = id;
+    selectedVehicleId.value = id;
 
+    final index = vehicles.indexWhere((e) => e["id"].toString() == id);
     if (index != -1) {
       currentVehicleIndex.value = index;
-      selectedVehicleId.value = id;
-      vehicleId = id;
-      box.write("vehicle_id", id);
       vehiclePlat.value = vehicles[index]["plate_number"]?.toString() ?? "-";
+    } else {
+      getVehicles();
+    }
 
-      fetchHome(force: true);
+    fetchHome(force: true);
+
+    // Sinkronkan ke KendaraanController agar berpindah ke paling atas dan badge aktif berpindah
+    if (Get.isRegistered<KendaraanController>()) {
+      Get.find<KendaraanController>().onVehicleChangedFromExternal(id);
+    }
+
+    // Sinkronkan ke ServiceController
+    if (Get.isRegistered<ServiceController>()) {
+      Get.find<ServiceController>().getServices(force: true);
+    }
+
+    // Sinkronkan ke NotifController jika aktif
+    if (Get.isRegistered<NotifController>()) {
+      Get.find<NotifController>().getNotifications(silent: true);
     }
   }
 
@@ -333,10 +353,10 @@ class HomeController extends GetxController {
         if (data is List) {
           vehicles.value = data;
 
-          final selectedId = box.read("vehicle_id");
+          final selectedId = box.read("vehicle_id")?.toString();
 
           currentVehicleIndex.value = vehicles.indexWhere(
-            (e) => e["id"] == selectedId,
+            (e) => e["id"].toString() == selectedId,
           );
 
           if (currentVehicleIndex.value < 0) {

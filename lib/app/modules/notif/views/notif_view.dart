@@ -9,7 +9,7 @@ class NotifView extends GetView<NotifController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -30,7 +30,11 @@ class NotifView extends GetView<NotifController> {
                           Get.offNamed('/mainscreen');
                         }
                       },
-                      icon: const Icon(Icons.arrow_back_ios),
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 20,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                   const Text(
@@ -45,7 +49,7 @@ class NotifView extends GetView<NotifController> {
               ),
             ),
 
-            // Top Filter Tabs (Semua & Belum di Baca)
+            // Top Filter Tabs (Semua & Belum dibaca)
             Container(
               color: Colors.white,
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
@@ -96,7 +100,8 @@ class NotifView extends GetView<NotifController> {
                                   borderRadius: BorderRadius.circular(100),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.1),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.1),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
                                     ),
@@ -151,9 +156,9 @@ class NotifView extends GetView<NotifController> {
               }),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
 
-            // Content List
+            // Content List (Grouped by Hari Ini, Minggu Ini, Bulan Ini)
             Expanded(
               child: Obx(() {
                 if (!controller.isPermissionGranted.value) {
@@ -192,493 +197,157 @@ class NotifView extends GetView<NotifController> {
     );
   }
 
-  /// Header Rentang Waktu ("Hari Ini", "Minggu Ini", "Lebih Lama")
+  /// Section Rentang Waktu (Hari Ini, Minggu Ini, Bulan Ini, Lebih Lama)
   Widget _buildTimeSection(TimeSectionGroup section) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Header Box (Sesuai Desain: rounded white container dengan judul tebal warna biru)
-        Container(
-          margin: const EdgeInsets.only(top: 14, bottom: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
+        Padding(
+          padding: const EdgeInsets.only(top: 14, bottom: 10, left: 2),
           child: Text(
             section.title,
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0052CC), // Bold deep blue seperti di screenshot
+              color: Color(0xFF1E293B),
             ),
           ),
         ),
-
-        // List Kendaraan di dalam rentang waktu ini
-        ...section.vehicleGroups.map((vehicleGroup) {
-          return _buildVehicleGroup(vehicleGroup);
-        }),
+        ...section.items.map((item) => _buildNotifCard(item)),
       ],
     );
   }
 
-  /// Kelompok Notifikasi per Kendaraan (dengan expand/collapse Up & Down)
-  Widget _buildVehicleGroup(VehicleNotifGroup vehicleGroup) {
-    return Obx(() {
-      final isExpanded = controller.isVehicleExpanded(vehicleGroup.vehicleId);
+  /// Desain Kartu Notifikasi Sesuai Desain Awal
+  Widget _buildNotifCard(NotifModel item) {
+    final isUnread = !item.isRead;
 
-      return Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: isUnread ? const Color(0xFFF0F8FF) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isUnread ? const Color(0xFFBAE0FD) : Colors.grey.shade300,
+          width: isUnread ? 1.2 : 1.0,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Vehicle Group Header (Up/Down toggleable)
-            InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () =>
-                  controller.toggleVehicleExpanded(vehicleGroup.vehicleId),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2583FD).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.two_wheeler_rounded,
-                        color: Color(0xFF2583FD),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => controller.onNotifCardTapped(item),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Icon Komponen di Sebelah Kiri
+                Image.asset(
+                  item.image,
+                  width: 54,
+                  height: 54,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Image.asset(
+                    'assets/icons/service.png',
+                    width: 54,
+                    height: 54,
+                  ),
+                ),
+                const SizedBox(width: 14),
+
+                // Detail Notifikasi
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Baris Atas: Badge Status & Waktu Relatif
+                      Row(
                         children: [
+                          _buildStatusBadge(item.status),
+                          const Spacer(),
                           Text(
-                            vehicleGroup.vehicleName,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            vehicleGroup.vehiclePlate,
+                            item.time,
                             style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 10,
+                              color: Colors.grey.shade400,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    // Badge jumlah notifikasi
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Text(
-                        "${vehicleGroup.totalCount} notifikasi",
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade700,
+                      const SizedBox(height: 6),
+
+                      // Judul Komponen (Bold)
+                      Text(
+                        item.title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Tombol chevron up / down
-                    Image.asset(
-                      isExpanded
-                          ? 'assets/icons/up.png'
-                          : 'assets/icons/down.png',
-                      width: 16,
-                      height: 16,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        isExpanded
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
-                        color: Colors.grey.shade700,
-                        size: 20,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                      const SizedBox(height: 4),
 
-            // Content jika di-expand
-            if (isExpanded) ...[
-              const Divider(height: 1, thickness: 0.8),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ==========================================
-                    // 1. TIPE: PENGINGAT JADWAL SERVIS (H-1)
-                    // Dipisahkan tersendiri & tidak digabung
-                    // ==========================================
-                    if (vehicleGroup.scheduleReminders.isNotEmpty) ...[
-                      _buildTypeHeader(
-                        icon: Icons.event_available_rounded,
-                        title: "Pengingat Jadwal Servis (H-1)",
-                        color: const Color(0xFF0066FF),
-                        bgColor: const Color(0xFFE8F1FD),
-                      ),
-                      const SizedBox(height: 8),
-                      ...vehicleGroup.scheduleReminders.map(
-                        (item) => _buildScheduleReminderCard(item),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-
-                    // ==========================================
-                    // 2. TIPE: PERINGATAN CEK/TAMBAH SERVIS HARIAN
-                    // Dipisahkan tersendiri & tidak digabung
-                    // ==========================================
-                    if (vehicleGroup.dailyWarnings.isNotEmpty) ...[
-                      _buildTypeHeader(
-                        icon: Icons.warning_amber_rounded,
-                        title: "Peringatan Cek Servis Harian",
-                        color: const Color(0xFFFA541C),
-                        bgColor: const Color(0xFFFFF2E8),
-                      ),
-                      const SizedBox(height: 8),
-                      ...vehicleGroup.dailyWarnings.map(
-                        (item) => _buildDailyWarningCard(item),
+                      // Deskripsi Notifikasi
+                      Text(
+                        item.desc,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                          height: 1.3,
+                        ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ],
-        ),
-      );
-    });
-  }
-
-  /// Header pembeda tipe notifikasi
-  Widget _buildTypeHeader({
-    required IconData icon,
-    required String title,
-    required Color color,
-    required Color bgColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 6),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: color,
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  /// Card untuk "Pengingat Jadwal Servis (H-1)"
-  Widget _buildScheduleReminderCard(NotifModel data) {
-    final isUnread = !data.isRead;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isUnread ? const Color(0xFFF0F8FF) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isUnread ? const Color(0xFF2583FD) : Colors.grey.shade300,
-          width: isUnread ? 1.4 : 1,
-        ),
-      ),
-      child: InkWell(
-        onTap: () => controller.markAsRead(data),
-        borderRadius: BorderRadius.circular(14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Icon Pengingat Servis
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F1FD),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Image.asset(
-                  'assets/icons/service.png',
-                  width: 28,
-                  height: 28,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.calendar_month_rounded,
-                    color: Color(0xFF2583FD),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Konten
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2583FD).withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          "Jadwal Servis (H-1)",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2583FD),
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        data.time,
-                        style: TextStyle(
-                          fontSize: 9,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    data.title,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    data.desc,
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.35,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );
   }
 
-  /// Card untuk "Peringatan Cek/Tambah Servis Harian" (Disertai tombol "Jadwalkan Servis")
-  Widget _buildDailyWarningCard(NotifModel data) {
-    final isUnread = !data.isRead;
+  /// Badge Status Notifikasi (Darurat, Mendesak, Segera, Pengingat)
+  Widget _buildStatusBadge(String status) {
+    Color bgColor;
+    Color textColor;
 
-    Color getStatusColor() {
-      switch (data.status) {
-        case "Darurat":
-          return const Color(0xFFFF0000);
-        case "Mendesak":
-          return const Color(0xFFFF6200);
-        case "Segera":
-          return const Color(0xFFFFC107);
-        default:
-          return const Color(0xFFFF6200);
-      }
+    switch (status) {
+      case "Darurat":
+        bgColor = const Color(0xFFFFEBEE);
+        textColor = const Color(0xFFFF3B30);
+        break;
+      case "Mendesak":
+        bgColor = const Color(0xFFFFF3E0);
+        textColor = const Color(0xFFFF7A00);
+        break;
+      case "Segera":
+        bgColor = const Color(0xFFFFFDE7);
+        textColor = const Color(0xFFFFB800);
+        break;
+      case "Pengingat":
+        bgColor = const Color(0xFFE3F2FD);
+        textColor = const Color(0xFF2583FD);
+        break;
+      default:
+        bgColor = const Color(0xFFFFF3E0);
+        textColor = const Color(0xFFFF7A00);
     }
 
-    final statusColor = getStatusColor();
-
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: isUnread ? const Color(0xFFFFF9F5) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isUnread ? statusColor : Colors.grey.shade300,
-          width: isUnread ? 1.4 : 1,
-        ),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Icon Komponen
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Image.asset(
-                    data.image,
-                    width: 32,
-                    height: 32,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => Icon(
-                      Icons.build_rounded,
-                      color: statusColor,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Detail
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            data.status,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: statusColor,
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          data.time,
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      data.title,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      data.desc,
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.35,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          // Tombol Aksi "Jadwalkan Servis"
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton.icon(
-              onPressed: () => controller.onJadwalkanServis(data),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2583FD),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              icon: const Icon(
-                Icons.calendar_month_rounded,
-                size: 15,
-                color: Colors.white,
-              ),
-              label: const Text(
-                "Jadwalkan Servis",
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ],
+      child: Text(
+        status,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: textColor,
+        ),
       ),
     );
   }
@@ -688,7 +357,7 @@ class NotifView extends GetView<NotifController> {
     String descText =
         "Notifikasi akan muncul di sini jika ada pembaruan terbaru.";
 
-    if (controller.selectedFilter.value == 'Belum di Baca') {
+    if (controller.selectedFilter.value == 'Belum dibaca') {
       titleText = "Semua Notifikasi Sudah Dibaca";
       descText = "Anda belum memiliki notifikasi baru yang belum dibaca.";
     }

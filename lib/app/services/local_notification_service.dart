@@ -38,20 +38,24 @@ class LocalNotificationService {
     required String title,
     required String body,
     String? payload,
+    String? groupKey,
+    bool setAsGroupSummary = false,
   }) async {
-    const android = AndroidNotificationDetails(
+    final android = AndroidNotificationDetails(
       'rideon_notification',
       'RideOn Notification',
       channelDescription: 'Reminder komponen kendaraan',
       importance: Importance.max,
       priority: Priority.high,
+      groupKey: groupKey,
+      setAsGroupSummary: setAsGroupSummary,
     );
 
     await notification.show(
       id,
       title,
       body,
-      const NotificationDetails(android: android),
+      NotificationDetails(android: android),
       payload: payload,
     );
   }

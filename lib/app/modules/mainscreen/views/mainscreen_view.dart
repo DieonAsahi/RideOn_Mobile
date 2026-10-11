@@ -111,10 +111,10 @@ class MainscreenView extends GetView<MainscreenController> {
                     bottom: 16,
                   ),
                   child: Container(
-                    height: 70,
+                    height: 55,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 8,
+                      horizontal: 2,
+                      vertical: 2,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white,

@@ -8,6 +8,7 @@ import 'package:capbatu/app/services/connectivity_service.dart';
 import 'package:capbatu/app/widgets/app_snackbar.dart';
 import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dart';
 import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
+import 'package:capbatu/app/modules/Feature/service/controllers/service_controller.dart';
 
 class RwtservisController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -53,13 +54,17 @@ class RwtservisController extends GetxController {
         final List data = jsonDecode(response.body);
 
         riwayat.value = data
+            .where((item) => item["status"]?.toString() != "Dibatalkan")
             .map((item) {
               Color statusColor = Colors.grey;
+              final st = item["status"]?.toString();
 
-              if (item["status"] == "Diproses") {
+              if (st == "Proses" || st == "Diproses") {
                 statusColor = Colors.orange;
-              } else if (item["status"] == "Selesai") {
+              } else if (st == "Selesai") {
                 statusColor = Colors.green;
+              } else if (st == "Dijadwalkan") {
+                statusColor = const Color(0xFF2196F3);
               }
 
               // Di dalam loadServiceHistory()
@@ -93,6 +98,53 @@ class RwtservisController extends GetxController {
     }
   }
 
+  Future<void> cancelServiceHistory(int id) async {
+    try {
+      isLoading.value = true;
+      final token = box.read("token");
+
+      final response = await http.put(
+        Uri.parse("$baseUrl/api/vehicle/service-history/$id"),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({"status": "Dibatalkan"}),
+      );
+
+      if (response.statusCode == 200) {
+        AppSnackbar.success("Proses servis berhasil dibatalkan.");
+
+        await loadServiceHistory();
+
+        if (Get.isRegistered<HomeController>()) {
+          Get.find<HomeController>().fetchHome(force: true);
+        }
+        if (Get.isRegistered<KendaraanController>()) {
+          Get.find<KendaraanController>().getVehicles(force: true);
+        }
+        if (Get.isRegistered<ServiceController>()) {
+          Get.find<ServiceController>().getServices(force: true);
+        }
+      } else {
+        String msg = "Gagal membatalkan servis";
+        try {
+          final err = jsonDecode(response.body);
+          if (err is Map && (err['message'] != null || err['error'] != null)) {
+            msg = err['message'] ?? err['error'];
+          }
+        } catch (_) {}
+        Get.snackbar("Error", msg);
+      }
+    } catch (e) {
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar("Error", "Gagal membatalkan servis");
+      }
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<void> deleteServiceHistory(int id) async {
     try {
       isLoading.value = true;
@@ -106,6 +158,8 @@ class RwtservisController extends GetxController {
 
       if (response.statusCode == 200) {
         riwayat.removeWhere((item) => item['id'] == id);
+        AppSnackbar.success("Riwayat servis berhasil dihapus.");
+
         await loadServiceHistory();
 
         if (Get.isRegistered<HomeController>()) {
@@ -114,8 +168,9 @@ class RwtservisController extends GetxController {
         if (Get.isRegistered<KendaraanController>()) {
           Get.find<KendaraanController>().getVehicles(force: true);
         }
-
-        AppSnackbar.success("Riwayat servis berhasil dihapus.");
+        if (Get.isRegistered<ServiceController>()) {
+          Get.find<ServiceController>().getServices(force: true);
+        }
       } else {
         String msg = "Gagal menghapus riwayat servis";
         try {

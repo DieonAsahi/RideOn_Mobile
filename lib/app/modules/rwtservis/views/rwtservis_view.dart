@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../controllers/rwtservis_controller.dart';
 import 'package:capbatu/app/core/theme/app_theme.dart';
+import 'package:capbatu/app/widgets/skeleton_widget.dart';
 
 class RwtservisView extends GetView<RwtservisController> {
   const RwtservisView({super.key});
@@ -152,6 +153,10 @@ class RwtservisView extends GetView<RwtservisController> {
                   const SizedBox(height: 20),
 
                   Obx(() {
+                    if (controller.isLoading.value) {
+                      return const RwtservisSkeleton();
+                    }
+
                     if (controller.filteredData.isEmpty) {
                       return Padding(
                         padding: const EdgeInsets.only(
@@ -162,7 +167,7 @@ class RwtservisView extends GetView<RwtservisController> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Image.asset(
-                                'assets/logo/empty_notification.png',
+                                'assets/logo/empty_rwtservice.png',
                                 width: 160,
                                 height: 160,
                               ),
@@ -301,6 +306,54 @@ class RwtservisView extends GetView<RwtservisController> {
                                             },
                                           );
                                         }
+                                        if (value == 'batalkan') {
+                                          FocusScope.of(context).unfocus();
+                                          Get.dialog(
+                                            AlertDialog(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(18),
+                                              ),
+                                              title: const Text(
+                                                "Konfirmasi Pembatalan",
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              content: const Text(
+                                                "Apakah Anda yakin ingin membatalkan jadwal servis ini?",
+                                                style: TextStyle(fontSize: 13),
+                                              ),
+                                              actions: [
+                                                OutlinedButton(
+                                                  onPressed: () => Get.back(),
+                                                  child: const Text("Tidak"),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () async {
+                                                    Get.back();
+                                                    await controller
+                                                        .cancelServiceHistory(
+                                                          item['id'],
+                                                        );
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                        backgroundColor:
+                                                            Colors.orange,
+                                                      ),
+                                                  child: const Text(
+                                                    "Ya, Batalkan",
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }
                                         if (value == 'hapus') {
                                           FocusScope.of(context).unfocus();
                                           Get.dialog(
@@ -347,51 +400,110 @@ class RwtservisView extends GetView<RwtservisController> {
                                           );
                                         }
                                       },
-                                      itemBuilder: (context) => [
-                                        PopupMenuItem(
-                                          value: 'edit',
-                                          height: 30,
-                                          child: Row(
-                                            children: [
-                                              Image.asset(
-                                                "assets/icon/edit.png",
-                                                width: 16,
-                                                height: 16,
+                                      itemBuilder: (context) {
+                                        final currentStatus =
+                                            item['status']?.toString();
+                                        final isScheduledOrInProcess =
+                                            currentStatus == 'Dijadwalkan' ||
+                                            currentStatus == 'Proses' ||
+                                            currentStatus == 'Diproses';
+
+                                        if (isScheduledOrInProcess) {
+                                          return [
+                                            PopupMenuItem(
+                                              value: 'edit',
+                                              height: 30,
+                                              child: Row(
+                                                children: [
+                                                  Image.asset(
+                                                    "assets/icon/edit.png",
+                                                    width: 16,
+                                                    height: 16,
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  const Text(
+                                                    "Edit",
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              const SizedBox(width: 10),
-                                              const Text(
-                                                "Edit",
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.black,
+                                            ),
+                                            const PopupMenuDivider(height: 1),
+                                            PopupMenuItem(
+                                              value: 'batalkan',
+                                              height: 30,
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.cancel_outlined,
+                                                    size: 16,
+                                                    color: Colors.orange,
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  const Text(
+                                                    "Batalkan",
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.orange,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ];
+                                        } else {
+                                          return [
+                                            if (currentStatus == 'Selesai') ...[
+                                              PopupMenuItem(
+                                                value: 'edit',
+                                                height: 30,
+                                                child: Row(
+                                                  children: [
+                                                    Image.asset(
+                                                      "assets/icon/edit.png",
+                                                      width: 16,
+                                                      height: 16,
+                                                    ),
+                                                    const SizedBox(width: 10),
+                                                    const Text(
+                                                      "Edit",
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        color: Colors.black,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
+                                              const PopupMenuDivider(height: 1),
                                             ],
-                                          ),
-                                        ),
-                                        const PopupMenuDivider(height: 1),
-                                        PopupMenuItem(
-                                          value: 'hapus',
-                                          height: 30,
-                                          child: Row(
-                                            children: [
-                                              Image.asset(
-                                                "assets/icon/hapus.png",
-                                                width: 16,
-                                                height: 16,
+                                            PopupMenuItem(
+                                              value: 'hapus',
+                                              height: 30,
+                                              child: Row(
+                                                children: [
+                                                  Image.asset(
+                                                    "assets/icon/hapus.png",
+                                                    width: 16,
+                                                    height: 16,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  const Text(
+                                                    "Hapus",
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              const SizedBox(width: 8),
-                                              const Text(
-                                                "Hapus",
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
+                                            ),
+                                          ];
+                                        }
+                                      },
                                     ),
                                   ),
                                 ],

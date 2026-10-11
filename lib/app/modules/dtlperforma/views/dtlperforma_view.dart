@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 
 import '../controllers/dtlperforma_controller.dart';
+import 'package:capbatu/app/widgets/skeleton_widget.dart';
 
 class DtlperformaView extends GetView<DtlperformaController> {
   const DtlperformaView({super.key});
@@ -15,21 +16,45 @@ class DtlperformaView extends GetView<DtlperformaController> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await controller.fetchPerformanceHistory();
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Get.back(),
+                            icon: const Icon(Icons.arrow_back_ios),
+                          ),
+                          const Expanded(
+                            child: Text(
+                              "Detail Performa",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 40),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      const DtlperformaSkeleton(),
+                    ],
+                  );
+                }
 
-          child: Obx(() {
-            final dates = controller.tanggal;
-            if (controller.isLoading.value) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            return RefreshIndicator(
-              onRefresh: () async {
-                await controller.fetchPerformanceHistory();
-              },
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
+                final dates = controller.tanggal;
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-
                   children: [
                     Row(
                       children: [
@@ -407,10 +432,10 @@ class DtlperformaView extends GetView<DtlperformaController> {
                       ),
                     ),
                   ],
-                ),
-              ),
-            );
-          }),
+                );
+              }),
+            ),
+          ),
         ),
       ),
     );

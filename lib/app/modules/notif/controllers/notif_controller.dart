@@ -44,10 +44,32 @@ class NotifModel {
   });
 
   factory NotifModel.fromJson(Map<String, dynamic> json) {
-    final componentIcon = json["master_components"]?["icon"];
-    final img = (componentIcon != null && componentIcon.toString().isNotEmpty)
-        ? "assets/icons/$componentIcon.png"
-        : "assets/icons/service.png";
+    String iconKey = json["master_components"]?["icon"]?.toString().trim() ?? "";
+    if (iconKey.endsWith(".png")) {
+      iconKey = iconKey.substring(0, iconKey.length - 4);
+    }
+
+    if (iconKey.isEmpty) {
+      final t = (json["title"] ?? "").toString().toLowerCase();
+      final m = (json["message"] ?? "").toString().toLowerCase();
+      if (t.contains("oli mesin") || m.contains("oli mesin")) {
+        iconKey = "oli_mesin";
+      } else if (t.contains("oli gardan") || m.contains("oli gardan")) {
+        iconKey = "oli_gardan";
+      } else if (t.contains("kampas rem") || m.contains("kampas rem")) {
+        iconKey = "kampas_rem";
+      } else if (t.contains("filter udara") || m.contains("filter udara")) {
+        iconKey = "filter_udara";
+      } else if (t.contains("busi") || m.contains("busi")) {
+        iconKey = "busi";
+      } else if (t.contains("cvt") || m.contains("cvt")) {
+        iconKey = "cvt";
+      } else {
+        iconKey = "service";
+      }
+    }
+
+    final img = "assets/icons/$iconKey.png";
 
     final created =
         DateTime.tryParse(json["created_at"]?.toString() ?? '') ??
@@ -91,16 +113,12 @@ class NotifModel {
     if (totalMinutes < 60) return '$totalMinutes menit yang lalu';
 
     final hours = totalMinutes ~/ 60;
-    final minutes = totalMinutes % 60;
     if (hours < 24) {
-      final minuteText = minutes > 0 ? ' $minutes menit' : '';
-      return '$hours jam$minuteText yang lalu';
+      return '$hours jam yang lalu';
     }
 
     final days = hours ~/ 24;
-    final remainingHours = hours % 24;
-    final hourText = remainingHours > 0 ? ' $remainingHours jam' : '';
-    return '$days hari$hourText yang lalu';
+    return '$days hari yang lalu';
   }
 
   NotifModel copyWith({bool? isRead}) => NotifModel(
@@ -121,31 +139,13 @@ class NotifModel {
   );
 }
 
-class VehicleNotifGroup {
-  final String vehicleId;
-  final String vehicleName;
-  final String vehiclePlate;
-  final List<NotifModel> scheduleReminders; // H-1 Pengingat Jadwal Servis
-  final List<NotifModel> dailyWarnings; // Peringatan Cek/Tambah Servis Harian
-
-  VehicleNotifGroup({
-    required this.vehicleId,
-    required this.vehicleName,
-    required this.vehiclePlate,
-    required this.scheduleReminders,
-    required this.dailyWarnings,
-  });
-
-  int get totalCount => scheduleReminders.length + dailyWarnings.length;
-}
-
 class TimeSectionGroup {
-  final String title; // "Hari Ini", "Minggu Ini", "Lebih Lama"
-  final List<VehicleNotifGroup> vehicleGroups;
+  final String title; // "Hari Ini", "Minggu Ini", "Bulan Ini", "Lebih Lama"
+  final List<NotifModel> items;
 
   TimeSectionGroup({
     required this.title,
-    required this.vehicleGroups,
+    required this.items,
   });
 }
 
@@ -157,33 +157,34 @@ class NotifController extends GetxController with WidgetsBindingObserver {
   var isLoading = false.obs;
   var isPermissionGranted = true.obs;
 
-  final List<String> filterOptions = ['Semua', 'Belum di Baca'];
+  final List<String> filterOptions = ['Semua', 'Belum dibaca'];
   var selectedFilter = 'Semua'.obs;
-
-  // Status expand/collapse tiap kendaraan: vehicleId -> bool
-  var expandedVehicles = <String, bool>{}.obs;
-
-  bool isVehicleExpanded(String vehicleId) {
-    return expandedVehicles[vehicleId] ?? true;
-  }
-
-  void toggleVehicleExpanded(String vehicleId) {
-    final current = isVehicleExpanded(vehicleId);
-    expandedVehicles[vehicleId] = !current;
-  }
 
   void changeFilter(String filter) {
     selectedFilter.value = filter;
   }
 
+  /// Hanya menampilkan notifikasi pada kendaraan yang sedang dipilih saat ini
   List<NotifModel> get filteredNotifList {
-    if (selectedFilter.value == 'Belum di Baca') {
-      return notifList.where((notif) => !notif.isRead).toList();
+    final currentVehicleId = box.read("vehicle_id")?.toString() ?? "";
+    var list = notifList.toList();
+
+    // Filter kendaraan terpilih saat ini
+    if (currentVehicleId.isNotEmpty) {
+      list = list
+          .where((notif) => notif.vehicleId.isEmpty || notif.vehicleId == currentVehicleId)
+          .toList();
     }
-    return notifList;
+
+    // Filter tab "Belum dibaca"
+    if (selectedFilter.value == 'Belum dibaca') {
+      list = list.where((notif) => !notif.isRead).toList();
+    }
+
+    return list;
   }
 
-  /// Kelompokkan notifikasi berdasarkan rentang waktu: Hari Ini, Minggu Ini, Lebih Lama
+  /// Kelompokkan notifikasi berdasarkan rentang waktu: Hari Ini, Minggu Ini, Bulan Ini, Lebih Lama
   List<TimeSectionGroup> get groupedTimeSections {
     final list = filteredNotifList;
     if (list.isEmpty) return [];
@@ -193,6 +194,7 @@ class NotifController extends GetxController with WidgetsBindingObserver {
 
     final List<NotifModel> hariIniList = [];
     final List<NotifModel> mingguIniList = [];
+    final List<NotifModel> bulanIniList = [];
     final List<NotifModel> lebihLamaList = [];
 
     for (final notif in list) {
@@ -207,6 +209,8 @@ class NotifController extends GetxController with WidgetsBindingObserver {
         hariIniList.add(notif);
       } else if (diffDays <= 7) {
         mingguIniList.add(notif);
+      } else if (diffDays <= 30) {
+        bulanIniList.add(notif);
       } else {
         lebihLamaList.add(notif);
       }
@@ -215,60 +219,19 @@ class NotifController extends GetxController with WidgetsBindingObserver {
     final sections = <TimeSectionGroup>[];
 
     if (hariIniList.isNotEmpty) {
-      sections.add(TimeSectionGroup(
-        title: "Hari Ini",
-        vehicleGroups: _groupByVehicle(hariIniList),
-      ));
+      sections.add(TimeSectionGroup(title: "Hari Ini", items: hariIniList));
     }
     if (mingguIniList.isNotEmpty) {
-      sections.add(TimeSectionGroup(
-        title: "Minggu Ini",
-        vehicleGroups: _groupByVehicle(mingguIniList),
-      ));
+      sections.add(TimeSectionGroup(title: "Minggu Ini", items: mingguIniList));
+    }
+    if (bulanIniList.isNotEmpty) {
+      sections.add(TimeSectionGroup(title: "Bulan Ini", items: bulanIniList));
     }
     if (lebihLamaList.isNotEmpty) {
-      sections.add(TimeSectionGroup(
-        title: "Lebih Lama",
-        vehicleGroups: _groupByVehicle(lebihLamaList),
-      ));
+      sections.add(TimeSectionGroup(title: "Lebih Lama", items: lebihLamaList));
     }
 
     return sections;
-  }
-
-  List<VehicleNotifGroup> _groupByVehicle(List<NotifModel> items) {
-    final Map<String, List<NotifModel>> byVehicle = {};
-    for (final item in items) {
-      final key = item.vehicleId.isNotEmpty ? item.vehicleId : "default_vehicle";
-      byVehicle.putIfAbsent(key, () => []).add(item);
-    }
-
-    final result = <VehicleNotifGroup>[];
-    for (final entry in byVehicle.entries) {
-      final vItems = entry.value;
-      final first = vItems.first;
-
-      final scheduleReminders = vItems
-          .where((it) =>
-              it.type == 'schedule_reminder' || it.status == 'Pengingat')
-          .toList();
-
-      final dailyWarnings = vItems
-          .where((it) =>
-              it.type != 'schedule_reminder' && it.status != 'Pengingat')
-          .toList();
-
-      result.add(VehicleNotifGroup(
-        vehicleId: entry.key,
-        vehicleName:
-            first.vehicleName.isNotEmpty ? first.vehicleName : "Kendaraan",
-        vehiclePlate: first.vehiclePlate,
-        scheduleReminders: scheduleReminders,
-        dailyWarnings: dailyWarnings,
-      ));
-    }
-
-    return result;
   }
 
   @override
@@ -294,6 +257,8 @@ class NotifController extends GetxController with WidgetsBindingObserver {
           isPermissionGranted.value = true;
           await getNotifications(silent: true);
         }
+      } else {
+        await getNotifications(silent: true);
       }
     }
   }
@@ -318,6 +283,7 @@ class NotifController extends GetxController with WidgetsBindingObserver {
     }
   }
 
+  /// Ambil notifikasi HANYA untuk kendaraan yang sedang dipilih saat ini
   Future<void> getNotifications({bool silent = false}) async {
     final shouldShowLoading = !silent && notifList.isEmpty;
     if (shouldShowLoading) {
@@ -326,10 +292,14 @@ class NotifController extends GetxController with WidgetsBindingObserver {
 
     try {
       final token = box.read("token");
-      final vehicleId = box.read("vehicle_id") ?? "all";
+      final currentVehicleId = box.read("vehicle_id")?.toString() ?? "";
+
+      final url = currentVehicleId.isNotEmpty
+          ? "$baseUrl/api/vehicle/notifications/$currentVehicleId"
+          : "$baseUrl/api/vehicle/notifications";
 
       final response = await http.get(
-        Uri.parse("$baseUrl/api/vehicle/notifications/$vehicleId"),
+        Uri.parse(url),
         headers: {"Authorization": "Bearer $token"},
       );
 
@@ -338,7 +308,14 @@ class NotifController extends GetxController with WidgetsBindingObserver {
       if (response.statusCode == 200) {
         try {
           final List data = jsonDecode(response.body);
-          final newList = data.map((e) => NotifModel.fromJson(e)).toList();
+          var newList = data.map((e) => NotifModel.fromJson(e)).toList();
+
+          // Pastikan hanya kendaraan yang sedang dipilih saat ini
+          if (currentVehicleId.isNotEmpty) {
+            newList = newList
+                .where((n) => n.vehicleId.isEmpty || n.vehicleId == currentVehicleId)
+                .toList();
+          }
 
           if (_hasDataChanged(newList)) {
             notifList.value = newList;
@@ -404,10 +381,9 @@ class NotifController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  /// Aksi Klik "Jadwalkan Servis":
-  /// Arahkan user ke halaman Tambah Riwayat dengan vehicleId terkait.
-  /// Saat user kembali/back ke Home, pastikan Home memuat data kendaraan yang sesuai.
-  void onJadwalkanServis(NotifModel notif) {
+  /// Aksi Klik Kartu Notifikasi:
+  /// Tandai dibaca, lalu buka Tambah Riwayat Servis sesuai kendaraan & komponen.
+  void onNotifCardTapped(NotifModel notif) {
     markAsRead(notif);
 
     if (notif.vehicleId.isNotEmpty) {

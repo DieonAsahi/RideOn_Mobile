@@ -25,7 +25,9 @@ class MainscreenController extends GetxController {
         break;
 
       case 1:
-        Get.find<KendaraanController>().getVehicles();
+        final k = Get.find<KendaraanController>();
+        k.syncActiveVehicleFromStorage();
+        k.getVehicles();
         break;
 
       case 2:

@@ -7,6 +7,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/services/auth_service.dart';
 import 'package:capbatu/app/services/connectivity_service.dart';
 import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dart';
+import 'package:capbatu/app/modules/Feature/service/controllers/service_controller.dart';
+import 'package:capbatu/app/modules/notif/controllers/notif_controller.dart';
 import 'package:capbatu/app/widgets/app_snackbar.dart';
 
 class Kendaraan {
@@ -48,13 +50,53 @@ class KendaraanController extends GetxController {
     getVehicles();
   }
 
+  /// Pindahkan kendaraan yang aktif/digunakan saat ini ke posisi paling atas (index 0)
+  void _reorderListForActiveVehicle() {
+    final activeId = activeVehicleId.value.isNotEmpty
+        ? activeVehicleId.value
+        : box.read("vehicle_id")?.toString() ?? "";
+    if (activeId.isEmpty || kendaraanList.isEmpty) return;
+
+    final index = kendaraanList.indexWhere((k) => k.id == activeId);
+    if (index > 0) {
+      final selectedItem = kendaraanList.removeAt(index);
+      kendaraanList.insert(0, selectedItem);
+      kendaraanList.refresh();
+    }
+  }
+
+  /// Sinkronkan kendaraan aktif dari storage saat tab atau halaman kendaraan dibuka
+  void syncActiveVehicleFromStorage() {
+    final stored = box.read("vehicle_id")?.toString();
+    if (stored != null && stored.isNotEmpty) {
+      activeVehicleId.value = stored;
+      _reorderListForActiveVehicle();
+    }
+  }
+
+  /// Dipanggil saat kendaraan diganti dari halaman Home atau halaman lain
+  void onVehicleChangedFromExternal(String id) {
+    activeVehicleId.value = id;
+    _reorderListForActiveVehicle();
+  }
+
+  /// Dipanggil saat user memilih kendaraan di halaman kendaraan
   void setActiveVehicle(String id) {
     activeVehicleId.value = id;
     box.write("vehicle_id", id);
+    _reorderListForActiveVehicle();
+
     if (Get.isRegistered<HomeController>()) {
       final home = Get.find<HomeController>();
-      home.vehicleId = id;
-      home.fetchHome();
+      home.changeVehicle(id);
+    }
+
+    if (Get.isRegistered<ServiceController>()) {
+      Get.find<ServiceController>().getServices(force: true);
+    }
+
+    if (Get.isRegistered<NotifController>()) {
+      Get.find<NotifController>().getNotifications(silent: true);
     }
   }
 
@@ -108,21 +150,18 @@ class KendaraanController extends GetxController {
           }
         }
 
-        // Paksa refresh dari backend untuk sinkronisasi state
-        await getVehicles(force: true);
+        // Tampilkan snackbar sukses segera setelah data terhapus di backend
+        AppSnackbar.success("Kendaraan berhasil dihapus.");
 
         // Sinkronisasi data ke HomeController jika aktif
         if (Get.isRegistered<HomeController>()) {
           final home = Get.find<HomeController>();
-          await home.getVehicles();
+          home.getVehicles();
           if (kendaraanList.isNotEmpty) {
             final activeId = box.read("vehicle_id") ?? kendaraanList.first.id;
             home.changeVehicle(activeId.toString());
           }
         }
-
-        // Tampilkan snackbar sukses HANYA setelah data benar-benar terhapus
-        AppSnackbar.success("Kendaraan berhasil dihapus.");
 
         if (kendaraanList.isEmpty) {
           box.remove("vehicle_id");
@@ -148,7 +187,10 @@ class KendaraanController extends GetxController {
   }
 
   Future<void> getVehicles({bool force = false}) async {
-    if (!force && kendaraanList.isNotEmpty) return;
+    if (!force && kendaraanList.isNotEmpty) {
+      syncActiveVehicleFromStorage();
+      return;
+    }
     try {
       isLoading.value = true;
 
@@ -194,15 +236,23 @@ class KendaraanController extends GetxController {
             );
           }).toList();
 
-          kendaraanList.value = parsedList.reversed.toList();
+          var list = parsedList.reversed.toList();
 
-          final currentActive = box.read("vehicle_id");
-          if ((currentActive == null || currentActive.toString().isEmpty) &&
-              kendaraanList.isNotEmpty) {
-            setActiveVehicle(kendaraanList.first.id);
-          } else {
-            activeVehicleId.value = currentActive?.toString() ?? "";
+          final currentActive = box.read("vehicle_id")?.toString();
+          if ((currentActive == null || currentActive.isEmpty) &&
+              list.isNotEmpty) {
+            activeVehicleId.value = list.first.id;
+            box.write("vehicle_id", list.first.id);
+          } else if (currentActive != null && currentActive.isNotEmpty) {
+            activeVehicleId.value = currentActive;
+            final idx = list.indexWhere((k) => k.id == currentActive);
+            if (idx > 0) {
+              final selectedItem = list.removeAt(idx);
+              list.insert(0, selectedItem);
+            }
           }
+
+          kendaraanList.assignAll(list);
         }
       }
     } catch (e) {

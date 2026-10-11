@@ -24,13 +24,17 @@ class RwttambahView extends GetView<RwttambahController> {
                       onPressed: () => Get.back(),
                       icon: const Icon(Icons.arrow_back_ios),
                     ),
-                    const Expanded(
-                      child: Text(
-                        "Tambah Riwayat Servis",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Obx(
+                        () => Text(
+                          controller.isEdit.value
+                              ? "Edit Riwayat Servis"
+                              : "Tambah Riwayat Servis",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -54,12 +58,14 @@ class RwttambahView extends GetView<RwttambahController> {
                         title: 'Servis Rutin',
                         selected:
                             controller.selectedJenis.value == 'Servis Rutin',
+                        enabled: controller.isJenisEnabled,
                         onTap: () => controller.changeJenis('Servis Rutin'),
                       ),
                       const SizedBox(width: 10),
                       _jenisButton(
                         title: 'Perbaikan',
                         selected: controller.selectedJenis.value == 'Perbaikan',
+                        enabled: controller.isJenisEnabled,
                         onTap: () => controller.changeJenis('Perbaikan'),
                       ),
                     ],
@@ -78,6 +84,7 @@ class RwttambahView extends GetView<RwttambahController> {
                         _textField(
                           controller: controller.detailController,
                           hint: "Contoh : Ganti Kampas Rem",
+                          readOnly: !controller.isDetailEnabled,
                         ),
                       ],
                     );
@@ -99,15 +106,18 @@ class RwttambahView extends GetView<RwttambahController> {
                             child: Text(item["name"]),
                           );
                         }).toList(),
-                        onChanged:
-                            (controller.isEdit.value &&
-                                controller.selectedJenis.value ==
-                                    "Servis Rutin")
-                            ? null
-                            : (value) {
-                                controller.selectedComponentId.value = value!;
-                              },
+                        onChanged: controller.isComponentEnabled
+                            ? (value) {
+                                if (value != null) {
+                                  controller.selectedComponentId.value = value;
+                                }
+                              }
+                            : null,
                         decoration: InputDecoration(
+                          fillColor: controller.isComponentEnabled
+                              ? Colors.white
+                              : Colors.grey.shade100,
+                          filled: !controller.isComponentEnabled,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -127,7 +137,7 @@ class RwttambahView extends GetView<RwttambahController> {
                   readOnly: true,
                   decoration: InputDecoration(
                     hintText: 'dd/mm/yyyy',
-                    hintStyle: TextStyle(color: Colors.black, fontSize: 12),
+                    hintStyle: const TextStyle(color: Colors.black, fontSize: 12),
                     suffixIcon: IconButton(
                       onPressed: controller.pickDate,
                       icon: Image.asset(
@@ -202,42 +212,41 @@ class RwttambahView extends GetView<RwttambahController> {
                 const SizedBox(height: 8),
 
                 Obx(
-                  () => DropdownButtonFormField<String>(
-                    value: controller.selectedStatus.value,
+                  () {
+                    final options = controller.availableStatusOptions;
+                    final currentValue = options.contains(controller.selectedStatus.value)
+                        ? controller.selectedStatus.value
+                        : (options.isNotEmpty ? options.first : null);
 
-                    items: controller.selectedJenis.value == 'Servis Rutin'
-                        ? ['Dijadwalkan', 'Selesai']
-                              .map(
-                                (status) => DropdownMenuItem(
-                                  value: status,
-                                  child: Text(status),
-                                ),
-                              )
-                              .toList()
-                        : ['Dijadwalkan', 'Diproses', 'Selesai']
-                              .map(
-                                (status) => DropdownMenuItem(
-                                  value: status,
-                                  child: Text(status),
-                                ),
-                              )
-                              .toList(),
-
-                    onChanged: controller.isStatusLocked.value
-                        ? null
-                        : (value) {
-                            if (value != null) {
-                              controller.changeStatus(value);
+                    return DropdownButtonFormField<String>(
+                      value: currentValue,
+                      items: options
+                          .map(
+                            (status) => DropdownMenuItem(
+                              value: status,
+                              child: Text(status),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: controller.isStatusDropdownEnabled
+                          ? (value) {
+                              if (value != null) {
+                                controller.changeStatus(value);
+                              }
                             }
-                          },
-
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                          : null,
+                      decoration: InputDecoration(
+                        fillColor: controller.isStatusDropdownEnabled
+                            ? Colors.white
+                            : Colors.grey.shade100,
+                        filled: !controller.isStatusDropdownEnabled,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 50),
@@ -289,12 +298,19 @@ class RwttambahView extends GetView<RwttambahController> {
     return Text(title, style: const TextStyle(fontWeight: FontWeight.w500));
   }
 
-  Widget _textField({required TextEditingController controller, String? hint}) {
+  Widget _textField({
+    required TextEditingController controller,
+    String? hint,
+    bool readOnly = false,
+  }) {
     return TextField(
       controller: controller,
+      readOnly: readOnly,
       decoration: InputDecoration(
+        fillColor: readOnly ? Colors.grey.shade100 : Colors.white,
+        filled: readOnly,
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.black, fontSize: 12),
+        hintStyle: const TextStyle(color: Colors.black, fontSize: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: Colors.grey.shade300),
@@ -307,23 +323,27 @@ class RwttambahView extends GetView<RwttambahController> {
     required String title,
     required bool selected,
     required VoidCallback onTap,
+    bool enabled = true,
   }) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primaryBlue : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? AppColors.primaryBlue : AppColors.cardBorder,
+      onTap: enabled ? onTap : null,
+      child: Opacity(
+        opacity: enabled ? 1.0 : 0.5,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primaryBlue : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? AppColors.primaryBlue : AppColors.cardBorder,
+            ),
           ),
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            fontSize: 12,
-            color: selected ? Colors.white : Colors.grey,
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: selected ? Colors.white : Colors.grey,
+            ),
           ),
         ),
       ),
