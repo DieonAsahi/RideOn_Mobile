@@ -10,7 +10,7 @@ import '../../../services/firebase_messaging_service.dart';
 import '../../../services/local_notification_service.dart';
 import '../../../services/connectivity_service.dart';
 
-class LoginController extends GetxController {
+class LoginController extends GetxController with GetTickerProviderStateMixin {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
 
   final emailController = TextEditingController();
@@ -18,6 +18,74 @@ class LoginController extends GetxController {
   final box = GetStorage();
 
   var isLoggingIn = false.obs;
+
+  // State untuk Toggle UI Password
+  var isObscure = true.obs;
+
+  // State untuk Error Validasi Form
+  var emailError = RxnString();
+  var passwordError = RxnString();
+
+  // Variabel Animasi UI
+  late AnimationController sheetAnimController;
+  late Animation<Offset> sheetOffsetAnim;
+  late AnimationController logoAnimController;
+  late Animation<Offset> logoOffsetAnim;
+
+  @override
+  void onInit() {
+    super.onInit();
+
+    // 1. Setup Animasi Container Putih (Durasi diperlama jadi 1.2 detik agar santai)
+    sheetAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    // Dimulai dari Offset(0, 1.5) yang memastikan container benar-benar bersembunyi di bawah layar
+    sheetOffsetAnim =
+        Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: sheetAnimController,
+            curve: Curves
+                .fastOutSlowIn, // Curve yang memberikan efek cepat di awal lalu melambat halus di akhir
+          ),
+        );
+
+    // 2. Setup Animasi Logo
+    logoAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500), // Durasi logo 1.5 detik
+    );
+    logoOffsetAnim =
+        Tween<Offset>(begin: const Offset(0, 1.5), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: logoAnimController,
+            curve: Curves.fastOutSlowIn,
+          ),
+        );
+  }
+
+  // Dipanggil otomatis oleh GetX SETELAH layar pertama kali selesai di-render
+  @override
+  void onReady() {
+    super.onReady();
+
+    // Beri jeda 400ms agar layar biru polos terlihat sejenak, baru container naik
+    Future.delayed(const Duration(milliseconds: 400), () {
+      sheetAnimController.forward();
+
+      // Beri jeda lagi 500ms agar logo menyusul naik saat container masih di tengah perjalanan
+      Future.delayed(const Duration(milliseconds: 500), () {
+        logoAnimController.forward();
+      });
+    });
+  }
+
+  void togglePasswordVisibility() {
+    isObscure.value = !isObscure.value;
+  }
+
+  // ================= LOGIKA LOGIN (TETAP SAMA) ================= //
 
   Future<void> checkVehicle() async {
     try {
@@ -52,10 +120,32 @@ class LoginController extends GetxController {
     String email = emailController.text.trim();
     String password = passwordController.text;
 
-    if (email.isEmpty || password.isEmpty) {
-      Get.snackbar("Error", "Email dan Password tidak boleh kosong");
-      return;
+    emailError.value = null;
+    passwordError.value = null;
+    bool isValid = true;
+
+    // Validasi Email
+    if (email.isEmpty) {
+      emailError.value = "Email tidak boleh kosong";
+      isValid = false;
+    } else if (!email.contains('@')) {
+      emailError.value = "Format email tidak valid (harus memakai @)";
+      isValid = false;
     }
+
+    // Validasi Sandi
+    if (password.isEmpty) {
+      passwordError.value = "Kata sandi tidak boleh kosong";
+      isValid = false;
+    } else if (password.length < 8) {
+      passwordError.value = "Kata sandi minimal 8 digit";
+      isValid = false;
+    } else if (password.length > 15) {
+      passwordError.value = "Kata sandi maksimal 15 digit";
+      isValid = false;
+    }
+
+    if (!isValid) return;
 
     try {
       isLoggingIn.value = true;
@@ -87,15 +177,14 @@ class LoginController extends GetxController {
       if (!ConnectivityService.handleNetworkError(e)) {
         Get.snackbar("Error", "Tidak bisa terhubung ke server");
       }
-    } finally {
-      // isLoggingIn will turn false automatically when navigating away
     }
   }
 
   Future<void> loginGoogle() async {
     try {
       isLoggingIn.value = true;
-      final serverClientId = dotenv.env['GOOGLE_SERVER_CLIENT_ID'] ??
+      final serverClientId =
+          dotenv.env['GOOGLE_SERVER_CLIENT_ID'] ??
           '223603698019-imou4debdr194jicsps6aalvl22lmls1.apps.googleusercontent.com';
       final GoogleSignIn googleSignIn = GoogleSignIn(
         serverClientId: serverClientId,
@@ -161,6 +250,8 @@ class LoginController extends GetxController {
 
   @override
   void onClose() {
+    sheetAnimController.dispose();
+    logoAnimController.dispose();
     emailController.dispose();
     passwordController.dispose();
     super.onClose();
