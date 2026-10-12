@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dart';
 import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
 import 'package:capbatu/app/modules/Feature/service/controllers/service_controller.dart';
-import 'package:capbatu/app/modules/Feature/edukasi/controllers/edukasi_controller.dart';
+// import 'package:capbatu/app/modules/Feature/edukasi/controllers/edukasi_controller.dart';
 import 'package:capbatu/app/modules/Feature/profil/controllers/profil_controller.dart';
 
 class MainscreenController extends GetxController {
