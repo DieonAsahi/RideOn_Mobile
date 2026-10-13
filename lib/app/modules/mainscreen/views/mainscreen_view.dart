@@ -137,20 +137,33 @@ class MainscreenView extends GetView<MainscreenController> {
 
                           return Stack(
                             children: [
+                              // ==========================================
+                              // ANIMASI PILL HIGHLIGHT YANG DIPERBAIKI
+                              // ==========================================
                               AnimatedPositioned(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.fastOutSlowIn,
-                                left: currentIndex * tabWidth,
-                                top: 0,
-                                bottom: 0,
-                                width: tabWidth,
+                                duration: const Duration(
+                                  milliseconds: 350,
+                                ), // Waktu transisi
+                                curve: Curves
+                                    .easeOutQuart, // Animasi sliding yang lebih smooth
+                                // Tambahkan margin agar bentuk pill lebih terlihat
+                                left: (currentIndex * tabWidth) + 6,
+                                top: 4,
+                                bottom: 4,
+                                width:
+                                    tabWidth -
+                                    12, // Kurangi width sesuai margin kiri-kanan
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFEEF5FF),
+                                    color: const Color(
+                                      0xFFEEF5FF,
+                                    ), // Warna pill (biru sangat muda)
                                     borderRadius: BorderRadius.circular(100),
                                   ),
                                 ),
                               ),
+
+                              // ==========================================
                               Row(
                                 children: List.generate(
                                   controller.navItems.length,

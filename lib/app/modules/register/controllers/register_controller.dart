@@ -5,28 +5,84 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/services/connectivity_service.dart';
 import 'package:capbatu/app/widgets/app_snackbar.dart';
+import 'package:capbatu/app/widgets/otp_limit_dialog.dart';
 
 class RegisterController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
 
-  final emailController = TextEditingController();
   final nameController = TextEditingController();
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  // State untuk Toggle UI Password
+  var isPasswordObscure = true.obs;
+  var isConfirmPasswordObscure = true.obs;
+
+  // State untuk Error Validasi Form
+  var nameError = RxnString();
+  var emailError = RxnString();
+  var passwordError = RxnString();
+  var confirmPasswordError = RxnString();
+
+  void togglePasswordVisibility() {
+    isPasswordObscure.value = !isPasswordObscure.value;
+  }
+
+  void toggleConfirmPasswordVisibility() {
+    isConfirmPasswordObscure.value = !isConfirmPasswordObscure.value;
+  }
+
   void register() async {
-    if (emailController.text.isEmpty ||
-        nameController.text.isEmpty ||
-        passwordController.text.isEmpty ||
-        confirmPasswordController.text.isEmpty) {
-      Get.snackbar("Error", "All fields are required");
-      return;
+    String name = nameController.text.trim();
+    String email = emailController.text.trim();
+    String password = passwordController.text;
+    String confirmPassword = confirmPasswordController.text;
+
+    // Reset error text
+    nameError.value = null;
+    emailError.value = null;
+    passwordError.value = null;
+    confirmPasswordError.value = null;
+    bool isValid = true;
+
+    // --- VALIDASI NAMA ---
+    if (name.isEmpty) {
+      nameError.value = "Nama tidak boleh kosong";
+      isValid = false;
     }
 
-    if (passwordController.text != confirmPasswordController.text) {
-      Get.snackbar("Error", "Passwords do not match");
-      return;
+    // --- VALIDASI EMAIL ---
+    if (email.isEmpty) {
+      emailError.value = "Email tidak boleh kosong";
+      isValid = false;
+    } else if (!email.contains('@')) {
+      emailError.value = "Format email tidak valid (harus memakai @)";
+      isValid = false;
     }
+
+    // --- VALIDASI KATA SANDI ---
+    if (password.isEmpty) {
+      passwordError.value = "Kata sandi tidak boleh kosong";
+      isValid = false;
+    } else if (password.length < 8) {
+      passwordError.value = "Kata sandi minimal 8 karakter";
+      isValid = false;
+    } else if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(password)) {
+      passwordError.value = "Kata sandi harus berisi huruf besar, huruf kecil, dan angka";
+      isValid = false;
+    }
+
+    // --- VALIDASI KONFIRMASI KATA SANDI ---
+    if (confirmPassword.isEmpty) {
+      confirmPasswordError.value = "Konfirmasi kata sandi tidak boleh kosong";
+      isValid = false;
+    } else if (password != confirmPassword) {
+      confirmPasswordError.value = "Kata sandi tidak cocok";
+      isValid = false;
+    }
+
+    if (!isValid) return;
 
     try {
       final url = Uri.parse("$baseUrl/api/auth/register");
@@ -35,10 +91,10 @@ class RegisterController extends GetxController {
         url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "full_name": nameController.text,
-          "email": emailController.text,
-          "password": passwordController.text,
-          "confirm_password": confirmPasswordController.text,
+          "full_name": name,
+          "email": email,
+          "password": password,
+          "confirm_password": confirmPassword,
         }),
       );
 
@@ -49,10 +105,19 @@ class RegisterController extends GetxController {
 
         Get.toNamed(
           '/otpemail',
-          arguments: {"email": emailController.text, "from": "register"},
+          arguments: {"email": email, "from": "register"},
         );
       } else {
-        Get.snackbar("Error", data['error'] ?? "Register gagal");
+        if (response.statusCode == 429 ||
+            data['is_rate_limit'] == true ||
+            OtpLimitDialog.isOtpLimitError(
+              data['error'],
+              statusCode: response.statusCode,
+            )) {
+          OtpLimitDialog.show();
+        } else {
+          Get.snackbar("Error", data['error'] ?? "Register gagal");
+        }
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
@@ -64,8 +129,8 @@ class RegisterController extends GetxController {
 
   @override
   void onClose() {
-    emailController.dispose();
     nameController.dispose();
+    emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
     super.onClose();

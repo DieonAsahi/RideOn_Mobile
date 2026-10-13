@@ -461,7 +461,7 @@ class OdometerCard extends GetView<HomeController> {
               children: [
                 Flexible(
                   child: PopupMenuButton<String>(
-                    offset: const Offset(0, 40),
+                    offset: const Offset(0, 30),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -482,16 +482,61 @@ class OdometerCard extends GetView<HomeController> {
                             "${vehicle["brand"] ?? ''} ${vehicle["model"] ?? ''}"
                                 .trim();
 
+                        // CATATAN: Ganti "plat" dengan key yang sesuai dari API/model Anda (misal "plat_number")
+                        final String platNomor = vehicle["plate_number"] ?? '';
+
+                        // Cek apakah kendaraan ini sedang aktif/dipilih
+                        final bool isSelected =
+                            vehicle["id"].toString() ==
+                            controller.selectedVehicleId.value;
+
                         return PopupMenuItem<String>(
                           value: vehicle["id"].toString(),
-                          child: Text(
-                            namaMotor.isEmpty ? "Kendaraan" : namaMotor,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                              fontSize: 14,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        namaMotor.isEmpty
+                                            ? "Kendaraan"
+                                            : namaMotor,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                          fontSize: 14,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      platNomor,
+                                      style: const TextStyle(
+                                        color: Color(
+                                          0xFF9E9E9E,
+                                        ), // Warna abu-abu plat
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Menampilkan ikon checklist hanya pada item yang aktif
+                              if (isSelected)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 10),
+                                  child: Image.asset(
+                                    'assets/icons/checklist.png',
+                                    width: 20,
+                                    height: 20,
+                                  ),
+                                ),
+                            ],
                           ),
                         );
                       }).toList();

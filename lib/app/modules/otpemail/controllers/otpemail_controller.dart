@@ -12,10 +12,14 @@ class OtpemailController extends GetxController {
   final otp = List.generate(6, (_) => ''.obs);
   final focusNodes = List.generate(6, (_) => FocusNode());
   final controllers = List.generate(6, (_) => TextEditingController());
+
   var otpExpiredSeconds = 180.obs;
   var isOtpExpired = false.obs;
   var isCooldown = false.obs;
   var secondsRemaining = 0.obs;
+
+  // State untuk menyimpan error text OTP
+  var otpError = RxnString();
 
   String fromPage = 'register';
   String email = '';
@@ -34,15 +38,25 @@ class OtpemailController extends GetxController {
     }
   }
 
+  String getMaskedEmail() {
+    if (email.isEmpty || !email.contains('@')) return email;
+    final parts = email.split('@');
+    final name = parts[0];
+    final domain = parts[1];
+
+    if (name.length <= 3) {
+      return "${name.substring(0, 1)}***@$domain";
+    }
+    return "${name.substring(0, 3)}****@$domain";
+  }
+
   void startOtpExpiredTimer([int seconds = 180]) {
     otpExpiredSeconds.value = seconds;
     isOtpExpired.value = false;
 
     Future.doWhile(() async {
       await Future.delayed(const Duration(seconds: 1));
-
       otpExpiredSeconds.value--;
-
       return otpExpiredSeconds.value > 0;
     }).then((_) {
       isOtpExpired.value = true;
@@ -56,7 +70,6 @@ class OtpemailController extends GetxController {
     Future.doWhile(() async {
       await Future.delayed(const Duration(seconds: 1));
       secondsRemaining.value--;
-
       return secondsRemaining.value > 0;
     }).then((_) {
       isCooldown.value = false;
@@ -64,6 +77,9 @@ class OtpemailController extends GetxController {
   }
 
   void onChanged(int index, String value) {
+    // Hapus error saat user mulai mengetik ulang
+    otpError.value = null;
+
     if (value.isNotEmpty) {
       otp[index].value = value;
       if (index < 5) {
@@ -77,13 +93,15 @@ class OtpemailController extends GetxController {
   }
 
   void verifyOtp() async {
+    otpError.value = null; // Reset error
+
     if (fullOtp.length < 6) {
-      Get.snackbar("Error", "OTP belum lengkap");
+      otpError.value = "Kode OTP belum lengkap (6 digit)";
       return;
     }
 
     if (isOtpExpired.value) {
-      Get.snackbar("Error", "OTP sudah kadaluarsa");
+      otpError.value = "Kode OTP sudah kadaluarsa";
       return;
     }
 
@@ -115,13 +133,13 @@ class OtpemailController extends GetxController {
             arguments: {
               "access_token": data['session']['access_token'],
               "refresh_token": data['session']['refresh_token'],
-
               "from_profile": fromPage == 'profile',
             },
           );
         }
       } else {
-        Get.snackbar("Error", data['error']);
+        // Tampilkan error dari server di bawah kotak OTP
+        otpError.value = data['error'] ?? "Verifikasi gagal";
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
@@ -131,7 +149,7 @@ class OtpemailController extends GetxController {
   }
 
   void resendOtp() async {
-    if (isCooldown.value) return; // 🔥 cegah spam
+    if (isCooldown.value) return;
 
     if (email.isEmpty) {
       Get.snackbar("Error", "Email kosong");
@@ -158,6 +176,9 @@ class OtpemailController extends GetxController {
         AppSnackbar.success(data['message'] ?? "OTP berhasil dikirim.");
         clearOtp();
 
+        // Bersihkan error jika sebelumnya ada
+        otpError.value = null;
+
         startCooldown(180);
         startOtpExpiredTimer();
       } else {
@@ -174,7 +195,6 @@ class OtpemailController extends GetxController {
     for (var c in controllers) {
       c.clear();
     }
-
     for (var o in otp) {
       o.value = '';
     }

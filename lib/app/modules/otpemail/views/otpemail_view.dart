@@ -1,184 +1,241 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../controllers/otpemail_controller.dart';
 
 class OtpemailView extends GetView<OtpemailController> {
   const OtpemailView({super.key});
+
   @override
   Widget build(BuildContext context) {
+    const primaryBlue = Color(0xFF2196F3);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF2196F3),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                const SizedBox(height: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 30),
 
-                const Text(
-                  "OTP Verification",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.yellow,
-                  ),
+              // ================= GAMBAR ASET =================
+              Image.asset(
+                'assets/logo/otp.png',
+                height: 120,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.mark_email_read,
+                  size: 100,
+                  color: primaryBlue,
                 ),
-                const SizedBox(height: 5),
+              ),
+              const SizedBox(height: 30),
 
-                const Text(
-                  "Enter the verificatin code sent to yout email",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                  ),
+              // ================= TEKS JUDUL =================
+              const Text(
+                "Verifikasi Email",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
+              ),
+              const SizedBox(height: 12),
 
-                const SizedBox(height: 20),
+              // ================= TEKS DESKRIPSI =================
+              Text(
+                "Kami telah mengirimkan kode verifikasi ke email Anda. Masukkan 6 digit kode untuk melanjutkan.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade600,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 16),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(6, (index) {
-                    return SizedBox(
-                      width: 45,
-                      height: 45,
-                      child: TextField(
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                  children: [
+                    const TextSpan(text: "Kode dikirimkan ke email "),
+                    TextSpan(
+                      text: controller.getMaskedEmail(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 40),
+
+              // ================= KOTAK INPUT OTP (6 DIGIT) =================
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(6, (index) {
+                  return SizedBox(
+                    width: 45,
+                    height: 55,
+                    child: Obx(() {
+                      final hasError = controller.otpError.value != null;
+                      return TextField(
                         controller: controller.controllers[index],
                         focusNode: controller.focusNodes[index],
                         textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
                         maxLength: 1,
-                        style: const TextStyle(fontSize: 18),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                         decoration: InputDecoration(
                           counterText: "",
                           filled: true,
-                          fillColor: Colors.grey.shade300,
+                          fillColor: hasError
+                              ? Colors.red.shade50
+                              : Colors.grey.shade50,
                           contentPadding: EdgeInsets.zero,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: hasError
+                                  ? Colors.red
+                                  : Colors.grey.shade300,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: hasError
+                                  ? Colors.red
+                                  : Colors.grey.shade300,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
+                            borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: Colors.blue,
+                              color: hasError ? Colors.red : primaryBlue,
                               width: 2,
                             ),
                           ),
                         ),
                         onChanged: (value) =>
                             controller.onChanged(index, value),
-                      ),
-                    );
-                  }),
-                ),
+                      );
+                    }),
+                  );
+                }),
+              ),
 
-                const SizedBox(height: 25),
+              // ================= ERROR TEXT MERAH DI BAWAH KOTAK OTP =================
+              Obx(() {
+                if (controller.otpError.value != null) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text(
+                      controller.otpError.value!,
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
 
-                Obx(() {
+              const SizedBox(height: 25),
+
+              // ================= INFO SISA WAKTU =================
+              Obx(() {
+                if (controller.isOtpExpired.value) {
+                  return const Text(
+                    "Kode OTP sudah kadaluarsa.",
+                    style: TextStyle(color: Colors.red, fontSize: 13),
+                  );
+                } else {
                   final minutes = (controller.otpExpiredSeconds.value ~/ 60)
                       .toString()
                       .padLeft(2, '0');
-
                   final seconds = (controller.otpExpiredSeconds.value % 60)
                       .toString()
                       .padLeft(2, '0');
-
-                  return Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 15,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: controller.isOtpExpired.value
-                          ? Colors.red.shade100
-                          : Colors.yellow.shade100,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          controller.isOtpExpired.value
-                              ? Icons.error_outline
-                              : Icons.access_time,
-                          color: controller.isOtpExpired.value
-                              ? Colors.red
-                              : Colors.orange,
-                        ),
-
-                        const SizedBox(width: 10),
-
-                        Expanded(
-                          child: Text(
-                            controller.isOtpExpired.value
-                                ? "OTP sudah kadaluarsa, silakan resend kode"
-                                : "OTP berlaku selama $minutes:$seconds",
-                            style: TextStyle(
-                              color: controller.isOtpExpired.value
-                                  ? Colors.red
-                                  : Colors.orange.shade800,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
+                  return Text(
+                    "Sisa waktu: $minutes:$seconds",
+                    style: TextStyle(
+                      color: Colors.orange.shade800,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
                     ),
                   );
-                }),
+                }
+              }),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 15),
 
-                Obx(
-                  () => GestureDetector(
-                    onTap: controller.isCooldown.value
-                        ? null
-                        : controller.resendOtp,
-                    child: Text(
-                      controller.isCooldown.value
-                          ? "Resend in ${controller.secondsRemaining.value}s"
-                          : "Resend Code",
-                      style: TextStyle(
-                        color: controller.isCooldown.value
-                            ? Colors.white
-                            : Colors.black,
-                        decoration: TextDecoration.underline,
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    "Tidak menerima kode OTP? ",
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                  ),
+                  Obx(
+                    () => GestureDetector(
+                      onTap: controller.isCooldown.value
+                          ? null
+                          : controller.resendOtp,
+                      child: Text(
+                        controller.isCooldown.value
+                            ? "Kirim ulang dalam ${controller.secondsRemaining.value}s"
+                            : "Kirim ulang",
+                        style: TextStyle(
+                          color: controller.isCooldown.value
+                              ? Colors.grey.shade400
+                              : primaryBlue,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
+              ),
 
-                const SizedBox(height: 100),
+              const SizedBox(height: 40),
 
-                SizedBox(
-                  // width: 335,
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade300,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadiusGeometry.circular(30),
-                      ),
+              // ================= TOMBOL LANJUTKAN =================
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryBlue,
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
                     ),
-                    onPressed: controller.verifyOtp,
-                    child: const Text(
-                      "Continue",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
+                  ),
+                  onPressed: controller.verifyOtp,
+                  child: const Text(
+                    "Lanjutkan",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

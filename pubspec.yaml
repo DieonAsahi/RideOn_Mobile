@@ -77,7 +77,7 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: true
-  image_path: assets/icon/motocare.png
+  image_path: assets/logo/RideOn_app.png
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

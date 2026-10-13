@@ -138,10 +138,10 @@ class LoginController extends GetxController with GetTickerProviderStateMixin {
       passwordError.value = "Kata sandi tidak boleh kosong";
       isValid = false;
     } else if (password.length < 8) {
-      passwordError.value = "Kata sandi minimal 8 digit";
+      passwordError.value = "Kata sandi minimal 8 karakter";
       isValid = false;
-    } else if (password.length > 15) {
-      passwordError.value = "Kata sandi maksimal 15 digit";
+    } else if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(password)) {
+      passwordError.value = "Kata sandi harus berisi huruf besar, huruf kecil, dan angka";
       isValid = false;
     }
 

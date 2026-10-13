@@ -146,11 +146,11 @@ class LoginView extends GetView<LoginController> {
                       ),
                       const SizedBox(height: 8),
 
-                      // Text Field Email dengan validasi error real-time
                       Obx(
                         () => TextField(
                           controller: controller.emailController,
                           keyboardType: TextInputType.emailAddress,
+
                           decoration: _inputDecoration(
                             "Masukkan email Anda",
                             errorText: controller.emailError.value,
@@ -169,27 +169,23 @@ class LoginView extends GetView<LoginController> {
                       ),
                       const SizedBox(height: 8),
 
-                      // Text Field Password dengan validasi number only & length
                       Obx(
                         () => TextField(
                           controller: controller.passwordController,
                           obscureText: controller.isObscure.value,
-                          keyboardType: TextInputType.number, // Keyboard angka
-                          inputFormatters: [
-                            FilteringTextInputFormatter
-                                .digitsOnly, // Hanya terima angka
-                          ],
+                          keyboardType: TextInputType.visiblePassword,
                           decoration:
                               _inputDecoration(
                                 "Masukkan kata sandi",
                                 errorText: controller.passwordError.value,
                               ).copyWith(
                                 suffixIcon: IconButton(
-                                  icon: Icon(
+                                  icon: Image.asset(
                                     controller.isObscure.value
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: Colors.grey,
+                                        ? 'assets/icons/eye_close.png'
+                                        : 'assets/icons/eye.png',
+                                    width: 24,
+                                    height: 24,
                                   ),
                                   onPressed:
                                       controller.togglePasswordVisibility,
@@ -392,13 +388,13 @@ class LoginView extends GetView<LoginController> {
     );
   }
 
-  // Fungsi Helper inputDecoration yang menerima parameter errorText
   InputDecoration _inputDecoration(String hint, {String? errorText}) {
     return InputDecoration(
       hintText: hint,
       errorText:
           errorText, // Menampilkan error text otomatis secara bawaan material UI
       errorStyle: const TextStyle(color: Colors.red, fontSize: 12),
+      errorMaxLines: 3,
       hintStyle: TextStyle(
         color: Colors.grey.shade400,
         fontSize: 14,

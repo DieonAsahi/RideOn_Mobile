@@ -14,8 +14,11 @@ class RwtservisView extends GetView<RwtservisController> {
       backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primaryBlue,
-        onPressed: () {
-          Get.toNamed('/rwttambah');
+        // 🌟 PERBAIKAN 1: Tambahkan async/await dan reload data saat kembali
+        onPressed: () async {
+          await Get.toNamed('/rwttambah');
+          controller
+              .loadServiceHistory(); // Memuat ulang data setelah halaman ditutup
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -159,9 +162,7 @@ class RwtservisView extends GetView<RwtservisController> {
 
                     if (controller.filteredData.isEmpty) {
                       return Padding(
-                        padding: const EdgeInsets.only(
-                          top: 60,
-                        ),
+                        padding: const EdgeInsets.only(top: 60),
                         child: Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -296,15 +297,18 @@ class RwtservisView extends GetView<RwtservisController> {
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      onSelected: (value) {
+                                      // 🌟 PERBAIKAN 2: Tambahkan async/await untuk fitur edit
+                                      onSelected: (value) async {
                                         if (value == 'edit') {
-                                          Get.toNamed(
+                                          await Get.toNamed(
                                             '/rwttambah',
                                             arguments: {
                                               'isEdit': true,
                                               'data': item,
                                             },
                                           );
+                                          // Reload riwayat begitu kembali dari halaman edit
+                                          controller.loadServiceHistory();
                                         }
                                         if (value == 'batalkan') {
                                           FocusScope.of(context).unfocus();
@@ -401,8 +405,8 @@ class RwtservisView extends GetView<RwtservisController> {
                                         }
                                       },
                                       itemBuilder: (context) {
-                                        final currentStatus =
-                                            item['status']?.toString();
+                                        final currentStatus = item['status']
+                                            ?.toString();
                                         final isScheduledOrInProcess =
                                             currentStatus == 'Dijadwalkan' ||
                                             currentStatus == 'Proses' ||
