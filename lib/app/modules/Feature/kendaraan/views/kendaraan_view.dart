@@ -12,38 +12,38 @@ class KendaraanView extends GetView<KendaraanController> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            Positioned.fill(
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  await controller.getVehicles(force: true);
-                },
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 700),
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 30),
-                            child: Center(
-                              child: Text(
-                                "Kendaraan",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 15),
-
-                          Obx(() {
+            const Padding(
+              padding: EdgeInsets.only(top: 30, bottom: 14),
+              child: Center(
+                child: Text(
+                  "Kendaraan",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        await controller.getVehicles(force: true);
+                      },
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 700),
+                          child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: Column(
+                              children: [
+                                Obx(() {
                             if (controller.isLoading.value) {
                               return const KendaraanSkeleton();
                             }
@@ -93,7 +93,7 @@ class KendaraanView extends GetView<KendaraanController> {
                               },
                             );
                           }),
-                          const SizedBox(height: 120),
+                          const SizedBox(height: 100),
                         ],
                       ),
                     ),
@@ -129,6 +129,9 @@ class KendaraanView extends GetView<KendaraanController> {
           ],
         ),
       ),
+    ],
+  ),
+),
     );
   }
 }

@@ -71,11 +71,11 @@ class FirebaseMessagingService {
   static Future<void> showMessageNotification(RemoteMessage message) async {
     final notificationId = int.tryParse(message.data['notification_id'] ?? '');
     final vehicleId = message.data['vehicle_id']?.toString() ?? '';
-    final category = message.data['category']?.toString() ??
-        (message.data['type'] == 'service_update' ||
-                message.data['type'] == 'schedule_reminder'
-            ? 'status'
-            : 'component');
+    final type = message.data['type']?.toString();
+    final rawCategory = message.data['category']?.toString();
+    final category = (type == 'service_update')
+        ? 'status'
+        : (rawCategory ?? 'component');
 
     final groupKey = category == 'component' && vehicleId.isNotEmpty
         ? 'vehicle_comp_$vehicleId'

@@ -80,7 +80,7 @@ class LocalNotificationService {
       await notification.zonedSchedule(
         inactivityNotifId,
         'RideOn',
-        'Ayo periksa kondisi kendaraan Anda!',
+        'Buka aplikasi dan mulai pengecekan kondisi kendaraan Anda!',
         scheduledDate,
         const NotificationDetails(android: android),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,

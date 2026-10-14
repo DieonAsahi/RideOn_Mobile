@@ -181,7 +181,7 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const SizedBox(height: 30),
+            const SizedBox(height: 14),
             const Text(
               "Hasil Deteksi Odometer",
               style: TextStyle(
@@ -190,7 +190,7 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
                 color: Colors.black,
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 15),
               decoration: BoxDecoration(

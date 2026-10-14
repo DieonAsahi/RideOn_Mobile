@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 
 import 'package:capbatu/app/modules/Feature/edukasi/views/edukasi_view.dart';
 import 'package:capbatu/app/modules/Feature/kendaraan/views/kendaraan_view.dart';
@@ -34,55 +35,136 @@ class MainscreenView extends GetView<MainscreenController> {
         if (didPop) return;
 
         Get.dialog(
-          AlertDialog(
+          Dialog(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(24),
             ),
-            title: const Text("Konfirmasi", style: TextStyle(fontSize: 16)),
-            content: const Text(
-              "Apakah Anda yakin ingin keluar aplikasi?",
-              style: TextStyle(fontSize: 13),
-            ),
-            actions: [
-              OutlinedButton(
-                onPressed: () => Get.back(),
-                child: const Text("Tidak"),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+            backgroundColor: Colors.white,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 400),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/icons/warning.png',
+                    width: 90,
+                    height: 90,
+                  ), // Ikon peringatan[cite: 8]
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    "Keluar dari Akun?", // Judul disesuaikan[cite: 8]
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
-                ),
-                onPressed: () async {
-                  final box = GetStorage();
+                  const SizedBox(height: 12),
 
-                  final serverClientId = dotenv.env['GOOGLE_SERVER_CLIENT_ID'];
-                  if (serverClientId != null) {
-                    final googleSignIn = GoogleSignIn(
-                      serverClientId: serverClientId,
-                    );
-                    try {
-                      await googleSignIn.signOut();
-                    } catch (_) {}
-                  }
+                  const Text(
+                    "Anda perlu masuk lagi untuk memantau kondisi motormu.", // Subjudul disesuaikan[cite: 8]
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF5C5C5C),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
 
-                  try {
-                    await Supabase.instance.client.auth.signOut();
-                  } catch (_) {}
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 42,
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                side: const BorderSide(
+                                  color: Colors.grey,
+                                  width: 1.5,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () => Get.back(),
+                              child: const Text(
+                                "Batal",
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
 
-                  await box.remove("token");
-                  await box.remove("user");
-                  await box.remove("vehicle_id");
+                        // Tombol Keluar[cite: 8]
+                        Expanded(
+                          child: SizedBox(
+                            height: 42,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                backgroundColor: AppColors.red,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () async {
+                                // ====== LOGIKA SIGN OUT ANDA TETAP DIPERTAHANKAN ======
+                                final box = GetStorage();
+                                final serverClientId =
+                                    dotenv.env['GOOGLE_SERVER_CLIENT_ID'];
 
-                  Get.back();
-                  SystemNavigator.pop();
-                },
-                child: const Text("Ya", style: TextStyle(color: Colors.white)),
+                                if (serverClientId != null) {
+                                  final googleSignIn = GoogleSignIn(
+                                    serverClientId: serverClientId,
+                                  );
+                                  try {
+                                    await googleSignIn.signOut();
+                                  } catch (_) {}
+                                }
+
+                                try {
+                                  await Supabase.instance.client.auth.signOut();
+                                } catch (_) {}
+
+                                await box.remove("token");
+                                await box.remove("user");
+                                await box.remove("vehicle_id");
+
+                                Get.back();
+                                SystemNavigator.pop();
+                              },
+                              child: const Text(
+                                "Keluar",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
+          barrierDismissible: false,
         );
       },
       child: Scaffold(

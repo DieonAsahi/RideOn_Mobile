@@ -13,11 +13,10 @@ class AppLifecycle extends WidgetsBindingObserver {
 
     // Saat aplikasi ditutup atau masuk ke background
     if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
-      if (token != null && token.toString().isNotEmpty) {
-        box.write("last_closed", DateTime.now().toIso8601String());
-        // Setel local notification tepat 24 jam setelah aplikasi ditutup
-        await LocalNotificationService.scheduleInactivityReminder();
-      }
+      box.write("last_closed", DateTime.now().toIso8601String());
+      // Setel local notification tepat 24 jam setelah aplikasi ditutup
+      // (Berlaku untuk user login, user logout, maupun baru download belum login)
+      await LocalNotificationService.scheduleInactivityReminder();
     }
 
     // Saat user membuka aplikasi kembali
@@ -25,21 +24,20 @@ class AppLifecycle extends WidgetsBindingObserver {
       // Batalkan local notification pengingat inaktivitas
       await LocalNotificationService.cancelInactivityReminder();
 
-      if (token != null && token.toString().isNotEmpty) {
-        final last = box.read("last_closed");
+      final last = box.read("last_closed");
 
-        if (last != null) {
-          final diff = DateTime.now().difference(DateTime.parse(last));
+      // Auto-Logout jika user yang sedang login tidak membuka aplikasi selama >= 24 jam
+      if (token != null && token.toString().isNotEmpty && last != null) {
+        final diff = DateTime.now().difference(DateTime.parse(last));
 
-          // Auto-Logout jika user tidak membuka aplikasi selama 1x24 jam
-          if (diff >= const Duration(hours: 24)) {
-            await AuthService.logout();
-            return;
-          }
+        if (diff >= const Duration(hours: 24)) {
+          await AuthService.logout();
+          return;
         }
-        // Perbarui waktu aktif terakhir
-        box.write("last_closed", DateTime.now().toIso8601String());
       }
+
+      // Perbarui waktu aktif terakhir
+      box.write("last_closed", DateTime.now().toIso8601String());
     }
   }
 }

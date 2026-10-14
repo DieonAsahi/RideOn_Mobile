@@ -44,9 +44,14 @@ class AuthService {
       await box.remove("token");
       await box.remove("user");
       await box.remove("vehicle_id");
-      await box.remove("last_closed");
+      await box.write("last_closed", DateTime.now().toIso8601String());
       await box.remove("pending_notification_vehicle_id");
       await box.remove("pending_notification_id");
+
+      // Setel reminder inaktivitas agar user yang logout tetap diingatkan jika 24 jam tidak buka aplikasi
+      try {
+        await LocalNotificationService.scheduleInactivityReminder();
+      } catch (_) {}
 
       Get.offAllNamed('/login');
     } finally {

@@ -13,6 +13,7 @@ class InAppPushNotification {
   final String title;
   final String body;
   final String vehicleName;
+  final String vehiclePlate;
   final String vehicleId;
   final int? componentId;
   final String componentName;
@@ -25,6 +26,7 @@ class InAppPushNotification {
     required this.title,
     required this.body,
     required this.vehicleName,
+    this.vehiclePlate = '',
     required this.vehicleId,
     this.componentId,
     required this.componentName,
@@ -32,6 +34,15 @@ class InAppPushNotification {
     required this.status,
     required this.timestamp,
   });
+
+  String get vehicleWithPlate {
+    final cleanPlate =
+        vehiclePlate.replaceAll('[', '').replaceAll(']', '').trim();
+    if (cleanPlate.isNotEmpty) {
+      return "$vehicleName [$cleanPlate]";
+    }
+    return vehicleName;
+  }
 
   String get timeAgo {
     final diff = DateTime.now().difference(timestamp);
@@ -50,13 +61,29 @@ abstract class BannerGroupItem {
 class VehicleComponentGroup extends BannerGroupItem {
   final String vehicleId;
   final String vehicleName;
+  final String vehiclePlate;
   final List<InAppPushNotification> items;
 
   VehicleComponentGroup({
     required this.vehicleId,
     required this.vehicleName,
+    this.vehiclePlate = '',
     required this.items,
   });
+
+  String get vehicleWithPlate {
+    String plate = vehiclePlate;
+    if (plate.isEmpty) {
+      final found = items.firstWhereOrNull((it) => it.vehiclePlate.isNotEmpty);
+      if (found != null) plate = found.vehiclePlate;
+    }
+    final cleanPlate =
+        plate.replaceAll('[', '').replaceAll(']', '').trim();
+    if (cleanPlate.isNotEmpty) {
+      return "$vehicleName [$cleanPlate]";
+    }
+    return vehicleName;
+  }
 
   @override
   String get key => 'vehicle_${vehicleId.isNotEmpty ? vehicleId : vehicleName}';
@@ -97,6 +124,7 @@ class InAppNotificationBanner {
           final g = VehicleComponentGroup(
             vehicleId: notif.vehicleId,
             vehicleName: notif.vehicleName,
+            vehiclePlate: notif.vehiclePlate,
             items: [],
           );
           compGroups[key] = g;
@@ -125,36 +153,48 @@ class InAppNotificationBanner {
       message.data['component_id']?.toString() ?? '',
     );
 
-    final category = message.data['category']?.toString() ??
-        (message.data['type'] == 'service_update' ||
-                message.data['type'] == 'schedule_reminder'
-            ? 'status'
-            : 'component');
+    final type = message.data['type']?.toString();
+    final rawCategory = message.data['category']?.toString();
+
+    // Sesuai aturan: Status servis berdiri sendiri, sedangkan reminder dan peringatan komponen digrup per kendaraan
+    final category = (type == 'service_update')
+        ? 'status'
+        : (rawCategory ?? 'component');
 
     String status = message.data['status']?.toString() ?? '';
 
-    // Ambil nama kendaraan dari payload atau fallback ke controller lokal
+    // Ambil nama kendaraan dan plat nomor dari payload atau fallback ke controller lokal
     String vehicleName = message.data['vehicle_name']?.toString() ?? '';
-    if (vehicleName.trim().isEmpty) {
-      if (Get.isRegistered<HomeController>()) {
-        final homeC = Get.find<HomeController>();
-        if (homeC.vehicles.isNotEmpty) {
-          final found = homeC.vehicles.firstWhereOrNull(
-            (v) => v['id']?.toString() == vehicleId,
-          );
-          if (found != null) {
+    String vehiclePlate = message.data['vehicle_plate']?.toString() ?? '';
+
+    if (Get.isRegistered<HomeController>()) {
+      final homeC = Get.find<HomeController>();
+      if (homeC.vehicles.isNotEmpty) {
+        final found = homeC.vehicles.firstWhereOrNull(
+          (v) => v['id']?.toString() == vehicleId,
+        );
+        if (found != null) {
+          if (vehicleName.trim().isEmpty) {
             vehicleName =
                 "${found['brand'] ?? ''} ${found['model'] ?? ''}".trim();
-          } else {
-            final first = homeC.vehicles.first;
+          }
+          if (vehiclePlate.trim().isEmpty) {
+            vehiclePlate = found['plate_number']?.toString() ?? '';
+          }
+        } else {
+          final first = homeC.vehicles.first;
+          if (vehicleName.trim().isEmpty) {
             vehicleName =
                 "${first['brand'] ?? ''} ${first['model'] ?? ''}".trim();
+          }
+          if (vehiclePlate.trim().isEmpty) {
+            vehiclePlate = first['plate_number']?.toString() ?? '';
           }
         }
       }
     }
     if (vehicleName.trim().isEmpty) {
-      vehicleName = "Honda Vario 125";
+      vehicleName = "RideOn";
     }
 
     String componentName = message.data['component_name']?.toString() ?? '';
@@ -179,6 +219,7 @@ class InAppNotificationBanner {
       title: rawTitle,
       body: body,
       vehicleName: vehicleName,
+      vehiclePlate: vehiclePlate,
       vehicleId: vehicleId,
       componentId: componentId,
       componentName: componentName,
@@ -193,6 +234,7 @@ class InAppNotificationBanner {
     required String title,
     required String body,
     required String vehicleName,
+    String vehiclePlate = '',
     String vehicleId = '',
     int? componentId,
     String componentName = '',
@@ -222,6 +264,7 @@ class InAppNotificationBanner {
       title: title,
       body: body,
       vehicleName: vehicleName,
+      vehiclePlate: vehiclePlate,
       vehicleId: vehicleId,
       componentId: componentId,
       componentName: comp,
@@ -502,14 +545,18 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
   }
 
   /// Desain Bagian Atas (Collapsed):
-  /// Logo | [Component] (bold)  [Nama Kendaraan]  [Waktu] | [v]
+  /// Logo | [Component] (bold)  [Nama Kendaraan [Plat]] (gray kecil)  [Waktu] | [v]
   ///        [Body]
   Widget _buildCollapsedVehicleContent(VehicleComponentGroup group) {
-    final first = group.items.first;
+    // Tampilkan 1 notif yang paling lama (oldest) sesuai instruksi:
+    // "ini hanya akan menampilkan 1 notif yang paling lama hanya 1 ingat"
+    final oldest = group.items.reduce(
+      (a, b) => a.timestamp.isBefore(b.timestamp) ? a : b,
+    );
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => _onOpenNotification(first),
+      onTap: () => _onOpenNotification(oldest),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -531,13 +578,13 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Baris Atas: Component (Bold) + VehicleName + Time
+                // Baris Atas: Component (Bold) + VehicleName [Plat] (gray lebih kecil) + Time
                 Row(
                   children: [
                     Text(
-                      first.componentName.isNotEmpty
-                          ? first.componentName
-                          : first.title,
+                      oldest.componentName.isNotEmpty
+                          ? oldest.componentName
+                          : oldest.title,
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 15,
@@ -547,10 +594,10 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        group.vehicleName,
+                        group.vehicleWithPlate,
                         style: GoogleFonts.poppins(
-                          color: const Color(0xFFB0B0B0),
-                          fontSize: 13,
+                          color: const Color(0xFF9E9E9E),
+                          fontSize: 12,
                           fontWeight: FontWeight.w400,
                         ),
                         maxLines: 1,
@@ -559,10 +606,10 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      first.timeAgo,
+                      oldest.timeAgo,
                       style: GoogleFonts.poppins(
                         color: const Color(0xFF8E8E93),
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -572,7 +619,7 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
 
                 // Baris Bawah: Body Pesan
                 Text(
-                  first.body,
+                  oldest.body,
                   style: GoogleFonts.poppins(
                     color: const Color(0xFFD1D1D6),
                     fontSize: 13,
@@ -585,7 +632,7 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
             ),
           ),
 
-          // Icon Down (v)
+          // Icon Down (v) hanya untuk parent group
           const SizedBox(width: 8),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -606,7 +653,7 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
   }
 
   /// Desain Bagian Bawah (Expanded):
-  /// Header: Logo | RideOn  [Nama Kendaraan]  [Waktu] | [^]
+  /// Header: Logo | RideOn  [Nama Kendaraan [Plat]] (gray kecil)  [Waktu] | [^]
   /// Detail komponen awal dan semua komponen lainnya turun ikut di bawah:
   ///   [Component 1]
   ///   [Body 1]
@@ -614,11 +661,15 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
   ///   --- Divider ---
   ///   [Component 2] ...
   Widget _buildExpandedVehicleContent(VehicleComponentGroup group) {
+    final oldest = group.items.reduce(
+      (a, b) => a.timestamp.isBefore(b.timestamp) ? a : b,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Header Baris Atas: Logo + "RideOn" + VehicleName + Time + Icon Up (^)
+        // Header Baris Atas: Logo + "RideOn" + VehicleName [Plat] + Time + Icon Up (^)
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -639,18 +690,18 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
                   Text(
                     "RideOn",
                     style: GoogleFonts.poppins(
-                      color: const Color(0xFFB0B0B0),
-                      fontSize: 13,
+                      color: const Color(0xFF9E9E9E),
+                      fontSize: 12,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      group.vehicleName,
+                      group.vehicleWithPlate,
                       style: GoogleFonts.poppins(
-                        color: const Color(0xFFB0B0B0),
-                        fontSize: 13,
+                        color: const Color(0xFF9E9E9E),
+                        fontSize: 12,
                         fontWeight: FontWeight.w400,
                       ),
                       maxLines: 1,
@@ -659,10 +710,10 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    group.items.first.timeAgo,
+                    oldest.timeAgo,
                     style: GoogleFonts.poppins(
                       color: const Color(0xFF8E8E93),
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -670,6 +721,7 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
               ),
             ),
 
+            // Icon Up (^) hanya untuk parent group
             const SizedBox(width: 8),
             GestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -821,10 +873,10 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        item.vehicleName,
+                        item.vehicleWithPlate,
                         style: GoogleFonts.poppins(
-                          color: const Color(0xFFB0B0B0),
-                          fontSize: 13,
+                          color: const Color(0xFF9E9E9E),
+                          fontSize: 12,
                           fontWeight: FontWeight.w400,
                         ),
                         maxLines: 1,
@@ -836,7 +888,7 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
                       item.timeAgo,
                       style: GoogleFonts.poppins(
                         color: const Color(0xFF8E8E93),
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w400,
                       ),
                     ),

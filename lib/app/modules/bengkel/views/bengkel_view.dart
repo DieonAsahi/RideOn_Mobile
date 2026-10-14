@@ -42,7 +42,7 @@ class BengkelView extends GetView<BengkelController> {
           /// ==========================================
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
+              padding: const EdgeInsets.fromLTRB(16, 30, 16, 25),
               child: Column(
                 children: [
                   Row(
@@ -56,7 +56,7 @@ class BengkelView extends GetView<BengkelController> {
                           "Bengkel Terdekat",
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -64,7 +64,7 @@ class BengkelView extends GetView<BengkelController> {
                       const SizedBox(width: 40),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
                   Expanded(
                     child: Obx(() {

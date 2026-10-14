@@ -1,9 +1,15 @@
-import "package:capbatu/app/widgets/skeleton_widget.dart";
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:capbatu/app/services/auth_service.dart';
+import 'package:flutter/services.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
 import '../controllers/profil_controller.dart';
+import "package:capbatu/app/widgets/skeleton_widget.dart";
 import 'package:capbatu/app/core/theme/app_theme.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ProfilView extends GetView<ProfilController> {
   const ProfilView({super.key});
@@ -13,193 +19,410 @@ class ProfilView extends GetView<ProfilController> {
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
-
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            await controller.getProfile(force: true);
-          },
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                child: Obx(() {
-                  if (controller.isLoading.value) {
-                    return const ProfileSkeleton();
-                  }
-
-                  return Column(
-                    children: [
-                      const SizedBox(height: 20),
-
-                  const Center(
-                    child: Text(
-                      "Profil",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 30, bottom: 24),
+              child: Center(
+                child: Text(
+                  "Profil",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await controller.getProfile(force: true);
+                },
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 600),
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
                       ),
-                    ),
-                  ),
+                      child: Obx(() {
+                      if (controller.isLoading.value) {
+                        return const ProfileSkeleton();
+                      }
 
-                  const SizedBox(height: 30),
-
-                  /// PROFILE
-                  Obx(
-                    () => CircleAvatar(
-                      radius: 42,
-                      backgroundImage: controller.imageUrl.value.isNotEmpty
-                          ? NetworkImage(controller.imageUrl.value)
-                          : const AssetImage("assets/images/profile.jpg")
-                                as ImageProvider,
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  Obx(
-                    () => Text(
-                      controller.name.value,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Obx(
-                    () => Text(
-                      controller.bio.value,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  /// SECTION
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Pengaturan Akun",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  /// MENU
-                  ProfileMenuTile(
-                    icon: Image.asset(
-                      'assets/icon/edit_profil.png',
-                      width: 24,
-                      height: 24,
-                    ),
-                    title: "Edit Profil",
-                    onTap: () async {
-                      // tutup keyboard dulu
-                      FocusScope.of(context).unfocus();
-
-                      await Get.toNamed('/editprofil');
-                      controller.getProfile(force: true);
-                    },
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  ProfileMenuTile(
-                    icon: Image.asset(
-                      'assets/icon/ganti_pass.png',
-                      width: 24,
-                      height: 24,
-                    ),
-                    title: "Ganti Password",
-                    onTap: () {
-                      FocusScope.of(context).unfocus();
-
-                      Get.toNamed('/emailver', arguments: {'from': 'profile'});
-                    },
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  ProfileMenuTile(
-                    icon: Image.asset(
-                      'assets/icon/logout.png',
-                      width: 24,
-                      height: 24,
-                    ),
-                    title: "Logout",
-                    isLogout: true,
-                    onTap: () {
-                      FocusScope.of(context).unfocus();
-
-                      Get.dialog(
-                        AlertDialog(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-
-                          title: const Text(
-                            "Konfirmasi",
-                            style: TextStyle(fontSize: 16),
-                          ),
-
-                          content: const Text(
-                            "Apakah Anda yakin ingin keluar?",
-                            style: TextStyle(fontSize: 13),
-                          ),
-
-                          actions: [
-                            OutlinedButton(
-                              onPressed: () {
-                                Get.back();
-                              },
-
-                              child: const Text("Tidak"),
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Card Profil (Foto, Nama, Bio)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.grey.shade300,
+                                width: 1.0,
+                              ),
                             ),
-
-                            ElevatedButton(
-                              onPressed: () async {
-                                Get.back();
-                                await AuthService.logout();
-                              },
-
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
+                            child: Row(
+                              children: [
+                                Obx(
+                                  () => Container(
+                                    // Menambahkan garis pinggir (border) biru
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: AppColors.primary,
+                                        width: 2.0,
+                                      ),
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 30,
+                                      backgroundColor: Colors.grey.shade200,
+                                      backgroundImage:
+                                          controller.imageUrl.value.isNotEmpty
+                                          ? NetworkImage(
+                                              controller.imageUrl.value,
+                                            )
+                                          : const AssetImage(
+                                                  "assets/images/profile.jpg",
+                                                )
+                                                as ImageProvider,
+                                    ),
+                                  ),
                                 ),
+                                const SizedBox(width: 24),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Obx(
+                                        () => Text(
+                                          controller.name.value,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Obx(
+                                        () => Text(
+                                          controller.bio.value,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade700,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          // Section: Akun Saya
+                          _buildSectionTitle("Akun Saya"),
+                          ProfileMenuTile(
+                            title: "Edit Profil",
+                            onTap: () async {
+                              FocusScope.of(context).unfocus();
+                              await Get.toNamed('/editprofil');
+                              controller.getProfile(force: true);
+                            },
+                          ),
+                          ProfileMenuTile(
+                            title: "Ganti Password",
+                            onTap: () {
+                              FocusScope.of(context).unfocus();
+                              Get.toNamed(
+                                '/emailver',
+                                arguments: {'from': 'profile'},
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // Section: Pengaturan
+                          _buildSectionTitle("Pengaturan"),
+                          ProfileMenuTile(
+                            title: "Pengingat Servis",
+                            trailing: CustomSwitch(
+                              value: false,
+                              activeColor: const Color(0xFF2583FD),
+                              width: 48,
+                              height: 24,
+                              onChanged: (value) {},
+                            ),
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // Section: Lainnya
+                          _buildSectionTitle("Lainnya"),
+                          ProfileMenuTile(title: "FAQ", onTap: () {}),
+
+                          const SizedBox(height: 24),
+
+                          // Tombol Keluar (Logout)
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                FocusScope.of(context).unfocus();
+                                _showLogoutDialog();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.red,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
                               ),
                               child: const Text(
-                                "Ya",
-                                style: TextStyle(color: Colors.white),
+                                "Keluar",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          ),
 
-                  // Ruang bawah agar menu logout tidak tertutup bottom navigation bar
-                  const SizedBox(height: 110),
-                ],
-                  );
-                }),
+                          // Versi Aplikasi
+                          Padding(
+                            padding: const EdgeInsets.only(top: 24, bottom: 40),
+                            child: Center(
+                              child: Text(
+                                "Versi 1.0.0",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Ruang bawah agar menu tidak tertutup bottom navigation bar
+                          const SizedBox(height: 50),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
               ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog() {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset('assets/icons/warning.png', width: 90, height: 90),
+              const SizedBox(height: 20),
+              const Text(
+                "Keluar dari Akun?",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "Anda perlu masuk lagi untuk memantau kondisi motormu.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF5C5C5C),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 30),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 42,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            side: const BorderSide(
+                              color: Colors.grey,
+                              width: 1.5,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () => Get.back(),
+                          child: const Text(
+                            "Batal",
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 42,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            backgroundColor: AppColors.red,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () async {
+                            final box = GetStorage();
+                            final serverClientId =
+                                dotenv.env['GOOGLE_SERVER_CLIENT_ID'];
+
+                            if (serverClientId != null) {
+                              final googleSignIn = GoogleSignIn(
+                                serverClientId: serverClientId,
+                              );
+                              try {
+                                await googleSignIn.signOut();
+                              } catch (_) {}
+                            }
+
+                            try {
+                              await Supabase.instance.client.auth.signOut();
+                            } catch (_) {}
+
+                            await box.remove("token");
+                            await box.remove("user");
+                            await box.remove("vehicle_id");
+
+                            Get.back();
+                            Get.offAllNamed('/login');
+                          },
+                          child: const Text(
+                            "Keluar",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+}
+
+class CustomSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final Color activeColor;
+  final Color inactiveColor;
+  final double width;
+  final double height;
+
+  const CustomSwitch({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.activeColor = const Color(0xFF2583FD),
+    this.inactiveColor = const Color(
+      0xFFE5E5EA,
+    ), // Warna abu-abu terang sesuai gambar
+    this.width = 46.0, // Edit panjangnya di sini
+    this.height = 24.0, // Edit ketebalannya di sini
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        width: width,
+        height: height,
+        padding: const EdgeInsets.all(
+          2.0,
+        ), // Jarak antara tombol putih dan tepi luar
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(height / 2),
+          color: value ? activeColor : inactiveColor,
+        ),
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: height - 4.0, // Menjaga tombol tetap bulat sempurna
+            height: height - 4.0,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 4.0,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
           ),
         ),
@@ -208,57 +431,51 @@ class ProfilView extends GetView<ProfilController> {
   }
 }
 
+// Widget ProfileMenuTile
 class ProfileMenuTile extends StatelessWidget {
-  final Widget icon;
   final String title;
-  final VoidCallback onTap;
-  final bool isLogout;
+  final VoidCallback? onTap;
+  final Widget? trailing;
 
   const ProfileMenuTile({
     super.key,
-    required this.icon,
     required this.title,
-    required this.onTap,
-    this.isLogout = false,
+    this.onTap,
+    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-
-      onTap: onTap,
-
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder, width: 1.0),
-          boxShadow: [
-            AppColors.cardShadow,
-          ],
-        ),
-
-        child: Row(
-          children: [
-            icon,
-
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isLogout ? Colors.red : Colors.black,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300, width: 1.0),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 14, color: Colors.black),
                 ),
-              ),
+                trailing ??
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: Colors.black,
+                    ),
+              ],
             ),
-
-            if (!isLogout) const Icon(Icons.chevron_right, size: 24),
-          ],
+          ),
         ),
       ),
     );

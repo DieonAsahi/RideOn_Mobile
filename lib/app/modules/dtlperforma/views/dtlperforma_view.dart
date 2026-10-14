@@ -14,74 +14,50 @@ class DtlperformaView extends GetView<DtlperformaController> {
       backgroundColor: Colors.white,
 
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: RefreshIndicator(
-            onRefresh: () async {
-              await controller.fetchPerformanceHistory();
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Obx(() {
-                if (controller.isLoading.value) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => Get.back(),
-                            icon: const Icon(Icons.arrow_back_ios),
-                          ),
-                          const Expanded(
-                            child: Text(
-                              "Detail Performa",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 40),
-                        ],
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 30, 20, 24),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Get.back(),
+                    icon: const Icon(Icons.arrow_back_ios),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      "Detail Performa",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(height: 20),
-                      const DtlperformaSkeleton(),
-                    ],
-                  );
-                }
-
-                final dates = controller.tanggal;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => Get.back(),
-                          icon: const Icon(Icons.arrow_back_ios),
-                        ),
-
-                        const Expanded(
-                          child: Text(
-                            "Detail Performa",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 40),
-                      ],
                     ),
+                  ),
+                  const SizedBox(width: 40),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    await controller.fetchPerformanceHistory();
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Obx(() {
+                      if (controller.isLoading.value) {
+                        return const DtlperformaSkeleton();
+                      }
 
-                    const SizedBox(height: 20),
-
-                    Center(
-                      child: Column(
+                      final dates = controller.tanggal;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Column(
                         children: [
                           SizedBox(
                             height: 180,
@@ -438,6 +414,9 @@ class DtlperformaView extends GetView<DtlperformaController> {
           ),
         ),
       ),
+    ],
+  ),
+),
     );
   }
 }

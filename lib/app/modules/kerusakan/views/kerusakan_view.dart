@@ -16,7 +16,7 @@ class KerusakanView extends GetView<KerusakanController> {
           double progress = controller.step.value / 4;
 
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
+            padding: const EdgeInsets.fromLTRB(16, 30, 16, 25),
 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -29,7 +29,7 @@ class KerusakanView extends GetView<KerusakanController> {
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,

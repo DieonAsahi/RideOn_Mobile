@@ -18,7 +18,7 @@ class EstimasiView extends GetView<EstimasiController> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
+              padding: const EdgeInsets.fromLTRB(16, 30, 16, 24),
               child: Row(
                 children: [
                   IconButton(

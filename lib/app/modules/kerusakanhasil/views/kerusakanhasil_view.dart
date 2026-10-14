@@ -14,14 +14,11 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
       backgroundColor: Colors.white,
 
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-              Row(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 30, 16, 24),
+              child: Row(
                 children: [
                   IconButton(
                     onPressed: () => Get.offNamed('/service'),
@@ -42,8 +39,13 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
                   const SizedBox(width: 40),
                 ],
               ),
-
-              const SizedBox(height: 30),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
 
               Container(
                 width: double.infinity,
@@ -156,8 +158,10 @@ class KerusakanhasilView extends GetView<KerusakanhasilController> {
                 ),
               ),
             ],
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     ),
   );

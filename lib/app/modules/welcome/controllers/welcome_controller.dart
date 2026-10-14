@@ -97,7 +97,7 @@ class WelcomeController extends GetxController
     final token = box.read("token");
     final lastClosedStr = box.read("last_closed");
 
-    if (lastClosedStr != null) {
+    if (lastClosedStr != null && token != null && token.toString().isNotEmpty) {
       final lastClosed = DateTime.tryParse(lastClosedStr);
       if (lastClosed != null) {
         final diff = DateTime.now().difference(lastClosed);
@@ -110,6 +110,7 @@ class WelcomeController extends GetxController
 
     // Aplikasi dibuka kembali, batalkan inactivity reminder
     LocalNotificationService.cancelInactivityReminder();
+    box.write("last_closed", DateTime.now().toIso8601String());
 
     if (isFirstInstall) {
       Get.offAllNamed("/onboarding");
@@ -117,7 +118,6 @@ class WelcomeController extends GetxController
     }
 
     if (token != null && token.toString().isNotEmpty) {
-      box.write("last_closed", DateTime.now().toIso8601String());
       _checkVehicleAndRoute(token.toString());
     } else {
       Get.offAllNamed("/login");

@@ -23,41 +23,44 @@ class RwtservisView extends GetView<RwtservisController> {
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            await controller.loadServiceHistory();
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 30, 16, 24),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () =>
-                            Get.offNamed('mainscreen', arguments: 2),
-                        icon: const Icon(Icons.arrow_back_ios),
-                      ),
-                      const Expanded(
-                        child: Text(
-                          "Riwayat Servis",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 40),
-                    ],
+                  IconButton(
+                    onPressed: () =>
+                        Get.offNamed('mainscreen', arguments: 2),
+                    icon: const Icon(Icons.arrow_back_ios),
                   ),
-
-                  const SizedBox(height: 20),
-
-                  Obx(() {
+                  const Expanded(
+                    child: Text(
+                      "Riwayat Servis",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 40),
+                ],
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await controller.loadServiceHistory();
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Obx(() {
                     int selectedIndex = controller.filterOptions.indexOf(
                       controller.selectedFilter.value,
                     );
@@ -297,7 +300,7 @@ class RwtservisView extends GetView<RwtservisController> {
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      // 🌟 PERBAIKAN 2: Tambahkan async/await untuk fitur edit
+
                                       onSelected: (value) async {
                                         if (value == 'edit') {
                                           await Get.toNamed(
@@ -307,100 +310,323 @@ class RwtservisView extends GetView<RwtservisController> {
                                               'data': item,
                                             },
                                           );
-                                          // Reload riwayat begitu kembali dari halaman edit
                                           controller.loadServiceHistory();
                                         }
+
                                         if (value == 'batalkan') {
                                           FocusScope.of(context).unfocus();
+
+                                          String currentStatus =
+                                              item['status']
+                                                  ?.toString()
+                                                  .toLowerCase() ??
+                                              '';
+                                          String statusText =
+                                              (currentStatus == 'dijadwalkan')
+                                              ? 'jadwal'
+                                              : 'proses';
+
                                           Get.dialog(
-                                            AlertDialog(
+                                            Dialog(
                                               shape: RoundedRectangleBorder(
                                                 borderRadius:
-                                                    BorderRadius.circular(18),
+                                                    BorderRadius.circular(24),
                                               ),
-                                              title: const Text(
-                                                "Konfirmasi Pembatalan",
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              content: const Text(
-                                                "Apakah Anda yakin ingin membatalkan jadwal servis ini?",
-                                                style: TextStyle(fontSize: 13),
-                                              ),
-                                              actions: [
-                                                OutlinedButton(
-                                                  onPressed: () => Get.back(),
-                                                  child: const Text("Tidak"),
-                                                ),
-                                                ElevatedButton(
-                                                  onPressed: () async {
-                                                    Get.back();
-                                                    await controller
-                                                        .cancelServiceHistory(
-                                                          item['id'],
-                                                        );
-                                                  },
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                        backgroundColor:
-                                                            Colors.orange,
-                                                      ),
-                                                  child: const Text(
-                                                    "Ya, Batalkan",
-                                                    style: TextStyle(
-                                                      color: Colors.white,
+                                              backgroundColor: Colors.white,
+                                              child: Container(
+                                                constraints:
+                                                    const BoxConstraints(
+                                                      maxWidth: 400,
                                                     ),
-                                                  ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 18,
+                                                      vertical: 24,
+                                                    ),
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Image.asset(
+                                                      'assets/icons/warning.png',
+                                                      width: 90,
+                                                      height: 90,
+                                                    ),
+                                                    const SizedBox(height: 20),
+                                                    const Text(
+                                                      "Konfirmasi Pembatalan",
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.black,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 12),
+                                                    Text(
+                                                      "Apakah Anda yakin ingin membatalkan $statusText servis ini?",
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        color: Color(
+                                                          0xFF5C5C5C,
+                                                        ),
+                                                        height: 1.4,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 30),
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 6,
+                                                          ),
+                                                      child: Row(
+                                                        children: [
+                                                          Expanded(
+                                                            child: SizedBox(
+                                                              height: 42,
+                                                              child: OutlinedButton(
+                                                                style: OutlinedButton.styleFrom(
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .zero,
+                                                                  side: const BorderSide(
+                                                                    color: Colors
+                                                                        .grey,
+                                                                    width: 1.5,
+                                                                  ),
+                                                                  shape: RoundedRectangleBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          12,
+                                                                        ),
+                                                                  ),
+                                                                ),
+                                                                onPressed: () =>
+                                                                    Get.back(),
+                                                                child: const Text(
+                                                                  "Tidak",
+                                                                  style: TextStyle(
+                                                                    color: Colors
+                                                                        .grey,
+                                                                    fontSize:
+                                                                        16,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 12,
+                                                          ),
+                                                          Expanded(
+                                                            child: SizedBox(
+                                                              height: 42,
+                                                              child: ElevatedButton(
+                                                                style: ElevatedButton.styleFrom(
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .zero,
+                                                                  backgroundColor:
+                                                                      AppColors
+                                                                          .red,
+                                                                  elevation: 0,
+                                                                  shape: RoundedRectangleBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          12,
+                                                                        ),
+                                                                  ),
+                                                                ),
+                                                                onPressed: () async {
+                                                                  Get.back();
+                                                                  await controller
+                                                                      .cancelServiceHistory(
+                                                                        item['id'],
+                                                                      );
+                                                                },
+                                                                child: const Text(
+                                                                  "Batalkan",
+                                                                  style: TextStyle(
+                                                                    color: Colors
+                                                                        .white,
+                                                                    fontSize:
+                                                                        16,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              ],
+                                              ),
                                             ),
+                                            barrierDismissible: false,
                                           );
                                         }
+
                                         if (value == 'hapus') {
                                           FocusScope.of(context).unfocus();
                                           Get.dialog(
-                                            AlertDialog(
+                                            Dialog(
                                               shape: RoundedRectangleBorder(
                                                 borderRadius:
-                                                    BorderRadius.circular(18),
+                                                    BorderRadius.circular(24),
                                               ),
-                                              title: const Text(
-                                                "Konfirmasi",
-                                                style: TextStyle(fontSize: 16),
-                                              ),
-                                              content: const Text(
-                                                "Apakah Anda yakin ingin menghapus?",
-                                                style: TextStyle(fontSize: 13),
-                                              ),
-                                              actions: [
-                                                OutlinedButton(
-                                                  onPressed: () => Get.back(),
-                                                  child: const Text("Tidak"),
-                                                ),
-                                                ElevatedButton(
-                                                  onPressed: () async {
-                                                    Get.back();
-                                                    await controller
-                                                        .deleteServiceHistory(
-                                                          item['id'],
-                                                        );
-                                                  },
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                        backgroundColor:
-                                                            Colors.red,
-                                                      ),
-                                                  child: const Text(
-                                                    "Hapus",
-                                                    style: TextStyle(
-                                                      color: Colors.white,
+                                              backgroundColor: Colors.white,
+                                              child: Container(
+                                                constraints:
+                                                    const BoxConstraints(
+                                                      maxWidth: 400,
                                                     ),
-                                                  ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 18,
+                                                      vertical: 24,
+                                                    ),
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Image.asset(
+                                                      'assets/icons/warning.png',
+                                                      width: 90,
+                                                      height: 90,
+                                                    ), // Ikon peringatan[cite: 7]
+                                                    const SizedBox(height: 20),
+                                                    const Text(
+                                                      "Konfirmasi",
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.black,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 12),
+                                                    const Text(
+                                                      "Apakah Anda yakin ingin menghapus?", // Teks sesuai desain[cite: 7]
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        color: Color(
+                                                          0xFF4A4A4A,
+                                                        ),
+                                                        height: 1.4,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 30),
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 6,
+                                                          ),
+                                                      child: Row(
+                                                        children: [
+                                                          Expanded(
+                                                            child: SizedBox(
+                                                              height: 42,
+                                                              child: OutlinedButton(
+                                                                style: OutlinedButton.styleFrom(
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .zero,
+                                                                  side: const BorderSide(
+                                                                    color: Colors
+                                                                        .grey,
+                                                                    width: 1.5,
+                                                                  ), // Garis abu-abu[cite: 7]
+                                                                  shape: RoundedRectangleBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          12,
+                                                                        ),
+                                                                  ),
+                                                                ),
+                                                                onPressed: () =>
+                                                                    Get.back(),
+                                                                child: const Text(
+                                                                  "Tidak",
+                                                                  style: TextStyle(
+                                                                    color: Colors
+                                                                        .grey, // Teks abu-abu[cite: 7]
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 12,
+                                                          ),
+                                                          Expanded(
+                                                            child: SizedBox(
+                                                              height: 42,
+                                                              child: ElevatedButton(
+                                                                style: ElevatedButton.styleFrom(
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .zero,
+                                                                  backgroundColor:
+                                                                      Colors
+                                                                          .red, // Latar merah[cite: 7]
+                                                                  elevation: 0,
+                                                                  shape: RoundedRectangleBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          12,
+                                                                        ),
+                                                                  ),
+                                                                ),
+                                                                onPressed: () async {
+                                                                  Get.back();
+                                                                  await controller
+                                                                      .deleteServiceHistory(
+                                                                        item['id'],
+                                                                      );
+                                                                },
+                                                                child: const Text(
+                                                                  "Hapus",
+                                                                  style: TextStyle(
+                                                                    color: Colors
+                                                                        .white,
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              ],
+                                              ),
                                             ),
+                                            barrierDismissible: false,
                                           );
                                         }
                                       },
@@ -701,6 +927,9 @@ class RwtservisView extends GetView<RwtservisController> {
           ),
         ),
       ),
+    ],
+  ),
+),
     );
   }
 }

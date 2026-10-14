@@ -16,35 +16,35 @@ class NotifView extends GetView<NotifController> {
             // App Bar
             Container(
               color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Stack(
-                alignment: Alignment.center,
+              padding: const EdgeInsets.fromLTRB(16, 30, 16, 16),
+              child: Row(
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      onPressed: () {
-                        if (Navigator.of(context).canPop()) {
-                          Get.back();
-                        } else {
-                          Get.offNamed('/mainscreen');
-                        }
-                      },
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 20,
+                  IconButton(
+                    onPressed: () {
+                      if (Navigator.of(context).canPop()) {
+                        Get.back();
+                      } else {
+                        Get.offAllNamed('/mainscreen');
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 20,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      "Notifikasi",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
                     ),
                   ),
-                  const Text(
-                    "Notifikasi",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
+                  const SizedBox(width: 40),
                 ],
               ),
             ),

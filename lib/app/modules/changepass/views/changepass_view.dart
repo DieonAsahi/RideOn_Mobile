@@ -16,32 +16,30 @@ class ChangepassView extends GetView<ChangepassController> {
       body: SafeArea(
         child: Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 30, bottom: 24),
+              child: Center(
+                child: Text(
+                  controller.isFromProfile
+                      ? "Ganti Kata Sandi"
+                      : "Lupa Kata Sandi",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ),
             // Bagian Form (Bisa di-scroll jika layar kecil)
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
-                  vertical: 30,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 20),
-
-                    // ================= JUDUL DINAMIS =================
-                    Center(
-                      child: Text(
-                        controller.isFromProfile
-                            ? "Ganti Kata Sandi"
-                            : "Lupa Kata Sandi",
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 40),
 
                     // ================= KATA SANDI LAMA (HANYA PROFIL) =================
                     if (controller.isFromProfile) ...[

@@ -13,7 +13,7 @@ import 'package:capbatu/app/widgets/app_snackbar.dart';
 class EditprofilController extends GetxController {
   final box = GetStorage();
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
-  
+
   final ImagePicker picker = ImagePicker();
 
   final nameController = TextEditingController();
@@ -26,21 +26,77 @@ class EditprofilController extends GetxController {
   var isLoading = false.obs;
   var isSaving = false.obs;
 
+  // Menyimpan data awal untuk perbandingan perubahan (Unsaved Changes)
+  String initialName = "";
+  String initialBio = "";
+
   @override
   void onInit() {
     super.onInit();
     getProfile();
   }
 
-  Future<void> pickImage() async {
+  /// Cek apakah ada perubahan data pada form
+  bool hasChanges() {
+    bool isNameChanged = nameController.text.trim() != initialName;
+    bool isBioChanged = bioController.text.trim() != initialBio;
+    bool isImageChanged = selectedImage.value != null;
+    return isNameChanged || isBioChanged || isImageChanged;
+  }
+
+  /// Validasi Format File Gambar (Harus JPG / JPEG / PNG, Bukan Video)
+  bool _isValidImage(String path) {
+    final lowerPath = path.toLowerCase();
+    return lowerPath.endsWith('.jpg') ||
+        lowerPath.endsWith('.jpeg') ||
+        lowerPath.endsWith('.png');
+  }
+
+  Future<void> pickImageFromGallery() async {
     final XFile? image = await picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 80,
     );
 
     if (image != null) {
+      if (!_isValidImage(image.path)) {
+        Get.snackbar(
+          "Format Salah",
+          "Harap pilih foto dengan format JPG, JPEG, atau PNG (bukan video/file lain).",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
       selectedImage.value = File(image.path);
     }
+  }
+
+  Future<void> pickImageFromCamera() async {
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 80,
+    );
+
+    if (image != null) {
+      if (!_isValidImage(image.path)) {
+        Get.snackbar(
+          "Format Salah",
+          "Harap ambil foto dengan format JPG/PNG.",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+      selectedImage.value = File(image.path);
+    }
+  }
+
+  void removeImage() {
+    selectedImage.value = null;
+    imageUrl.value = '';
   }
 
   Future<void> getProfile() async {
@@ -59,9 +115,12 @@ class EditprofilController extends GetxController {
 
       final data = jsonDecode(response.body);
 
-      nameController.text = data["full_name"] ?? "";
+      initialName = data["full_name"] ?? "";
+      initialBio = data["bio"] ?? "";
+
+      nameController.text = initialName;
       emailController.text = data["email"] ?? "";
-      bioController.text = data["bio"] ?? "";
+      bioController.text = initialBio;
       imageUrl.value = data["image_url"] ?? "";
     } catch (e) {
       print(e);
@@ -71,6 +130,25 @@ class EditprofilController extends GetxController {
   }
 
   Future<void> updateProfile() async {
+    // Validasi tambahan sebelum kirim
+    if (nameController.text.trim().isEmpty) {
+      Get.snackbar(
+        "Validasi",
+        "Nama tidak boleh kosong",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    if (bioController.text.length > 60) {
+      Get.snackbar(
+        "Validasi",
+        "Bio maksimal 60 karakter",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     try {
       isSaving.value = true;
 
@@ -83,8 +161,8 @@ class EditprofilController extends GetxController {
 
       request.headers["Authorization"] = "Bearer $token";
 
-      request.fields["full_name"] = nameController.text;
-      request.fields["bio"] = bioController.text;
+      request.fields["full_name"] = nameController.text.trim();
+      request.fields["bio"] = bioController.text.trim();
 
       if (selectedImage.value != null) {
         request.files.add(

@@ -13,37 +13,39 @@ class ServiceView extends GetView<ServiceController> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            Positioned.fill(
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  await controller.getServices(force: true);
-                },
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 700),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 30),
-                            child: Center(
-                              child: Text(
-                                "Servis",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
+            const Padding(
+              padding: EdgeInsets.only(top: 30, bottom: 24),
+              child: Center(
+                child: Text(
+                  "Servis",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        await controller.getServices(force: true);
+                      },
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 700),
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
 
                           Container(
                             width: double.infinity,
@@ -265,7 +267,7 @@ class ServiceView extends GetView<ServiceController> {
                             );
                           }),
 
-                          const SizedBox(height: 120),
+                          const SizedBox(height: 100),
                         ],
                       ),
                     ),
@@ -276,6 +278,9 @@ class ServiceView extends GetView<ServiceController> {
           ],
         ),
       ),
+    ],
+  ),
+),
     );
   }
 

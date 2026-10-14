@@ -13,29 +13,33 @@ class EdukasiView extends GetView<EdukasiController> {
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            await controller.fetchArtikel();
-          },
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 30),
-                Center(
-                  child: const Text(
-                    "Edukasi",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 30, bottom: 24),
+              child: Center(
+                child: Text(
+                  "Edukasi",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
                 ),
-                const SizedBox(height: 24),
-                TextField(
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await controller.fetchArtikel();
+                },
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
                   controller: controller.searchController,
                   onChanged: (value) {
                     controller.search.value = value;
@@ -112,6 +116,9 @@ class EdukasiView extends GetView<EdukasiController> {
           ),
         ),
       ),
+    ],
+  ),
+),
     );
   }
 }

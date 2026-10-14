@@ -72,27 +72,114 @@ class ProfileSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 30),
-        const SkeletonBox(width: 80, height: 24, borderRadius: 6),
-        const SizedBox(height: 30),
-        const SkeletonBox(width: 84, height: 84, shape: CircleBorder()),
-        const SizedBox(height: 14),
-        const SkeletonBox(width: 140, height: 20, borderRadius: 6),
-        const SizedBox(height: 8),
-        const SkeletonBox(width: 200, height: 16, borderRadius: 6),
-        const SizedBox(height: 36),
-        const Align(
-          alignment: Alignment.centerLeft,
-          child: SkeletonBox(width: 130, height: 18, borderRadius: 6),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade300, width: 1.0),
+          ),
+          child: const Row(
+            children: [
+              SkeletonBox(width: 60, height: 60, shape: CircleBorder()),
+              SizedBox(width: 24),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(width: 140, height: 16, borderRadius: 4),
+                    SizedBox(height: 4),
+                    SkeletonBox(width: 200, height: 12, borderRadius: 4),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 16),
-        const SkeletonBox(width: double.infinity, height: 56, borderRadius: 14),
+
+        const SizedBox(height: 24),
+        _ProfileSectionSkeleton(
+          titleWidth: 90,
+          tiles: const [_ProfileMenuSkeleton(), _ProfileMenuSkeleton()],
+        ),
         const SizedBox(height: 12),
-        const SkeletonBox(width: double.infinity, height: 56, borderRadius: 14),
+        _ProfileSectionSkeleton(
+          titleWidth: 100,
+          tiles: const [_ProfileMenuSkeleton(showSwitch: true)],
+        ),
         const SizedBox(height: 12),
-        const SkeletonBox(width: double.infinity, height: 56, borderRadius: 14),
+        _ProfileSectionSkeleton(
+          titleWidth: 70,
+          tiles: const [_ProfileMenuSkeleton()],
+        ),
+        const SizedBox(height: 32),
+        const SkeletonBox(width: double.infinity, height: 52, borderRadius: 12),
+        Padding(
+          padding: const EdgeInsets.only(top: 24, bottom: 40),
+          child: Center(
+            child: SkeletonBox(width: 70, height: 14, borderRadius: 4),
+          ),
+        ),
+        const SizedBox(height: 50),
       ],
+    );
+  }
+}
+
+class _ProfileSectionSkeleton extends StatelessWidget {
+  final double titleWidth;
+  final List<Widget> tiles;
+
+  const _ProfileSectionSkeleton({
+    required this.titleWidth,
+    required this.tiles,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: SkeletonBox(width: titleWidth, height: 17, borderRadius: 4),
+        ),
+        ...tiles,
+      ],
+    );
+  }
+}
+
+class _ProfileMenuSkeleton extends StatelessWidget {
+  final bool showSwitch;
+
+  const _ProfileMenuSkeleton({this.showSwitch = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const SkeletonBox(width: 110, height: 17, borderRadius: 4),
+            SkeletonBox(
+              width: showSwitch ? 50 : 16,
+              height: showSwitch ? 32 : 16,
+              borderRadius: showSwitch ? 8 : 4,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -457,10 +544,16 @@ class RwtservisSkeleton extends StatelessWidget {
                           Row(
                             children: [
                               SkeletonBox(
-                                  width: 20, height: 20, borderRadius: 6),
+                                width: 20,
+                                height: 20,
+                                borderRadius: 6,
+                              ),
                               SizedBox(width: 8),
                               SkeletonBox(
-                                  width: 80, height: 14, borderRadius: 4),
+                                width: 80,
+                                height: 14,
+                                borderRadius: 4,
+                              ),
                             ],
                           ),
                         ],
@@ -476,10 +569,16 @@ class RwtservisSkeleton extends StatelessWidget {
                           Row(
                             children: [
                               SkeletonBox(
-                                  width: 20, height: 20, borderRadius: 6),
+                                width: 20,
+                                height: 20,
+                                borderRadius: 6,
+                              ),
                               SizedBox(width: 8),
                               SkeletonBox(
-                                  width: 70, height: 14, borderRadius: 4),
+                                width: 70,
+                                height: 14,
+                                borderRadius: 4,
+                              ),
                             ],
                           ),
                         ],
@@ -587,10 +686,16 @@ class DtlperformaSkeleton extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         const SkeletonBox(
-            width: double.infinity, height: 44, borderRadius: 100),
+          width: double.infinity,
+          height: 44,
+          borderRadius: 100,
+        ),
         const SizedBox(height: 24),
         const SkeletonBox(
-            width: double.infinity, height: 210, borderRadius: 16),
+          width: double.infinity,
+          height: 210,
+          borderRadius: 16,
+        ),
         const SizedBox(height: 24),
         const Align(
           alignment: Alignment.centerLeft,

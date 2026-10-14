@@ -74,9 +74,7 @@ class HomeView extends GetView<HomeController> {
                           ),
 
                           Padding(
-                            padding: const EdgeInsets.only(
-                              right: 10,
-                            ), // Sesuaikan jaraknya
+                            padding: const EdgeInsets.only(right: 10),
                             child: Obx(() {
                               final count = controller.unreadNotifCount.value;
 
@@ -267,7 +265,7 @@ class HomeView extends GetView<HomeController> {
                           },
                         );
                       }),
-                      const SizedBox(height: 120),
+                      const SizedBox(height: 100),
 
                       // const TopikArtikelSection(),
 
@@ -437,12 +435,7 @@ class OdometerCard extends GetView<HomeController> {
       }
 
       return Container(
-        padding: const EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 15,
-          bottom: 15,
-        ),
+        padding: const EdgeInsets.only(left: 20, right: 20, top: 15, bottom: 5),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             begin: Alignment.topCenter,
@@ -482,15 +475,15 @@ class OdometerCard extends GetView<HomeController> {
                             "${vehicle["brand"] ?? ''} ${vehicle["model"] ?? ''}"
                                 .trim();
 
-                        // CATATAN: Ganti "plat" dengan key yang sesuai dari API/model Anda (misal "plat_number")
                         final String platNomor = vehicle["plate_number"] ?? '';
 
-                        // Cek apakah kendaraan ini sedang aktif/dipilih
                         final bool isSelected =
                             vehicle["id"].toString() ==
                             controller.selectedVehicleId.value;
 
                         return PopupMenuItem<String>(
+                          height: 36,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           value: vehicle["id"].toString(),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -526,14 +519,13 @@ class OdometerCard extends GetView<HomeController> {
                                 ),
                               ),
 
-                              // Menampilkan ikon checklist hanya pada item yang aktif
                               if (isSelected)
                                 Padding(
                                   padding: const EdgeInsets.only(left: 10),
                                   child: Image.asset(
                                     'assets/icons/checklist.png',
-                                    width: 20,
-                                    height: 20,
+                                    width: 18,
+                                    height: 18,
                                   ),
                                 ),
                             ],
@@ -582,7 +574,6 @@ class OdometerCard extends GetView<HomeController> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
                 Text(
                   controller.vehiclePlat.value,
                   style: const TextStyle(
@@ -611,35 +602,38 @@ class OdometerCard extends GetView<HomeController> {
               ],
             ),
             const SizedBox(height: 15),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  final result = await Get.toNamed(
-                    '/updtodometer',
-                    arguments: controller.vehicleId,
-                  );
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final result = await Get.toNamed(
+                      '/updtodometer',
+                      arguments: controller.vehicleId,
+                    );
 
-                  if (result == true) {
-                    controller.fetchHome();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2196F3),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
+                    if (result == true) {
+                      controller.fetchHome();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2196F3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  "Update Odometer",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
+                  child: const Text(
+                    "Update Odometer",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ),
               ),
