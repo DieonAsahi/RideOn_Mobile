@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/services.dart';
+
 import 'package:image_picker/image_picker.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 import '../controllers/pluskendaraan_controller.dart';
 
 class PluskendaraanView extends GetView<PluskendaraanController> {
@@ -12,7 +15,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        controller.handleBackPress();
+        _handleBackPress(context);
       },
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -25,7 +28,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
               size: 20,
               color: Colors.black,
             ),
-            onPressed: () => controller.handleBackPress(),
+            onPressed: () => _handleBackPress(context),
           ),
           centerTitle: true,
           title: const Text(
@@ -345,6 +348,10 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
           () => TextField(
             controller: controller.estimasiHarianController,
             keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+            ],
+
             style: const TextStyle(fontSize: 14),
             onChanged: (val) {
               if (controller.estimasiError.value.isNotEmpty) {
@@ -367,6 +374,10 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
           () => TextField(
             controller: controller.odometerController,
             keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+            ],
+
             style: const TextStyle(fontSize: 14),
             onChanged: (val) {
               if (controller.odometerError.value.isNotEmpty) {
@@ -419,6 +430,11 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                         TextField(
                           controller: controller.komponenControllers[item],
                           keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9]'),
+                            ),
+                          ],
                           style: const TextStyle(fontSize: 14),
                           onChanged: (val) {
                             if (controller.komponenErrors[item]?.value.isNotEmpty ??
@@ -442,6 +458,120 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
         const SizedBox(height: 10),
       ],
     );
+  }
+
+  void _showUnsavedChangesDialog(BuildContext context) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/icons/warning.png',
+                width: Get.width > 400 ? 90 : Get.width * 0.22,
+                height: Get.width > 400 ? 90 : Get.width * 0.22,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Batalkan tambah kendaraan?",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "Data yang sudah diisi akan hilang jika Anda keluar sekarang.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF5C5C5C),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 30),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 42,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            side: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            Get.back();
+                            controller.cancelAddingVehicle();
+                          },
+                          child: const Text(
+                            "Keluar",
+                            style: TextStyle(
+                              color: AppColors.primaryBlue,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 42,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            backgroundColor: AppColors.primaryBlue,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            Get.back();
+                          },
+                          child: const Text(
+                            "Lanjut Isi",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  void _handleBackPress(BuildContext context) {
+    if (controller.step.value > 1) {
+      controller.prevStep();
+      return;
+    }
+
+    _showUnsavedChangesDialog(context);
   }
 
   // ================= BOTTOM BUTTON (LANJUT / SIMPAN) =================

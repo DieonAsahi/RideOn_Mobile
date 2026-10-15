@@ -194,8 +194,8 @@ class RegisterView extends GetView<RegisterController> {
                               suffixIcon: IconButton(
                                 icon: Image.asset(
                                   controller.isPasswordObscure.value
-                                      ? 'assets/icons/eye_close.png'
-                                      : 'assets/icons/eye.png',
+                                      ? 'assets/image/eye_close.png'
+                                      : 'assets/image/eye.png',
                                   width: 24,
                                   height: 24,
                                 ),
@@ -229,8 +229,8 @@ class RegisterView extends GetView<RegisterController> {
                               suffixIcon: IconButton(
                                 icon: Image.asset(
                                   controller.isConfirmPasswordObscure.value
-                                      ? 'assets/icons/eye_close.png'
-                                      : 'assets/icons/eye.png',
+                                      ? 'assets/image/eye_close.png'
+                                      : 'assets/image/eye.png',
                                   width: 24,
                                   height: 24,
                                 ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:capbatu/app/widgets/skeleton_widget.dart';
+import 'package:capbatu/app/widgets/action_popup_menu.dart';
 import '../controllers/kendaraan_controller.dart';
 import 'package:capbatu/app/core/theme/app_theme.dart';
 
@@ -212,7 +213,7 @@ class KendaraanCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Image.asset(
-                            'assets/icons/checklist_fill.png',
+                            'assets/image/checklist_fill.png',
                             width: 14,
                             height: 14,
                           ),
@@ -450,6 +451,11 @@ class KendaraanCard extends StatelessWidget {
             child: PopupMenuButton<String>(
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.more_vert, color: Colors.black87),
+              color: Colors.white,
+              elevation: 8,
+              constraints: actionPopupMenuConstraints,
+              menuPadding: EdgeInsets.zero,
+              shape: actionPopupMenuShape,
               onSelected: (value) {
                 if (value == 'hapus') {
                   FocusScope.of(context).unfocus();
@@ -519,28 +525,11 @@ class KendaraanCard extends StatelessWidget {
                 }
               },
               itemBuilder: (context) => [
-                PopupMenuItem(
+                actionPopupMenuItem(
                   value: 'hapus',
-                  height: 30,
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        "assets/icon/hapus.png",
-                        width: 16,
-                        height: 16,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          Icons.delete,
-                          size: 16,
-                          color: Colors.red,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        "Hapus",
-                        style: TextStyle(fontSize: 14, color: Colors.black),
-                      ),
-                    ],
-                  ),
+                  label: 'Hapus',
+                  iconAsset: 'assets/image/hapus_fill.png',
+                  color: Colors.red,
                 ),
               ],
             ),

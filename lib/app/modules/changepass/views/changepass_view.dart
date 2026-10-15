@@ -65,8 +65,8 @@ class ChangepassView extends GetView<ChangepassController> {
                                 suffixIcon: IconButton(
                                   icon: Image.asset(
                                     controller.isOldPassObscure.value
-                                        ? 'assets/icons/eye_close.png'
-                                        : 'assets/icons/eye.png',
+                                        ? 'assets/image/eye_close.png'
+                                        : 'assets/image/eye.png',
                                     width: 24,
                                     height: 24,
                                   ),
@@ -101,8 +101,8 @@ class ChangepassView extends GetView<ChangepassController> {
                               suffixIcon: IconButton(
                                 icon: Image.asset(
                                   controller.isNewPassObscure.value
-                                      ? 'assets/icons/eye_close.png'
-                                      : 'assets/icons/eye.png',
+                                      ? 'assets/image/eye_close.png'
+                                      : 'assets/image/eye.png',
                                   width: 24,
                                   height: 24,
                                 ),
@@ -136,8 +136,8 @@ class ChangepassView extends GetView<ChangepassController> {
                               suffixIcon: IconButton(
                                 icon: Image.asset(
                                   controller.isConfirmPassObscure.value
-                                      ? 'assets/icons/eye_close.png'
-                                      : 'assets/icons/eye.png',
+                                      ? 'assets/image/eye_close.png'
+                                      : 'assets/image/eye.png',
                                   width: 24,
                                   height: 24,
                                 ),

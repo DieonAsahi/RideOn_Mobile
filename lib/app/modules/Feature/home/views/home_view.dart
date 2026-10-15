@@ -1,8 +1,11 @@
-import "package:capbatu/app/widgets/skeleton_widget.dart";
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../controllers/home_controller.dart';
+
 import 'package:capbatu/app/core/theme/app_theme.dart';
+import "package:capbatu/app/widgets/skeleton_widget.dart";
+import '../../../../widgets/base_bottom_sheet.dart';
+import '../../../../widgets/odometer_form_content.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
@@ -523,7 +526,7 @@ class OdometerCard extends GetView<HomeController> {
                                 Padding(
                                   padding: const EdgeInsets.only(left: 10),
                                   child: Image.asset(
-                                    'assets/icons/checklist.png',
+                                    'assets/image/checklist.png',
                                     width: 18,
                                     height: 18,
                                   ),
@@ -564,8 +567,8 @@ class OdometerCard extends GetView<HomeController> {
                         Obx(
                           () => Image.asset(
                             controller.isDropdownOpen.value
-                                ? 'assets/icons/up_home.png'
-                                : 'assets/icons/down_home.png',
+                                ? 'assets/image/up_home.png'
+                                : 'assets/image/down_home.png',
                             width: 24,
                             height: 24,
                           ),
@@ -608,9 +611,30 @@ class OdometerCard extends GetView<HomeController> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () async {
-                    final result = await Get.toNamed(
-                      '/updtodometer',
-                      arguments: controller.vehicleId,
+                    // 1. CARI DATA KENDARAAN YANG SEDANG AKTIF DI SINI
+                    final currentVehicle = controller.vehicles.firstWhere(
+                      (e) =>
+                          e["id"].toString() ==
+                          controller.selectedVehicleId.value,
+                      orElse: () => {},
+                    );
+
+                    // 2. DEKLARASIKAN NAMA MOTORNYA
+                    final String namaMotor =
+                        "${currentVehicle["brand"] ?? ''} ${currentVehicle["model"] ?? ''}"
+                            .trim();
+
+                    // 3. BARU PANGGIL BOTTOM SHEET-NYA
+                    final result = await BaseBottomSheet.show(
+                      context: context,
+                      title: "Perbaharui Odometer",
+                      child: OdometerFormContent(
+                        currentOdometer: controller.odometer.value,
+                        namaMotor: namaMotor.isEmpty
+                            ? "Kendaraan"
+                            : namaMotor, // Garis merah akan hilang
+                        platNomor: controller.vehiclePlat.value,
+                      ),
                     );
 
                     if (result == true) {
@@ -671,7 +695,7 @@ class PerformaSection extends GetView<HomeController> {
         status = "Baik";
         progressColor = Colors.green;
       } else if (score >= 50) {
-        status = "Cukup";
+        status = "perlu perhatian";
         progressColor = Colors.orange;
       } else if (score > 0) {
         status = "Buruk";

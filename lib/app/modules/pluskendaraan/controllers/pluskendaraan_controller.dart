@@ -485,64 +485,14 @@ class PluskendaraanController extends GetxController {
     }
   }
 
-  // ================= LOGIKA BACK BUTTON & KONFIRMASI PEMBATALAN =================
-  Future<bool> handleBackPress() async {
-    if (step.value > 1) {
-      prevStep();
-      return false; // Jangan tutup halaman, kembali ke step sebelumnya
+  void cancelAddingVehicle() {
+    if (isFromLogin.value) {
+      Get.offAllNamed('/login');
+    } else if (Navigator.of(Get.context!).canPop()) {
+      Get.back();
+    } else {
+      Get.offAllNamed('/mainscreen', arguments: 1);
     }
-
-    // Step 1: Munculkan AlertDialog konfirmasi pembatalan
-    final shouldExit = await Get.dialog<bool>(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          "Konfirmasi",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        content: const Text(
-          "Apakah anda ingin membatalkan menambah kendaraan?",
-          style: TextStyle(fontSize: 14),
-        ),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Get.back(result: false),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: Colors.grey.shade300),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            child: const Text("Tidak", style: TextStyle(color: Colors.black)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back(result: true);
-              if (isFromLogin.value) {
-                // Pertama kali daftar akun / login pertama: kembali ke login
-                Get.offAllNamed('/login');
-              } else {
-                // Sedang login / diakses dari Home atau Page Kendaraan: kembali ke page kendaraan
-                if (Navigator.of(Get.context!).canPop()) {
-                  Get.back();
-                } else {
-                  Get.offAllNamed('/mainscreen', arguments: 1);
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2196F3),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            child: const Text("Ya", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-
-    return shouldExit ?? false;
   }
 
   // ================= SIMPAN KENDARAAN (SUBMIT DATA) =================

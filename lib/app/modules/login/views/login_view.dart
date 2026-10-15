@@ -182,8 +182,8 @@ class LoginView extends GetView<LoginController> {
                                 suffixIcon: IconButton(
                                   icon: Image.asset(
                                     controller.isObscure.value
-                                        ? 'assets/icons/eye_close.png'
-                                        : 'assets/icons/eye.png',
+                                        ? 'assets/image/eye_close.png'
+                                        : 'assets/image/eye.png',
                                     width: 24,
                                     height: 24,
                                   ),

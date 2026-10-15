@@ -640,7 +640,7 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
             child: Padding(
               padding: const EdgeInsets.all(6),
               child: Image.asset(
-                'assets/icons/down.png',
+                'assets/image/down.png',
                 width: 14,
                 height: 14,
                 color: Colors.white,
@@ -729,7 +729,7 @@ class _BannerOverlayWidgetState extends State<_BannerOverlayWidget>
               child: Padding(
                 padding: const EdgeInsets.all(6),
                 child: Image.asset(
-                  'assets/icons/up.png',
+                  'assets/image/up.png',
                   width: 14,
                   height: 14,
                   color: Colors.white,

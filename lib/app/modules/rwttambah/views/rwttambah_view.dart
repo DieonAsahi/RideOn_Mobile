@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../controllers/rwttambah_controller.dart';
 import 'package:capbatu/app/core/theme/app_theme.dart';
 
@@ -66,287 +67,400 @@ class RwttambahView extends GetView<RwttambahController> {
                     children: [
                       const Text(
                         "Jenis",
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
 
-                  const SizedBox(height: 10),
+                      const SizedBox(height: 10),
 
-                  Obx(
-                    () => Row(
-                      children: [
-                        _jenisButton(
-                          title: 'Servis Rutin',
-                          selected:
-                              controller.selectedJenis.value == 'Servis Rutin',
-                          enabled: controller.isJenisEnabled,
-                          onTap: () => controller.changeJenis('Servis Rutin'),
+                      Obx(
+                        () => Row(
+                          children: [
+                            _jenisButton(
+                              title: 'Servis Rutin',
+                              selected:
+                                  controller.selectedJenis.value ==
+                                  'Servis Rutin',
+                              enabled: controller.isJenisEnabled,
+                              onTap: () =>
+                                  controller.changeJenis('Servis Rutin'),
+                            ),
+                            const SizedBox(width: 10),
+                            _jenisButton(
+                              title: 'Perbaikan',
+                              selected:
+                                  controller.selectedJenis.value == 'Perbaikan',
+                              enabled: controller.isJenisEnabled,
+                              onTap: () => controller.changeJenis('Perbaikan'),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 10),
-                        _jenisButton(
-                          title: 'Perbaikan',
-                          selected:
-                              controller.selectedJenis.value == 'Perbaikan',
-                          enabled: controller.isJenisEnabled,
-                          onTap: () => controller.changeJenis('Perbaikan'),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
 
-                  const SizedBox(height: 25),
+                      const SizedBox(height: 25),
 
-                  // ================= KOLOM DINAMIS (DETAIL / KOMPONEN) =================
-                  Obx(() {
-                    if (controller.selectedJenis.value == 'Perbaikan') {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _inputLabel("Detail"),
-                          const SizedBox(height: 8),
-                          _textField(
-                            controller: controller.detailController,
-                            hint: "Contoh : Ganti Kampas Rem",
-                            readOnly: !controller.isDetailEnabled,
+                      // ================= KOLOM DINAMIS (DETAIL / KOMPONEN) =================
+                      Obx(() {
+                        if (controller.selectedJenis.value == 'Perbaikan') {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _inputLabel("Detail"),
+                              const SizedBox(height: 8),
+                              _textField(
+                                controller: controller.detailController,
+                                hint: "Contoh : Ganti Kampas Rem",
+                                readOnly: !controller.isDetailEnabled,
+                                errorText: controller
+                                    .detailError
+                                    .value, // Inline error
+                              ),
+                            ],
+                          );
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _inputLabel("Komponen"),
+                            const SizedBox(height: 8),
+
+                            DropdownButtonFormField<int>(
+                              value: controller.selectedComponentId.value == 0
+                                  ? null
+                                  : controller.selectedComponentId.value,
+                              hint: const Text(
+                                "Pilih Komponen",
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              items: controller.components.map((item) {
+                                return DropdownMenuItem<int>(
+                                  value: item["id"],
+                                  child: Text(item["name"]),
+                                );
+                              }).toList(),
+                              onChanged: controller.isComponentEnabled
+                                  ? (value) {
+                                      if (value != null) {
+                                        controller.selectedComponentId.value =
+                                            value;
+                                        controller.componentError.value = null;
+                                      }
+                                    }
+                                  : null,
+                              decoration: InputDecoration(
+                                fillColor: controller.isComponentEnabled
+                                    ? Colors.white
+                                    : Colors.grey.shade100,
+                                filled: !controller.isComponentEnabled,
+                                errorText: controller.componentError.value,
+                                errorStyle: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 11,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF2196F3),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(
+                                    color: Colors.red,
+                                  ),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(
+                                    color: Colors.red,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+
+                      const SizedBox(height: 20),
+
+                      // ================= TANGGAL =================
+                      _inputLabel("Tanggal"),
+                      const SizedBox(height: 8),
+
+                      Obx(
+                        () => TextField(
+                          controller: controller.tanggalController,
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            hintText: 'dd/mm/yyyy',
+                            hintStyle: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
                             errorText:
-                                controller.detailError.value, // Inline error
+                                controller.tanggalError.value, // Inline error
+                            errorStyle: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 11,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            suffixIcon: IconButton(
+                              onPressed: controller.pickDate,
+                              icon: Image.asset(
+                                'assets/icon/calender.png',
+                                width: 20,
+                                height: 20,
+                              ),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF2196F3),
+                                width: 1.5,
+                              ),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(color: Colors.red),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Colors.red,
+                                width: 1.5,
+                              ),
+                            ),
                           ),
-                        ],
-                      );
-                    }
+                        ),
+                      ),
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _inputLabel("Komponen"),
-                        const SizedBox(height: 8),
+                      const SizedBox(height: 20),
 
-                        DropdownButtonFormField<int>(
-                          value: controller.selectedComponentId.value == 0
-                              ? null
-                              : controller.selectedComponentId.value,
+                      // ================= ODOMETER =================
+                      _inputLabel("Odometer (km)"),
+                      const SizedBox(height: 8),
+
+                      Obx(
+                        () => InputDecorator(
+                          decoration: InputDecoration(
+                            suffixText: 'km',
+                            errorText: controller.odometerError.value,
+                            errorStyle: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 11,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF2196F3),
+                                width: 1.5,
+                              ),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(color: Colors.red),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Colors.red,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            controller.currentOdometer.value.toString(),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ================= NAMA BENGKEL =================
+                      _inputLabel("Nama Bengkel"),
+                      const SizedBox(height: 8),
+
+                      Obx(
+                        () => _textField(
+                          controller: controller.bengkelController,
+                          hint: "Contoh : Bengkel Motor Jaya",
+                          errorText:
+                              controller.bengkelError.value, // Inline error
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ================= TOTAL BIAYA (Conditional seandainya status Selesai) =================
+                      Obx(() {
+                        if (controller.selectedStatus.value != "Selesai") {
+                          return const SizedBox();
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _inputLabel("Total Biaya"),
+                            const SizedBox(height: 8),
+
+                            TextField(
+                              controller: controller.biayaController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[a-zA-Z0-9]'),
+                                ),
+                              ],
+
+                              style: const TextStyle(fontSize: 12),
+                              decoration: InputDecoration(
+                                prefixText: 'Rp ',
+                                errorText:
+                                    controller.biayaError.value, // Inline error
+                                errorStyle: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 11,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF2196F3),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(
+                                    color: Colors.red,
+                                  ),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(
+                                    color: Colors.red,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        );
+                      }),
+
+                      // ================= STATUS DENGAN PLACEHOLDER =================
+                      _inputLabel("Status"),
+                      const SizedBox(height: 8),
+
+                      Obx(() {
+                        final options = controller.availableStatusOptions;
+                        final String? currentValue =
+                            options.contains(controller.selectedStatus.value) &&
+                                controller.selectedStatus.value.isNotEmpty
+                            ? controller.selectedStatus.value
+                            : null;
+
+                        return DropdownButtonFormField<String>(
+                          value: currentValue,
                           hint: const Text(
-                            "Pilih Komponen",
+                            "Pilih Status",
                             style: TextStyle(
                               color: Colors.grey,
                               fontSize: 12,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
-                          items: controller.components.map((item) {
-                            return DropdownMenuItem<int>(
-                              value: item["id"],
-                              child: Text(item["name"]),
-                            );
-                          }).toList(),
-                          onChanged: controller.isComponentEnabled
+                          items: options
+                              .map(
+                                (status) => DropdownMenuItem(
+                                  value: status,
+                                  child: Text(
+                                    status,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: controller.isStatusDropdownEnabled
                               ? (value) {
                                   if (value != null) {
-                                    controller.selectedComponentId.value =
-                                        value;
-                                    controller.componentError.value = null;
+                                    controller.changeStatus(value);
                                   }
                                 }
                               : null,
                           decoration: InputDecoration(
-                            fillColor: controller.isComponentEnabled
+                            fillColor: controller.isStatusDropdownEnabled
                                 ? Colors.white
                                 : Colors.grey.shade100,
-                            filled: !controller.isComponentEnabled,
-                            errorText: controller.componentError.value,
-                            errorStyle: const TextStyle(
-                              color: Colors.red,
-                              fontSize: 11,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: Colors.grey.shade300,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(
-                                color: Color(0xFF2196F3),
-                                width: 1.5,
-                              ),
-                            ),
-                            errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: Colors.red),
-                            ),
-                            focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(
-                                color: Colors.red,
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-
-                  const SizedBox(height: 20),
-
-                  // ================= TANGGAL =================
-                  _inputLabel("Tanggal"),
-                  const SizedBox(height: 8),
-
-                  Obx(
-                    () => TextField(
-                      controller: controller.tanggalController,
-                      readOnly: true,
-                      decoration: InputDecoration(
-                        hintText: 'dd/mm/yyyy',
-                        hintStyle: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                        errorText:
-                            controller.tanggalError.value, // Inline error
-                        errorStyle: const TextStyle(
-                          color: Colors.red,
-                          fontSize: 11,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        suffixIcon: IconButton(
-                          onPressed: controller.pickDate,
-                          icon: Image.asset(
-                            'assets/icon/calender.png',
-                            width: 20,
-                            height: 20,
-                          ),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF2196F3),
-                            width: 1.5,
-                          ),
-                        ),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: Colors.red),
-                        ),
-                        focusedErrorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: Colors.red,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // ================= ODOMETER =================
-                  _inputLabel("Odometer (km)"),
-                  const SizedBox(height: 8),
-
-                  Obx(
-                    () => InputDecorator(
-                      decoration: InputDecoration(
-                        suffixText: 'km',
-                        errorText: controller.odometerError.value,
-                        errorStyle: const TextStyle(
-                          color: Colors.red,
-                          fontSize: 11,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF2196F3),
-                            width: 1.5,
-                          ),
-                        ),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: Colors.red),
-                        ),
-                        focusedErrorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: Colors.red,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        controller.currentOdometer.value.toString(),
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // ================= NAMA BENGKEL =================
-                  _inputLabel("Nama Bengkel"),
-                  const SizedBox(height: 8),
-
-                  Obx(
-                    () => _textField(
-                      controller: controller.bengkelController,
-                      hint: "Contoh : Bengkel Motor Jaya",
-                      errorText: controller.bengkelError.value, // Inline error
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // ================= TOTAL BIAYA (Conditional seandainya status Selesai) =================
-                  Obx(() {
-                    if (controller.selectedStatus.value != "Selesai") {
-                      return const SizedBox();
-                    }
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _inputLabel("Total Biaya"),
-                        const SizedBox(height: 8),
-
-                        TextField(
-                          controller: controller.biayaController,
-                          keyboardType: TextInputType.number,
-                          style: const TextStyle(fontSize: 12),
-                          decoration: InputDecoration(
-                            prefixText: 'Rp ',
-                            errorText:
-                                controller.biayaError.value, // Inline error
+                            filled: !controller.isStatusDropdownEnabled,
+                            errorText: controller.statusError.value,
                             errorStyle: const TextStyle(
                               color: Colors.red,
                               fontSize: 11,
@@ -386,139 +500,52 @@ class RwttambahView extends GetView<RwttambahController> {
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-                    );
-                  }),
+                        );
+                      }),
 
-                  // ================= STATUS DENGAN PLACEHOLDER =================
-                  _inputLabel("Status"),
-                  const SizedBox(height: 8),
+                      const SizedBox(height: 50),
 
-                  Obx(() {
-                    final options = controller.availableStatusOptions;
-                    final String? currentValue =
-                        options.contains(controller.selectedStatus.value) &&
-                            controller.selectedStatus.value.isNotEmpty
-                        ? controller.selectedStatus.value
-                        : null;
-
-                    return DropdownButtonFormField<String>(
-                      value: currentValue,
-                      hint: const Text(
-                        "Pilih Status",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      items: options
-                          .map(
-                            (status) => DropdownMenuItem(
-                              value: status,
-                              child: Text(
-                                status,
-                                style: const TextStyle(fontSize: 12),
+                      // ================= TOMBOL SIMPAN =================
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 20),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2196F3),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
                               ),
                             ),
-                          )
-                          .toList(),
-                      onChanged: controller.isStatusDropdownEnabled
-                          ? (value) {
-                              if (value != null) {
-                                controller.changeStatus(value);
+                            onPressed: () {
+                              if (controller.isEdit.value) {
+                                controller.updateRiwayat();
+                              } else {
+                                controller.simpanRiwayat();
                               }
-                            }
-                          : null,
-                      decoration: InputDecoration(
-                        fillColor: controller.isStatusDropdownEnabled
-                            ? Colors.white
-                            : Colors.grey.shade100,
-                        filled: !controller.isStatusDropdownEnabled,
-                        errorText: controller.statusError.value,
-                        errorStyle: const TextStyle(
-                          color: Colors.red,
-                          fontSize: 11,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF2196F3),
-                            width: 1.5,
-                          ),
-                        ),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: Colors.red),
-                        ),
-                        focusedErrorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: Colors.red,
-                            width: 1.5,
+                            },
+                            child: const Text(
+                              "Simpan",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    );
-                  }),
-
-                  const SizedBox(height: 50),
-
-                  // ================= TOMBOL SIMPAN =================
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2196F3),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        onPressed: () {
-                          if (controller.isEdit.value) {
-                            controller.updateRiwayat();
-                          } else {
-                            controller.simpanRiwayat();
-                          }
-                        },
-                        child: const Text(
-                          "Simpan",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
-    ),
-  ),
-);
-}
+    );
+  }
 
   Widget _inputLabel(String title) {
     return Text(

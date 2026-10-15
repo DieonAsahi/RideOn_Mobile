@@ -327,6 +327,50 @@ class HomeController extends GetxController {
     await fetchKomponenServis();
   }
 
+  // Tambahkan fungsi ini di dalam HomeController
+  Future<bool> updateOdometerManual(int newOdometer) async {
+    try {
+      final token = box.read("token");
+      if (token == null) return false;
+
+      final response = await http.put(
+        Uri.parse("$baseUrl/api/vehicle/update-odometer"),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "vehicle_id":
+              vehicleId, // Mengambil ID kendaraan yang sedang aktif di Home
+          "new_odometer": newOdometer,
+          "odometer_image": "", // Kosong karena ini update manual lewat teks
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Update angka odometer di UI secara instan
+        odometer.value = newOdometer;
+
+        // Refresh data lainnya (grafik, notif, dll)
+        fetchHome(force: true);
+
+        // Sinkronkan juga dengan KendaraanController jika terdaftar
+        if (Get.isRegistered<KendaraanController>()) {
+          Get.find<KendaraanController>().getVehicles(force: true);
+        }
+
+        return true;
+      } else {
+        print("Gagal update odometer: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Error update odometer manual: $e");
+      ConnectivityService.handleNetworkError(e);
+      return false;
+    }
+  }
+
   Future<void> getVehicles() async {
     final token = box.read("token");
     if (token == null) {
@@ -435,7 +479,9 @@ class HomeController extends GetxController {
           storedVehicleId != vehicleId) {
         vehicleId = storedVehicleId;
         selectedVehicleId.value = storedVehicleId;
-        final idx = vehicles.indexWhere((e) => e["id"].toString() == storedVehicleId);
+        final idx = vehicles.indexWhere(
+          (e) => e["id"].toString() == storedVehicleId,
+        );
         if (idx != -1) {
           currentVehicleIndex.value = idx;
           vehiclePlat.value = vehicles[idx]["plate_number"]?.toString() ?? "-";
@@ -482,25 +528,40 @@ class HomeController extends GetxController {
         odometer.value = data['vehicle']['current_odometer'] ?? 0;
       }
 
-      if (data['performance'] != null &&
-          data['performance'] is Map &&
-          data['performance']['history'] != null &&
-          data['performance']['history'] is List) {
-        final history = (data['performance']['history'] as List)
-          ..sort(
-            (a, b) => DateTime.parse(
-              a['created_at'],
-            ).compareTo(DateTime.parse(b['created_at'])),
-          );
+      if (data['performance'] != null && data['performance'] is Map) {
+        final perfMap = data['performance'] as Map;
+        final currentScore = perfMap['current'] != null
+            ? (perfMap['current'] as num).toDouble()
+            : null;
 
-        tanggal.value = history.map<String>((item) {
-          final date = DateTime.parse(item['created_at']);
-          return formatTanggal(date);
-        }).toList();
+        if (perfMap['history'] != null && perfMap['history'] is List) {
+          final history = (perfMap['history'] as List)
+            ..sort(
+              (a, b) => DateTime.parse(
+                a['created_at'],
+              ).compareTo(DateTime.parse(b['created_at'])),
+            );
 
-        performa.value = history.map<double>((item) {
-          return (item['performance_percent'] as num).toDouble();
-        }).toList();
+          tanggal.value = history.map<String>((item) {
+            final date = DateTime.parse(item['created_at']);
+            return formatTanggal(date);
+          }).toList();
+
+          performa.value = history.map<double>((item) {
+            return (item['performance_percent'] as num).toDouble();
+          }).toList();
+        }
+
+        // Pastikan nilai performa terkini konsisten persis dengan backend real-time current score
+        if (currentScore != null) {
+          if (performa.isEmpty) {
+            performa.value = [currentScore];
+            tanggal.value = [formatTanggal(DateTime.now())];
+          } else {
+            // Update titik terakhir agar persis sama dengan real-time current score
+            performa[performa.length - 1] = currentScore;
+          }
+        }
       }
 
       if (tanggal.isEmpty) {
