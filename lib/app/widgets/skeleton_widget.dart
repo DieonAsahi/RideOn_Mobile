@@ -782,99 +782,182 @@ class DtlperformaSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 8),
+        const SkeletonBox(width: 100, height: 100, borderRadius: 12),
+        const SizedBox(height: 12),
+        const SkeletonBox(width: 150, height: 18, borderRadius: 5),
+        const SizedBox(height: 8),
+        const SkeletonBox(width: 110, height: 14, borderRadius: 4),
+        const SizedBox(height: 24),
         _skeletonCard(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           child: const Row(
             children: [
-              SkeletonBox(width: 104, height: 78, borderRadius: 12),
-              SizedBox(width: 14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SkeletonBox(width: 150, height: 16, borderRadius: 4),
-                  SizedBox(height: 10),
-                  SkeletonBox(width: 100, height: 12, borderRadius: 4),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        _skeletonCard(
-          child: const Row(
-            children: [
-              SkeletonBox(width: 108, height: 108, shape: CircleBorder()),
-              SizedBox(width: 18),
+              SkeletonBox(width: 70, height: 70, shape: CircleBorder()),
+              SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SkeletonBox(width: 140, height: 16, borderRadius: 4),
-                    SizedBox(height: 10),
-                    SkeletonBox(
-                      width: double.infinity,
-                      height: 12,
-                      borderRadius: 4,
-                    ),
-                    SizedBox(height: 10),
-                    SkeletonBox(width: 120, height: 14, borderRadius: 4),
+                    SkeletonBox(width: 175, height: 13, borderRadius: 4),
+                    SizedBox(height: 8),
+                    SkeletonBox(width: 100, height: 18, borderRadius: 4),
+                    SizedBox(height: 8),
+                    SkeletonBox(width: 140, height: 12, borderRadius: 4),
                   ],
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         _skeletonCard(
+          padding: const EdgeInsets.all(20),
           child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(width: 160, height: 16, borderRadius: 4),
-              SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SkeletonBox(width: 160, height: 17, borderRadius: 4),
+                  SkeletonBox(width: 55, height: 13, borderRadius: 4),
+                ],
+              ),
+              SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
-                    child: SkeletonBox(
-                      width: double.infinity,
-                      height: 24,
-                      borderRadius: 4,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonBox(width: 45, height: 13, borderRadius: 4),
+                        SizedBox(height: 6),
+                        SkeletonBox(width: 100, height: 16, borderRadius: 4),
+                      ],
                     ),
                   ),
-                  SizedBox(width: 14),
                   Expanded(
-                    child: SkeletonBox(
-                      width: double.infinity,
-                      height: 24,
-                      borderRadius: 4,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonBox(width: 45, height: 13, borderRadius: 4),
+                        SizedBox(height: 6),
+                        SkeletonBox(width: 100, height: 16, borderRadius: 4),
+                      ],
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 14),
-              SkeletonBox(width: double.infinity, height: 28, borderRadius: 6),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        _skeletonCard(
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SkeletonBox(width: 100, height: 16, borderRadius: 4),
-              SizedBox(height: 18),
-              SkeletonBox(width: double.infinity, height: 90, borderRadius: 8),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        _skeletonCard(
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SkeletonBox(width: 140, height: 16, borderRadius: 4),
               SizedBox(height: 16),
-              SkeletonBox(width: double.infinity, height: 46, borderRadius: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonBox(width: 45, height: 13, borderRadius: 4),
+                        SizedBox(height: 6),
+                        SkeletonBox(width: 100, height: 16, borderRadius: 4),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonBox(width: 105, height: 13, borderRadius: 4),
+                        SizedBox(height: 6),
+                        SkeletonBox(width: 95, height: 16, borderRadius: 4),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16),
+              SkeletonBox(width: 125, height: 13, borderRadius: 4),
+              SizedBox(height: 6),
+              SkeletonBox(width: 110, height: 16, borderRadius: 4),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFEFEF),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: const Row(
+            children: [
+              Expanded(
+                child: SkeletonBox(
+                  width: double.infinity,
+                  height: 36,
+                  borderRadius: 30,
+                ),
+              ),
+              SizedBox(width: 4),
+              Expanded(
+                child: SkeletonBox(
+                  width: double.infinity,
+                  height: 36,
+                  borderRadius: 30,
+                ),
+              ),
+              SizedBox(width: 4),
+              Expanded(
+                child: SkeletonBox(
+                  width: double.infinity,
+                  height: 36,
+                  borderRadius: 30,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: SkeletonBox(width: 155, height: 17, borderRadius: 4),
+        ),
+        const SizedBox(height: 16),
+        _chartSkeleton(),
+        const SizedBox(height: 24),
+        _skeletonCard(
+          padding: const EdgeInsets.all(20),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SkeletonBox(width: 110, height: 17, borderRadius: 4),
+                  SkeletonBox(width: 90, height: 13, borderRadius: 4),
+                ],
+              ),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  SkeletonBox(width: 50, height: 50, borderRadius: 12),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonBox(width: 140, height: 15, borderRadius: 4),
+                        SizedBox(height: 8),
+                        SkeletonBox(width: 105, height: 12, borderRadius: 4),
+                        SizedBox(height: 8),
+                        SkeletonBox(width: 140, height: 12, borderRadius: 4),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  SkeletonBox(width: 65, height: 14, borderRadius: 4),
+                ],
+              ),
             ],
           ),
         ),
@@ -882,14 +965,69 @@ class DtlperformaSkeleton extends StatelessWidget {
     );
   }
 
-  Widget _skeletonCard({required Widget child}) => Container(
+  Widget _skeletonCard({
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(16),
+  }) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(16),
+    padding: padding,
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: const Color(0xFFE8EAED)),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x0A000000),
+          blurRadius: 10,
+          offset: Offset(0, 4),
+        ),
+      ],
     ),
     child: child,
+  );
+
+  Widget _chartSkeleton() => SizedBox(
+    height: 190,
+    width: double.infinity,
+    child: Stack(
+      children: [
+        for (var index = 0; index < 6; index++)
+          Positioned(
+            top: 12 + index * 28,
+            left: 36,
+            right: 8,
+            child: const SkeletonBox(height: 1, borderRadius: 1),
+          ),
+        const Positioned(
+          left: 42,
+          top: 118,
+          child: SkeletonBox(width: 8, height: 8, shape: CircleBorder()),
+        ),
+        const Positioned(
+          left: 92,
+          top: 94,
+          child: SkeletonBox(width: 8, height: 8, shape: CircleBorder()),
+        ),
+        const Positioned(
+          left: 142,
+          top: 105,
+          child: SkeletonBox(width: 8, height: 8, shape: CircleBorder()),
+        ),
+        const Positioned(
+          left: 192,
+          top: 65,
+          child: SkeletonBox(width: 8, height: 8, shape: CircleBorder()),
+        ),
+        const Positioned(
+          left: 242,
+          top: 78,
+          child: SkeletonBox(width: 8, height: 8, shape: CircleBorder()),
+        ),
+        const Positioned(
+          left: 292,
+          top: 43,
+          child: SkeletonBox(width: 8, height: 8, shape: CircleBorder()),
+        ),
+      ],
+    ),
   );
 }

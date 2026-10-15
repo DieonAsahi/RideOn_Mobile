@@ -684,7 +684,7 @@ class PerformaSection extends GetView<HomeController> {
           ? dataPerforma.last
           : 0.0;
 
-      final int score = latestScoreDouble.round();
+      final int score = latestScoreDouble.round().clamp(0, 100);
 
       final double progressValue = score / 100;
 
@@ -697,12 +697,9 @@ class PerformaSection extends GetView<HomeController> {
       } else if (score >= 50) {
         status = "perlu perhatian";
         progressColor = Colors.orange;
-      } else if (score > 0) {
+      } else {
         status = "Buruk";
         progressColor = Colors.red;
-      } else {
-        status = "Belum ada data";
-        progressColor = Colors.grey;
       }
 
       return Container(

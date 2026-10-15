@@ -122,22 +122,10 @@ class DtlperformaView extends GetView<DtlperformaController> {
 
   // 2. Card Performa Kondisi
   Widget _buildPerformanceCard() {
-    final score = controller.currentScore.value.clamp(0.0, 100.0);
+    final score = controller.currentScore.value.round().clamp(0, 100);
 
-    // Logika Status & Warna Progress (Sesuai Permintaan)
-    String status = "Belum ada data";
-    Color progressColor = Colors.grey;
-
-    if (score >= 75) {
-      status = "Baik";
-      progressColor = Colors.green;
-    } else if (score >= 50) {
-      status = "Perlu Perhatian";
-      progressColor = Colors.orange;
-    } else if (score > 0) {
-      status = "Buruk";
-      progressColor = Colors.red;
-    }
+    final status = controller.performanceStatus;
+    final progressColor = controller.scoreColor;
 
     // Asumsi nilai persentase mingguan disediakan oleh controller dalam bentuk double
     // Jika masih string di controller, tim backend/antigravity perlu mem-parsing-nya menjadi angka
@@ -161,7 +149,9 @@ class DtlperformaView extends GetView<DtlperformaController> {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      decoration: _cardDecoration(),
+      decoration: _cardDecoration().copyWith(
+        border: Border.all(color: progressColor),
+      ),
       child: Row(
         children: [
           SizedBox(
@@ -178,7 +168,7 @@ class DtlperformaView extends GetView<DtlperformaController> {
                 ),
                 Center(
                   child: Text(
-                    '${score.toInt()}%',
+                    '$score%',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -203,7 +193,7 @@ class DtlperformaView extends GetView<DtlperformaController> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                  ),
+                  ).copyWith(color: progressColor),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -387,9 +377,35 @@ class DtlperformaView extends GetView<DtlperformaController> {
         SizedBox(
           height: 190,
           width: double.infinity,
-          child: CustomPaint(
-            painter: _PerformanceChartPainter(
-              points: controller.chartPoints.toList(),
+          child: LayoutBuilder(
+            builder: (context, constraints) => GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapDown: (details) {
+                const left = 34.0;
+                const right = 8.0;
+                final chartWidth = constraints.maxWidth - left - right;
+                final tapX = details.localPosition.dx;
+                if (chartWidth <= 0 ||
+                    tapX < left ||
+                    tapX > left + chartWidth) {
+                  return;
+                }
+                final points = controller.chartPoints;
+                if (points.isEmpty) return;
+                final selected =
+                    (((tapX - left) / chartWidth * (points.length - 1)).round())
+                        .clamp(0, points.length - 1);
+                controller.selectChartPoint(selected);
+              },
+              child: Obx(
+                () => CustomPaint(
+                  painter: _PerformanceChartPainter(
+                    points: controller.chartPoints.toList(),
+                    selectedIndex: controller.selectedChartPointIndex.value,
+                  ),
+                  size: Size(constraints.maxWidth, 190),
+                ),
+              ),
             ),
           ),
         ),
@@ -597,9 +613,10 @@ class DtlperformaView extends GetView<DtlperformaController> {
 
 // CustomPainter untuk Grafik
 class _PerformanceChartPainter extends CustomPainter {
-  _PerformanceChartPainter({required this.points});
+  _PerformanceChartPainter({required this.points, required this.selectedIndex});
 
   final List<PerformancePoint> points;
+  final int selectedIndex;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -619,8 +636,7 @@ class _PerformanceChartPainter extends CustomPainter {
       fontSize: 10,
     );
 
-    // Draw Axis (100, 80, 60)
-    for (final value in [100, 80, 60]) {
+    for (final value in [100, 80, 60, 40, 20, 0]) {
       final y = top + (100 - value) / 100 * chartHeight;
       // Dot dash pattern can be handled here, but solid line is fine as per baseline
       canvas.drawLine(
@@ -706,18 +722,18 @@ class _PerformanceChartPainter extends CustomPainter {
       }
     }
 
-    // Draw the latest Score Badge (Berdasarkan index terakhir yang ada isinya)
-    final latestIndex = points.lastIndexWhere((point) => point.score != null);
-    if (latestIndex >= 0) {
-      final latestPoint = pointsOnChart[latestIndex]!;
-      final score = points[latestIndex].score!.round();
+    if (selectedIndex >= 0 &&
+        selectedIndex < points.length &&
+        points[selectedIndex].score != null) {
+      final selectedPoint = pointsOnChart[selectedIndex]!;
+      final score = points[selectedIndex].score!.round();
 
       // Menggambar Badge gelap sesuai desain (cth: 87%)
       final badgeRect = RRect.fromRectAndRadius(
         Rect.fromCenter(
           center: Offset(
-            latestPoint.dx,
-            (latestPoint.dy - 20).clamp(8, size.height - bottom - 10),
+            selectedPoint.dx,
+            (selectedPoint.dy - 20).clamp(8, size.height - bottom - 10),
           ),
           width: 36,
           height: 22,
@@ -744,9 +760,9 @@ class _PerformanceChartPainter extends CustomPainter {
         dotColor = Colors.orange;
       }
 
-      canvas.drawCircle(latestPoint, 6, Paint()..color = dotColor);
+      canvas.drawCircle(selectedPoint, 6, Paint()..color = dotColor);
       canvas.drawCircle(
-        latestPoint,
+        selectedPoint,
         3,
         Paint()..color = const Color(0xFF2196F3),
       );
@@ -792,5 +808,6 @@ class _PerformanceChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _PerformanceChartPainter oldDelegate) =>
-      oldDelegate.points != points;
+      oldDelegate.points != points ||
+      oldDelegate.selectedIndex != selectedIndex;
 }

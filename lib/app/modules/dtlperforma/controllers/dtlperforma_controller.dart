@@ -44,6 +44,7 @@ class DtlperformaController extends GetxController {
 
   /// Titik-titik grafik performa
   final chartPoints = <PerformancePoint>[].obs;
+  final selectedChartPointIndex = (-1).obs;
 
   late String vehicleId;
   List<Map<String, dynamic>> _history = [];
@@ -55,16 +56,14 @@ class DtlperformaController extends GetxController {
     final score = currentScore.value.round();
     if (score >= 75) return Colors.green;
     if (score >= 50) return Colors.orange;
-    if (score > 0) return Colors.red;
-    return Colors.grey;
+    return Colors.red;
   }
 
   String get performanceStatus {
     final score = currentScore.value.round();
     if (score >= 75) return 'Baik';
-    if (score >= 50) return 'Perlu perhatian';
-    if (score > 0) return 'Buruk';
-    return 'Belum ada data';
+    if (score >= 50) return 'Perlu Perhatian';
+    return 'Buruk';
   }
 
   String get performanceText => '${currentScore.value.round()}%';
@@ -101,6 +100,15 @@ class DtlperformaController extends GetxController {
   void changeFilter(String filter) {
     selectedFilter.value = filter;
     _buildChartPoints();
+  }
+
+  void selectChartPoint(int index) {
+    if (index < 0 ||
+        index >= chartPoints.length ||
+        chartPoints[index].score == null) {
+      return;
+    }
+    selectedChartPointIndex.value = index;
   }
 
   /// Mengambil data histori performa, detail kendaraan, dan servis terakhir
@@ -357,6 +365,9 @@ class DtlperformaController extends GetxController {
     }
 
     chartPoints.assignAll(points);
+    selectedChartPointIndex.value = points.lastIndexWhere(
+      (point) => point.score != null,
+    );
   }
 
   // ==========================================
