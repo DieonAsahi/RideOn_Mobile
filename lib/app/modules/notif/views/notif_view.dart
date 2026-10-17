@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 
 import '../controllers/notif_controller.dart';
 
@@ -96,12 +97,13 @@ class NotifView extends GetView<NotifController> {
                               width: tabWidth,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF2583FD),
+                                  color: AppColors.primaryBlue,
                                   borderRadius: BorderRadius.circular(100),
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.1),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
                                     ),
@@ -129,6 +131,7 @@ class NotifView extends GetView<NotifController> {
                                             milliseconds: 250,
                                           ),
                                           style: TextStyle(
+                                            fontFamily: 'Poppins',
                                             fontSize: screenWidth < 360
                                                 ? 12
                                                 : 14,
@@ -328,7 +331,7 @@ class NotifView extends GetView<NotifController> {
         break;
       case "Pengingat":
         bgColor = const Color(0xFFE3F2FD);
-        textColor = const Color(0xFF2583FD);
+        textColor = AppColors.primaryBlue;
         break;
       default:
         bgColor = const Color(0xFFFFF3E0);
@@ -397,10 +400,7 @@ class NotifView extends GetView<NotifController> {
                     Text(
                       descText,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey,
-                      ),
+                      style: const TextStyle(fontSize: 13, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -446,7 +446,7 @@ class NotifView extends GetView<NotifController> {
               ElevatedButton(
                 onPressed: () => controller.requestPermission(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2196F3),
+                  backgroundColor: AppColors.primaryBlue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

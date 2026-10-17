@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:capbatu/app/core/theme/app_theme.dart';
 import '../controllers/pluskendaraan_controller.dart';
+import '../../../widgets/form_label_with_tooltip.dart';
+import '../../../widgets/base_bottom_sheet.dart';
 
 class PluskendaraanView extends GetView<PluskendaraanController> {
   const PluskendaraanView({super.key});
@@ -104,7 +106,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
     return Container(
       height: 4,
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF2196F3) : Colors.grey.shade300,
+        color: isActive ? AppColors.primaryBlue : Colors.grey.shade300,
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -115,26 +117,26 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel("Merek Kendaraan"),
+        _buildLabel(
+          'Merek Kendaraan',
+          helperText: 'Pilih merek kendaraan sesuai STNK atau kendaraan Anda.',
+        ),
         const SizedBox(height: 8),
         Obx(
           () => DropdownButtonFormField<String>(
-            value:
-                controller.selectedBrand.value.isEmpty
-                    ? null
-                    : controller.selectedBrand.value,
+            value: controller.selectedBrand.value.isEmpty
+                ? null
+                : controller.selectedBrand.value,
             hint: Text(
               "Merek",
               style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
             ),
             icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
-            items:
-                controller.brandOptions
-                    .map(
-                      (brand) =>
-                          DropdownMenuItem(value: brand, child: Text(brand)),
-                    )
-                    .toList(),
+            items: controller.brandOptions
+                .map(
+                  (brand) => DropdownMenuItem(value: brand, child: Text(brand)),
+                )
+                .toList(),
             onChanged: controller.onBrandChanged,
             decoration: _inputDecoration(
               errorText: controller.brandError.value,
@@ -144,15 +146,18 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
 
         const SizedBox(height: 18),
 
-        _buildLabel("Model Kendaraan"),
+        _buildLabel(
+          'Model Kendaraan',
+          helperText: 'Pilih model yang sesuai dengan merek kendaraan.',
+        ),
         const SizedBox(height: 8),
         Obx(() {
           final isEnabled = controller.isModelDropdownEnabled;
           final availableModels = controller.availableModels;
           final currentVal =
               availableModels.contains(controller.selectedModel.value)
-                  ? controller.selectedModel.value
-                  : null;
+              ? controller.selectedModel.value
+              : null;
 
           return DropdownButtonFormField<String>(
             value: isEnabled ? currentVal : null,
@@ -167,17 +172,14 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
               Icons.keyboard_arrow_down,
               color: isEnabled ? Colors.black54 : Colors.grey.shade400,
             ),
-            items:
-                isEnabled
-                    ? availableModels
-                        .map(
-                          (model) => DropdownMenuItem(
-                            value: model,
-                            child: Text(model),
-                          ),
-                        )
-                        .toList()
-                    : null,
+            items: isEnabled
+                ? availableModels
+                      .map(
+                        (model) =>
+                            DropdownMenuItem(value: model, child: Text(model)),
+                      )
+                      .toList()
+                : null,
             onChanged: isEnabled ? controller.onModelChanged : null,
             decoration: _inputDecoration(
               filled: !isEnabled,
@@ -189,35 +191,37 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
 
         const SizedBox(height: 18),
 
-        _buildLabel("Tahun Produksi"),
+        _buildLabel(
+          'Tahun Produksi',
+          helperText:
+              'Pilih tahun produksi kendaraan yang tertera pada dokumen kendaraan.',
+        ),
         const SizedBox(height: 8),
         Obx(
           () => DropdownButtonFormField<String>(
-            value:
-                controller.selectedYear.value.isEmpty
-                    ? null
-                    : controller.selectedYear.value,
+            value: controller.selectedYear.value.isEmpty
+                ? null
+                : controller.selectedYear.value,
             hint: Text(
               "Tahun",
               style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
             ),
             icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
-            items:
-                controller.yearOptions
-                    .map(
-                      (year) => DropdownMenuItem(value: year, child: Text(year)),
-                    )
-                    .toList(),
+            items: controller.yearOptions
+                .map((year) => DropdownMenuItem(value: year, child: Text(year)))
+                .toList(),
             onChanged: controller.onYearChanged,
-            decoration: _inputDecoration(
-              errorText: controller.yearError.value,
-            ),
+            decoration: _inputDecoration(errorText: controller.yearError.value),
           ),
         ),
 
         const SizedBox(height: 18),
 
-        _buildLabel("Plat Nomor Kendaraan"),
+        _buildLabel(
+          'Plat Nomor Kendaraan',
+          helperText:
+              'Gunakan format seperti A 1234 BC tanpa simbol atau tanda baca.',
+        ),
         const SizedBox(height: 8),
         Obx(
           () => TextField(
@@ -238,7 +242,10 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
 
         const SizedBox(height: 18),
 
-        _buildLabel("Gambar Kendaraan"),
+        _buildLabel(
+          'Gambar Kendaraan',
+          helperText: 'Unggah foto kendaraan yang jelas agar mudah dikenali.',
+        ),
         const SizedBox(height: 8),
         Obx(
           () => Column(
@@ -253,62 +260,60 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color:
-                          controller.imageError.value.isNotEmpty
-                              ? Colors.red
-                              : Colors.grey.shade300,
+                      color: controller.imageError.value.isNotEmpty
+                          ? AppColors.red
+                          : Colors.grey.shade300,
                       width: controller.imageError.value.isNotEmpty ? 1.2 : 1,
                     ),
                   ),
-                  child:
-                      controller.selectedVehicleImage != null
-                          ? Stack(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(13),
-                                child: Image.file(
-                                  controller.selectedVehicleImage!,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  fit: BoxFit.cover,
+                  child: controller.selectedVehicleImage != null
+                      ? Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(13),
+                              child: Image.file(
+                                controller.selectedVehicleImage!,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.edit,
+                                  color: Colors.white,
+                                  size: 16,
                                 ),
                               ),
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.black54,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.edit,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                ),
+                            ),
+                          ],
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.file_upload_outlined,
+                              size: 38,
+                              color: AppColors.primaryBlue,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Unggah gambar",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade500,
                               ),
-                            ],
-                          )
-                          : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.file_upload_outlined,
-                                size: 38,
-                                color: Color(0xFF2196F3),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "Unggah gambar",
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey.shade500,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
+                        ),
                 ),
               ),
               if (controller.imageError.value.isNotEmpty)
@@ -316,7 +321,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                   padding: const EdgeInsets.only(top: 6, left: 12),
                   child: Text(
                     controller.imageError.value,
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                    style: const TextStyle(color: AppColors.red, fontSize: 12),
                   ),
                 ),
             ],
@@ -333,7 +338,11 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel("Estimasi penggunaan harian"),
+        _buildLabel(
+          'Estimasi penggunaan harian',
+          helperText:
+              'Masukkan rata-rata jarak tempuh per hari dalam angka kilometer.',
+        ),
         const SizedBox(height: 4),
         Text(
           "Anda tetap dapat memperbaharui odometer secara manual untuk mendapatkan angka yang akurat.",
@@ -348,9 +357,7 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
           () => TextField(
             controller: controller.estimasiHarianController,
             keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
-            ],
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
 
             style: const TextStyle(fontSize: 14),
             onChanged: (val) {
@@ -368,15 +375,17 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
 
         const SizedBox(height: 24),
 
-        _buildLabel("Angka Odometer"),
+        _buildLabel(
+          'Angka Odometer',
+          helperText:
+              'Masukkan hanya angka kilometer saat ini, tanpa titik atau huruf.',
+        ),
         const SizedBox(height: 12),
         Obx(
           () => TextField(
             controller: controller.odometerController,
             keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
-            ],
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
 
             style: const TextStyle(fontSize: 14),
             onChanged: (val) {
@@ -416,43 +425,41 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
         const SizedBox(height: 20),
         Obx(
           () => Column(
-            children:
-                controller.komponen.map((item) {
-                  final errorText =
-                      controller.komponenErrors[item]?.value ?? '';
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildLabel(item),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: controller.komponenControllers[item],
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'[0-9]'),
-                            ),
-                          ],
-                          style: const TextStyle(fontSize: 14),
-                          onChanged: (val) {
-                            if (controller.komponenErrors[item]?.value.isNotEmpty ??
-                                false) {
-                              controller.komponenErrors[item]?.value = '';
-                            }
-                          },
-                          decoration: _inputDecoration(
-                            hintText:
-                                controller.komponenHints[item] ?? "Contoh : 30",
-                            suffixText: "hari yang lalu",
-                            errorText: errorText,
-                          ),
-                        ),
-                      ],
+            children: controller.komponen.map((item) {
+              final errorText = controller.komponenErrors[item]?.value ?? '';
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLabel(
+                      item,
+                      helperText:
+                          'Masukkan jumlah hari sejak komponen ini terakhir diganti.',
                     ),
-                  );
-                }).toList(),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: controller.komponenControllers[item],
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      style: const TextStyle(fontSize: 14),
+                      onChanged: (val) {
+                        if (controller.komponenErrors[item]?.value.isNotEmpty ??
+                            false) {
+                          controller.komponenErrors[item]?.value = '';
+                        }
+                      },
+                      decoration: _inputDecoration(
+                        hintText:
+                            controller.komponenHints[item] ?? "Contoh : 30",
+                        suffixText: "hari yang lalu",
+                        errorText: errorText,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
           ),
         ),
         const SizedBox(height: 10),
@@ -507,7 +514,10 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
                             padding: EdgeInsets.zero,
-                            side: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+                            side: const BorderSide(
+                              color: AppColors.primaryBlue,
+                              width: 1.5,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -583,16 +593,16 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
         child: OutlinedButton(
           onPressed: controller.nextStep,
           style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Color(0xFF2196F3), width: 1.5),
+            side: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.circular(12),
             ),
             backgroundColor: Colors.white,
           ),
           child: const Text(
             "Lanjut",
             style: TextStyle(
-              color: Color(0xFF2196F3),
+              color: AppColors.primaryBlue,
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
@@ -607,38 +617,38 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
       child: ElevatedButton(
         onPressed: controller.isLoading.value ? null : controller.saveVehicle,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2196F3),
+          backgroundColor: AppColors.primaryBlue,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child:
-            controller.isLoading.value
-                ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-                : const Text(
-                  "Simpan",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+        child: controller.isLoading.value
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
                 ),
+              )
+            : const Text(
+                "Simpan",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
       ),
     );
   }
 
   // ================= HELPER WIDGETS & DECORATION =================
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
+  Widget _buildLabel(String text, {required String helperText}) {
+    return FormLabelWithTooltip(
+      label: text,
+      message: helperText,
       style: const TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w600,
@@ -665,17 +675,14 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
       ),
       errorText: (errorText != null && errorText.isNotEmpty) ? errorText : null,
       errorStyle: const TextStyle(
-        color: Colors.red,
+        color: AppColors.red,
         fontSize: 12,
         fontWeight: FontWeight.w400,
       ),
-      errorMaxLines: 2,
+      errorMaxLines: 3,
       filled: filled,
       fillColor: fillColor ?? Colors.white,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 14,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(color: Colors.grey.shade300),
@@ -690,57 +697,54 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFF2196F3), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Colors.red, width: 1.2),
+        borderSide: const BorderSide(color: AppColors.red, width: 1.2),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.red, width: 1.5),
       ),
     );
   }
 
   void _showImageSourcePicker(BuildContext context) {
-    Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Unggah Gambar Kendaraan",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    BaseBottomSheet.show(
+      context: context,
+      title: "Foto Kendaraan",
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Image.asset(
+              'assets/image/camera.png',
+              width: 24,
+              height: 24,
             ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Color(0xFF2196F3)),
-              title: const Text("Ambil Foto dari Kamera"),
-              onTap: () {
-                Get.back();
-                controller.pickVehicleImage(ImageSource.camera);
-              },
+            title: const Text("Kamera", style: TextStyle(color: Colors.black)),
+            onTap: () {
+              Get.back();
+              controller.pickVehicleImage(ImageSource.camera);
+            },
+          ),
+          Divider(color: Colors.grey.shade300, height: 1),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Image.asset(
+              'assets/image/galeri.png',
+              width: 24,
+              height: 24,
             ),
-            ListTile(
-              leading: const Icon(
-                Icons.photo_library,
-                color: Color(0xFF2196F3),
-              ),
-              title: const Text("Pilih dari Galeri"),
-              onTap: () {
-                Get.back();
-                controller.pickVehicleImage(ImageSource.gallery);
-              },
-            ),
-          ],
-        ),
+            title: const Text("Galeri", style: TextStyle(color: Colors.black)),
+            onTap: () {
+              Get.back();
+              controller.pickVehicleImage(ImageSource.gallery);
+            },
+          ),
+        ],
       ),
     );
   }

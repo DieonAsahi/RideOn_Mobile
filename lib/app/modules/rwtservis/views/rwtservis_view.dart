@@ -100,7 +100,7 @@ class RwtservisView extends GetView<RwtservisController> {
                                         width: tabWidth,
                                         child: Container(
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFF2583FD),
+                                            color: AppColors.primaryBlue,
                                             borderRadius: BorderRadius.circular(
                                               100,
                                             ),
@@ -252,7 +252,8 @@ class RwtservisView extends GetView<RwtservisController> {
                                                 Text(
                                                   item['jenis'] ?? "-",
                                                   style: const TextStyle(
-                                                    color: Color(0xFF2196F3),
+                                                    color:
+                                                        AppColors.primaryBlue,
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 16,
                                                   ),
@@ -625,7 +626,7 @@ class RwtservisView extends GetView<RwtservisController> {
                                                                         padding:
                                                                             EdgeInsets.zero,
                                                                         backgroundColor:
-                                                                            Colors.red, // Latar merah[cite: 7]
+                                                                            AppColors.red, // Latar merah[cite: 7]
                                                                         elevation:
                                                                             0,
                                                                         shape: RoundedRectangleBorder(
@@ -720,7 +721,7 @@ class RwtservisView extends GetView<RwtservisController> {
                                                     label: 'Hapus',
                                                     iconAsset:
                                                         'assets/image/hapus_fill.png',
-                                                    color: Colors.red,
+                                                    color: AppColors.red,
                                                   ),
                                                 ];
                                               }

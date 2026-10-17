@@ -52,7 +52,10 @@ class EmailverController extends GetxController {
 
       // EMAIL TIDAK ADA / ERROR LAINNYA
       if (checkResponse.statusCode != 200) {
-        Get.snackbar("Error", checkData['error']);
+        emailError.value =
+            checkData['message'] ??
+            checkData['error'] ??
+            'Email tidak ditemukan.';
         return;
       }
 
@@ -80,14 +83,15 @@ class EmailverController extends GetxController {
               data['error'],
               statusCode: response.statusCode,
             )) {
-          OtpLimitDialog.show();
+          OtpLimitDialog.show(customTime: data['reset_time']?.toString());
         } else {
-          Get.snackbar("Error", data['error'] ?? "Gagal kirim OTP");
+          emailError.value =
+              data['message'] ?? data['error'] ?? 'Gagal mengirim kode OTP.';
         }
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Tidak bisa konek ke server");
+        emailError.value = 'Tidak bisa terhubung ke server. Silakan coba lagi.';
       }
     }
   }

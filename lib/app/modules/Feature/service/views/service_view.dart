@@ -46,241 +46,244 @@ class ServiceView extends GetView<ServiceController> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                Container(
+                                  width: double.infinity,
+                                  constraints: const BoxConstraints(
+                                    minHeight: 180,
+                                  ),
 
-                          Container(
-                            width: double.infinity,
-                            constraints: const BoxConstraints(minHeight: 180),
-
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(22),
-                              image: const DecorationImage(
-                                image: AssetImage(
-                                  "assets/images/kerusakan.png",
-                                ),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(22),
-                                color: Colors.black.withOpacity(0.45),
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Kendaraan bermasalah?",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(22),
+                                    image: const DecorationImage(
+                                      image: AssetImage(
+                                        "assets/images/kerusakan.png",
+                                      ),
+                                      fit: BoxFit.cover,
                                     ),
                                   ),
 
-                                  const SizedBox(height: 10),
-
-                                  Text(
-                                    "Ketahui kerusakan yang mungkin dialami dengan menjawab beberapa pertanyaan singkat",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(22),
+                                      color: Colors.black.withOpacity(0.45),
                                     ),
-                                  ),
-
-                                  const SizedBox(height: 24),
-
-                                  Align(
-                                    alignment: Alignment.bottomRight,
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.white,
-                                        foregroundColor: Colors.black,
-                                        elevation: 0,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Kendaraan bermasalah?",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w700,
                                           ),
                                         ),
-                                      ),
-                                      onPressed: controller.checkDamage,
-                                      child: Text(
-                                        "Cek Kerusakan",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: 14,
+
+                                        const SizedBox(height: 10),
+
+                                        Text(
+                                          "Ketahui kerusakan yang mungkin dialami dengan menjawab beberapa pertanyaan singkat",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                          ),
                                         ),
-                                      ),
+
+                                        const SizedBox(height: 24),
+
+                                        Align(
+                                          alignment: Alignment.bottomRight,
+                                          child: ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.white,
+                                              foregroundColor: Colors.black,
+                                              elevation: 0,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                            ),
+                                            onPressed: controller.checkDamage,
+                                            child: Text(
+                                              "Cek Kerusakan",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+
+                                const SizedBox(height: 30),
+
+                                Text(
+                                  "Untuk Anda",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 20),
+
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _menuItem(
+                                        icon: SizedBox(
+                                          width: 90,
+                                          height: 90,
+                                          child: Image.asset(
+                                            'assets/logo/bengkel_terdekat.png',
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        title: "Bengkel Terdekat",
+                                        onTap: controller.goToWorkshop,
+                                      ),
+                                    ),
+
+                                    Expanded(
+                                      child: _menuItem(
+                                        icon: SizedBox(
+                                          width: 90,
+                                          height: 90,
+                                          child: Image.asset(
+                                            'assets/logo/riwayat_servis.png',
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        title: "Riwayat Servis",
+                                        onTap: controller.goToHistory,
+                                      ),
+                                    ),
+
+                                    Expanded(
+                                      child: _menuItem(
+                                        icon: SizedBox(
+                                          width: 90,
+                                          height: 90,
+                                          child: Image.asset(
+                                            'assets/logo/estimasi_biaya.png',
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        title: "Estimasi Biaya",
+                                        onTap: controller.goToEstimate,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                // const SizedBox(height: 30),
+                                const SizedBox(height: 24),
+
+                                Obx(() {
+                                  if (controller.isLoading.value) {
+                                    return const ServiceSkeleton();
+                                  }
+
+                                  if (controller.services.isEmpty) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(top: 60),
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Image.asset(
+                                              'assets/logo/empty_rwtservice.png',
+                                              width: 160,
+                                              height: 160,
+                                            ),
+                                            const SizedBox(height: 24),
+                                            const Text(
+                                              "Komponen dalam Kondisi Baik",
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            const Text(
+                                              "Anda belum memiliki komponen yang perlu di service.",
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }
+
+                                  return Column(
+                                    children: controller.services.map((item) {
+                                      String badgeText;
+                                      Color badgeColor;
+
+                                      if (item.status == "danger" ||
+                                          item.severity == "Darurat") {
+                                        badgeText = "Darurat";
+                                        badgeColor = AppColors.red;
+                                      } else if (item.status == "warning" ||
+                                          item.severity == "Mendesak") {
+                                        badgeText = "Mendesak";
+                                        badgeColor = AppColors.orange;
+                                      } else {
+                                        badgeText = "Segera";
+                                        badgeColor = const Color(0xFFFFB800);
+                                      }
+
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 12,
+                                        ),
+                                        child: _serviceCard(
+                                          image: DecorationImage(
+                                            image: AssetImage(
+                                              "assets/icons/${item.icon}.png",
+                                            ),
+                                            fit: BoxFit.contain,
+                                          ),
+                                          title: item.name,
+                                          subtitle: item.message,
+                                          badge: badgeText,
+                                          badgeColor: badgeColor,
+                                          isScheduled: item.isScheduled,
+                                          onSchedule: () =>
+                                              controller.goToAddHistory(item),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  );
+                                }),
+
+                                const SizedBox(height: 100),
+                              ],
                             ),
                           ),
-
-                          const SizedBox(height: 30),
-
-                          Text(
-                            "Untuk Anda",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _menuItem(
-                                  icon: SizedBox(
-                                    width: 90,
-                                    height: 90,
-                                    child: Image.asset(
-                                      'assets/logo/bengkel_terdekat.png',
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                  title: "Bengkel Terdekat",
-                                  onTap: controller.goToWorkshop,
-                                ),
-                              ),
-
-                              Expanded(
-                                child: _menuItem(
-                                  icon: SizedBox(
-                                    width: 90,
-                                    height: 90,
-                                    child: Image.asset(
-                                      'assets/logo/riwayat_servis.png',
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                  title: "Riwayat Servis",
-                                  onTap: controller.goToHistory,
-                                ),
-                              ),
-
-                              Expanded(
-                                child: _menuItem(
-                                  icon: SizedBox(
-                                    width: 90,
-                                    height: 90,
-                                    child: Image.asset(
-                                      'assets/logo/estimasi_biaya.png',
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                  title: "Estimasi Biaya",
-                                  onTap: controller.goToEstimate,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          // const SizedBox(height: 30),
-                          const SizedBox(height: 24),
-
-                          Obx(() {
-                            if (controller.isLoading.value) {
-                              return const ServiceSkeleton();
-                            }
-
-                            if (controller.services.isEmpty) {
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 60),
-                                child: Center(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Image.asset(
-                                        'assets/logo/empty_rwtservice.png',
-                                        width: 160,
-                                        height: 160,
-                                      ),
-                                      const SizedBox(height: 24),
-                                      const Text(
-                                        "Komponen dalam Kondisi Baik",
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      const Text(
-                                        "Anda belum memiliki komponen yang perlu di service.",
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }
-
-                            return Column(
-                              children: controller.services.map((item) {
-                                String badgeText;
-                                Color badgeColor;
-
-                                if (item.status == "danger" ||
-                                    item.severity == "Darurat") {
-                                  badgeText = "Darurat";
-                                  badgeColor = AppColors.red;
-                                } else if (item.status == "warning" ||
-                                    item.severity == "Mendesak") {
-                                  badgeText = "Mendesak";
-                                  badgeColor = AppColors.orange;
-                                } else {
-                                  badgeText = "Segera";
-                                  badgeColor = const Color(0xFFFFB800);
-                                }
-
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _serviceCard(
-                                    image: DecorationImage(
-                                      image: AssetImage(
-                                        "assets/icons/${item.icon}.png",
-                                      ),
-                                      fit: BoxFit.contain,
-                                    ),
-                                    title: item.name,
-                                    subtitle: item.message,
-                                    badge: badgeText,
-                                    badgeColor: badgeColor,
-                                    isScheduled: item.isScheduled,
-                                    onSchedule: () =>
-                                        controller.goToAddHistory(item),
-                                  ),
-                                );
-                              }).toList(),
-                            );
-                          }),
-
-                          const SizedBox(height: 100),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
         ),
       ),
-    ],
-  ),
-),
     );
   }
 
@@ -354,7 +357,7 @@ class ServiceView extends GetView<ServiceController> {
           if (!isScheduled)
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2196F3),
+                backgroundColor: AppColors.primaryBlue,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(

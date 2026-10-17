@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../controllers/rwttambah_controller.dart';
 import 'package:capbatu/app/core/theme/app_theme.dart';
+import '../../../widgets/form_label_with_tooltip.dart';
 
 class RwttambahView extends GetView<RwttambahController> {
   const RwttambahView({super.key});
@@ -11,7 +12,7 @@ class RwttambahView extends GetView<RwttambahController> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
 
         if (controller.isEdit.value) {
@@ -65,8 +66,10 @@ class RwttambahView extends GetView<RwttambahController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Jenis",
+                      const FormLabelWithTooltip(
+                        label: 'Jenis',
+                        message:
+                            'Pilih Servis Rutin untuk perawatan berkala atau Perbaikan untuk kerusakan tertentu.',
                         style: TextStyle(fontWeight: FontWeight.w500),
                       ),
 
@@ -104,7 +107,11 @@ class RwttambahView extends GetView<RwttambahController> {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _inputLabel("Detail"),
+                              _inputLabel(
+                                'Detail',
+                                helperText:
+                                    'Jelaskan pekerjaan perbaikan yang dilakukan.',
+                              ),
                               const SizedBox(height: 8),
                               _textField(
                                 controller: controller.detailController,
@@ -121,7 +128,11 @@ class RwttambahView extends GetView<RwttambahController> {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _inputLabel("Komponen"),
+                            _inputLabel(
+                              'Komponen',
+                              helperText:
+                                  'Pilih komponen yang diservis dari daftar yang tersedia.',
+                            ),
                             const SizedBox(height: 8),
 
                             DropdownButtonFormField<int>(
@@ -158,9 +169,10 @@ class RwttambahView extends GetView<RwttambahController> {
                                 filled: !controller.isComponentEnabled,
                                 errorText: controller.componentError.value,
                                 errorStyle: const TextStyle(
-                                  color: Colors.red,
+                                  color: AppColors.red,
                                   fontSize: 11,
                                 ),
+                                errorMaxLines: 3,
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 14,
@@ -177,20 +189,20 @@ class RwttambahView extends GetView<RwttambahController> {
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   borderSide: const BorderSide(
-                                    color: Color(0xFF2196F3),
+                                    color: AppColors.primaryBlue,
                                     width: 1.5,
                                   ),
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   borderSide: const BorderSide(
-                                    color: Colors.red,
+                                    color: AppColors.red,
                                   ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   borderSide: const BorderSide(
-                                    color: Colors.red,
+                                    color: AppColors.red,
                                     width: 1.5,
                                   ),
                                 ),
@@ -203,7 +215,11 @@ class RwttambahView extends GetView<RwttambahController> {
                       const SizedBox(height: 20),
 
                       // ================= TANGGAL =================
-                      _inputLabel("Tanggal"),
+                      _inputLabel(
+                        'Tanggal',
+                        helperText:
+                            'Pilih tanggal saat servis atau perbaikan dilakukan.',
+                      ),
                       const SizedBox(height: 8),
 
                       Obx(
@@ -219,9 +235,10 @@ class RwttambahView extends GetView<RwttambahController> {
                             errorText:
                                 controller.tanggalError.value, // Inline error
                             errorStyle: const TextStyle(
-                              color: Colors.red,
+                              color: AppColors.red,
                               fontSize: 11,
                             ),
+                            errorMaxLines: 3,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 14,
@@ -249,18 +266,20 @@ class RwttambahView extends GetView<RwttambahController> {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: const BorderSide(
-                                color: Color(0xFF2196F3),
+                                color: AppColors.primaryBlue,
                                 width: 1.5,
                               ),
                             ),
                             errorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: Colors.red),
+                              borderSide: const BorderSide(
+                                color: AppColors.red,
+                              ),
                             ),
                             focusedErrorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: const BorderSide(
-                                color: Colors.red,
+                                color: AppColors.red,
                                 width: 1.5,
                               ),
                             ),
@@ -271,7 +290,11 @@ class RwttambahView extends GetView<RwttambahController> {
                       const SizedBox(height: 20),
 
                       // ================= ODOMETER =================
-                      _inputLabel("Odometer (km)"),
+                      _inputLabel(
+                        'Odometer (km)',
+                        helperText:
+                            'Nilai ini berasal dari odometer kendaraan yang telah diperbarui hari ini.',
+                      ),
                       const SizedBox(height: 8),
 
                       Obx(
@@ -280,9 +303,10 @@ class RwttambahView extends GetView<RwttambahController> {
                             suffixText: 'km',
                             errorText: controller.odometerError.value,
                             errorStyle: const TextStyle(
-                              color: Colors.red,
+                              color: AppColors.red,
                               fontSize: 11,
                             ),
+                            errorMaxLines: 3,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 14,
@@ -302,18 +326,20 @@ class RwttambahView extends GetView<RwttambahController> {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: const BorderSide(
-                                color: Color(0xFF2196F3),
+                                color: AppColors.primaryBlue,
                                 width: 1.5,
                               ),
                             ),
                             errorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: Colors.red),
+                              borderSide: const BorderSide(
+                                color: AppColors.red,
+                              ),
                             ),
                             focusedErrorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: const BorderSide(
-                                color: Colors.red,
+                                color: AppColors.red,
                                 width: 1.5,
                               ),
                             ),
@@ -328,7 +354,11 @@ class RwttambahView extends GetView<RwttambahController> {
                       const SizedBox(height: 20),
 
                       // ================= NAMA BENGKEL =================
-                      _inputLabel("Nama Bengkel"),
+                      _inputLabel(
+                        'Nama Bengkel',
+                        helperText:
+                            'Masukkan nama bengkel atau tempat servis yang menangani kendaraan.',
+                      ),
                       const SizedBox(height: 8),
 
                       Obx(
@@ -351,16 +381,18 @@ class RwttambahView extends GetView<RwttambahController> {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _inputLabel("Total Biaya"),
+                            _inputLabel(
+                              'Total Biaya',
+                              helperText:
+                                  'Masukkan total biaya servis dalam angka Rupiah tanpa titik atau huruf.',
+                            ),
                             const SizedBox(height: 8),
 
                             TextField(
                               controller: controller.biayaController,
                               keyboardType: TextInputType.number,
                               inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                  RegExp(r'[a-zA-Z0-9]'),
-                                ),
+                                FilteringTextInputFormatter.digitsOnly,
                               ],
 
                               style: const TextStyle(fontSize: 12),
@@ -369,9 +401,10 @@ class RwttambahView extends GetView<RwttambahController> {
                                 errorText:
                                     controller.biayaError.value, // Inline error
                                 errorStyle: const TextStyle(
-                                  color: Colors.red,
+                                  color: AppColors.red,
                                   fontSize: 11,
                                 ),
+                                errorMaxLines: 3,
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 14,
@@ -391,20 +424,20 @@ class RwttambahView extends GetView<RwttambahController> {
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   borderSide: const BorderSide(
-                                    color: Color(0xFF2196F3),
+                                    color: AppColors.primaryBlue,
                                     width: 1.5,
                                   ),
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   borderSide: const BorderSide(
-                                    color: Colors.red,
+                                    color: AppColors.red,
                                   ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   borderSide: const BorderSide(
-                                    color: Colors.red,
+                                    color: AppColors.red,
                                     width: 1.5,
                                   ),
                                 ),
@@ -416,7 +449,11 @@ class RwttambahView extends GetView<RwttambahController> {
                       }),
 
                       // ================= STATUS DENGAN PLACEHOLDER =================
-                      _inputLabel("Status"),
+                      _inputLabel(
+                        'Status',
+                        helperText:
+                            'Pilih status pekerjaan servis yang sesuai.',
+                      ),
                       const SizedBox(height: 8),
 
                       Obx(() {
@@ -462,9 +499,10 @@ class RwttambahView extends GetView<RwttambahController> {
                             filled: !controller.isStatusDropdownEnabled,
                             errorText: controller.statusError.value,
                             errorStyle: const TextStyle(
-                              color: Colors.red,
+                              color: AppColors.red,
                               fontSize: 11,
                             ),
+                            errorMaxLines: 3,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 14,
@@ -484,18 +522,20 @@ class RwttambahView extends GetView<RwttambahController> {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: const BorderSide(
-                                color: Color(0xFF2196F3),
+                                color: AppColors.primaryBlue,
                                 width: 1.5,
                               ),
                             ),
                             errorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: Colors.red),
+                              borderSide: const BorderSide(
+                                color: AppColors.red,
+                              ),
                             ),
                             focusedErrorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: const BorderSide(
-                                color: Colors.red,
+                                color: AppColors.red,
                                 width: 1.5,
                               ),
                             ),
@@ -503,29 +543,47 @@ class RwttambahView extends GetView<RwttambahController> {
                         );
                       }),
 
-                      const SizedBox(height: 50),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
 
-                      // ================= TOMBOL SIMPAN =================
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2196F3),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
+              // ================= TOMBOL SIMPAN (STICKY DI BAWAH) =================
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryBlue,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      if (controller.isEdit.value) {
+                        controller.updateRiwayat();
+                      } else {
+                        controller.simpanRiwayat();
+                      }
+                    },
+                    child: Obx(
+                      () => controller.isLoading.value
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
                               ),
-                            ),
-                            onPressed: () {
-                              if (controller.isEdit.value) {
-                                controller.updateRiwayat();
-                              } else {
-                                controller.simpanRiwayat();
-                              }
-                            },
-                            child: const Text(
+                            )
+                          : const Text(
                               "Simpan",
                               style: TextStyle(
                                 color: Colors.white,
@@ -533,10 +591,7 @@ class RwttambahView extends GetView<RwttambahController> {
                                 fontSize: 16,
                               ),
                             ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -547,9 +602,10 @@ class RwttambahView extends GetView<RwttambahController> {
     );
   }
 
-  Widget _inputLabel(String title) {
-    return Text(
-      title,
+  Widget _inputLabel(String title, {required String helperText}) {
+    return FormLabelWithTooltip(
+      label: title,
+      message: helperText,
       style: const TextStyle(
         fontWeight: FontWeight.w400,
         fontSize: 12,
@@ -573,7 +629,8 @@ class RwttambahView extends GetView<RwttambahController> {
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.grey, fontSize: 12),
         errorText: errorText, // Set inline validasi
-        errorStyle: const TextStyle(color: Colors.red, fontSize: 11),
+        errorStyle: const TextStyle(color: AppColors.red, fontSize: 11),
+        errorMaxLines: 3,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
@@ -588,15 +645,18 @@ class RwttambahView extends GetView<RwttambahController> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF2196F3), width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.primaryBlue,
+            width: 1.5,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.red),
+          borderSide: const BorderSide(color: AppColors.red),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.red, width: 1.5),
         ),
       ),
       style: const TextStyle(

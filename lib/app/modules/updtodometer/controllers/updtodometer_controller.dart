@@ -12,7 +12,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dart';
 import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
 import 'package:capbatu/app/services/connectivity_service.dart';
+import 'package:capbatu/app/services/local_notification_service.dart';
 import 'package:capbatu/app/widgets/app_snackbar.dart';
+import 'package:capbatu/app/widgets/app_feedback_widgets.dart';
 
 class UpdtodometerController extends GetxController {
   final box = GetStorage();
@@ -48,7 +50,7 @@ class UpdtodometerController extends GetxController {
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
-        Get.snackbar("Error", "Kamera tidak ditemukan");
+        AppFeedback.cameraUnavailable(message: 'Kamera tidak ditemukan.');
         return;
       }
 
@@ -68,7 +70,7 @@ class UpdtodometerController extends GetxController {
       // Panggil fungsi loop scanning yang benar
       startLiveScanningLoop();
     } catch (e) {
-      Get.snackbar("Error Kamera", e.toString());
+      AppFeedback.cameraUnavailable();
     }
   }
 
@@ -132,11 +134,11 @@ class UpdtodometerController extends GetxController {
 
         await disposeCamera();
         pageState.value = 1; // Pindah ke layar hasil
-        Get.snackbar("Berhasil", "Odometer otomatis terdeteksi!");
+        AppSnackbar.success('Odometer otomatis terdeteksi!');
         return;
       }
     } catch (e) {
-      print("Gagal memproses frame loop: $e");
+      // Pemindaian akan mencoba kembali pada frame berikutnya.
     } finally {
       _isProcessing = false;
     }
@@ -223,6 +225,9 @@ class UpdtodometerController extends GetxController {
       final vehicleId = Get.arguments;
       final token = box.read("token");
 
+      final cleanText = odometerController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+      final parsedInt = int.tryParse(cleanText) ?? (double.tryParse(cleanText)?.round() ?? 0);
+
       final response = await http.put(
         Uri.parse("$baseUrl/api/vehicle/update-odometer"),
         headers: {
@@ -231,13 +236,17 @@ class UpdtodometerController extends GetxController {
         },
         body: jsonEncode({
           "vehicle_id": vehicleId,
-          "new_odometer": int.tryParse(odometerController.text) ?? 0,
+          "new_odometer": parsedInt,
           "odometer_image": odometerImageUrl.value,
         }),
       );
 
       if (response.statusCode == 200) {
-        final newKm = int.tryParse(odometerController.text) ?? 0;
+        final newKm = parsedInt;
+        final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+        box.write('last_odometer_update_date', todayStr);
+        await LocalNotificationService.cancelOdometerReminderToday();
+
         if (Get.isRegistered<HomeController>()) {
           final homeC = Get.find<HomeController>();
           homeC.odometer.value = newKm;
@@ -251,11 +260,18 @@ class UpdtodometerController extends GetxController {
         Get.offNamed('/mainscreen', arguments: 0);
         AppSnackbar.success("Odometer berhasil diperbarui.");
       } else {
-        Get.snackbar("Error", "Gagal memperbarui odometer");
+        String message = 'Gagal memperbarui odometer.';
+        try {
+          final data = jsonDecode(response.body);
+          message = data['message'] ?? data['error'] ?? message;
+        } catch (_) {}
+        AppFeedback.odometerUpdateFailed(message: message);
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Gagal memperbarui odometer");
+        AppFeedback.odometerUpdateFailed(
+          message: 'Gagal memperbarui odometer, periksa koneksi Anda.',
+        );
       }
     } finally {
       isLoading.value = false;

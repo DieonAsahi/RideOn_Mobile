@@ -1,9 +1,8 @@
-import 'dart:ui'; // Wajib di-import untuk ImageFilter (efek blur)
-
-import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:get/get.dart';
-
+import 'package:flutter/material.dart';
 import '../controllers/bengkel_controller.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 
 class BengkelView extends GetView<BengkelController> {
   const BengkelView({super.key});
@@ -21,15 +20,27 @@ class BengkelView extends GetView<BengkelController> {
           return const SizedBox.shrink();
         }
 
-        return FloatingActionButton.extended(
-          backgroundColor: const Color(0xFF2196F3),
-          onPressed: () {
-            Get.toNamed('/petabengkel');
-          },
-          icon: const Icon(Icons.map_outlined, color: Colors.white),
-          label: const Text(
-            "Lihat Peta",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 24),
+          child: SizedBox(
+            height: 40,
+            child: FloatingActionButton.extended(
+              backgroundColor: AppColors.primaryBlue,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              onPressed: () {
+                Get.toNamed('/petabengkel');
+              },
+              icon: Image.asset('assets/image/peta.png', width: 18, height: 18),
+              label: const Text(
+                "Lihat Peta",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
           ),
         );
       }),
@@ -42,7 +53,7 @@ class BengkelView extends GetView<BengkelController> {
           /// ==========================================
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 30, 16, 25),
+              padding: const EdgeInsets.fromLTRB(16, 30, 16, 0),
               child: Column(
                 children: [
                   Row(
@@ -85,7 +96,7 @@ class BengkelView extends GetView<BengkelController> {
                                     'assets/logo/izin_lokasi.png',
                                     width: 160,
                                     height: 160,
-                                  ),  
+                                  ),
                                   const SizedBox(height: 16),
                                   const Text(
                                     "Izin Lokasi Diperlukan",
@@ -111,7 +122,7 @@ class BengkelView extends GetView<BengkelController> {
                                     onPressed: () =>
                                         controller.requestLocationPermission(),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF2196F3),
+                                      backgroundColor: AppColors.primaryBlue,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
@@ -145,20 +156,30 @@ class BengkelView extends GetView<BengkelController> {
                           TextField(
                             controller: controller.searchController,
                             onChanged: controller.searchBengkel,
+                            textInputAction: TextInputAction.search,
                             decoration: InputDecoration(
                               hintText: "Cari bengkel...",
                               hintStyle: TextStyle(
                                 color: Colors.grey.shade500,
                                 fontSize: 14,
                               ),
-                              suffixIcon: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: Center(
-                                  child: Image.asset(
-                                    "assets/icon/search.png",
-                                    width: 20,
-                                    height: 20,
+                              // PERBAIKAN DI SINI
+                              suffixIcon: GestureDetector(
+                                onTap: () {
+                                  FocusScope.of(context).unfocus();
+                                  controller.searchBengkel(
+                                    controller.searchController.text,
+                                  );
+                                },
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Center(
+                                    child: Image.asset(
+                                      "assets/icon/search.png",
+                                      width: 20,
+                                      height: 20,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -195,12 +216,13 @@ class BengkelView extends GetView<BengkelController> {
                                 String emptyTitle = "";
                                 String emptyDesc = "";
                                 String emptyImage =
-                                    'assets/logo/missing_lokasi.png';
+                                    ""; // Kosongkan default-nya terlebih dahulu
 
                                 if (!controller.isGpsEnabled.value) {
                                   emptyTitle = "Lokasi Perangkat Tidak Aktif";
                                   emptyDesc =
                                       "Aktifkan layanan lokasi perangkat untuk menemukan bengkel terdekat dari lokasi Anda.";
+                                  emptyImage = 'assets/logo/missing_lokasi.png';
                                 } else if (controller
                                     .searchController
                                     .text
@@ -208,10 +230,12 @@ class BengkelView extends GetView<BengkelController> {
                                   emptyTitle = "Bengkel Tidak Ditemukan";
                                   emptyDesc =
                                       "Tidak ada bengkel yang sesuai dengan pencarian Anda.";
+                                  emptyImage = 'assets/logo/bengkel_empty.png';
                                 } else {
                                   emptyTitle = "Belum Ada Bengkel";
                                   emptyDesc =
                                       "Saat ini belum ada data bengkel yang tersedia di sekitar Anda.";
+                                  emptyImage = 'assets/logo/bengkel_empty.png';
                                 }
                                 return Align(
                                   alignment: const Alignment(0.0, -0.3),
@@ -307,19 +331,38 @@ class BengkelView extends GetView<BengkelController> {
                                             topLeft: Radius.circular(18),
                                             topRight: Radius.circular(18),
                                           ),
-                                          child: Image.network(
-                                            item['image'] ?? '',
-                                            height: 150,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) {
-                                              return Container(
-                                                height: 150,
-                                                color: Colors.grey.shade200,
-                                                child: const Icon(Icons.image),
-                                              );
-                                            },
-                                          ),
+                                          child:
+                                              (item['image'] == null ||
+                                                  item['image']
+                                                      .toString()
+                                                      .trim()
+                                                      .isEmpty)
+                                              ? Image.asset(
+                                                  'assets/logo/placeholder.png',
+                                                  height: 150,
+                                                  width: double.infinity,
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : Image.network(
+                                                  item['image'],
+                                                  height: 150,
+                                                  width: double.infinity,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder:
+                                                      (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) {
+                                                        return Image.asset(
+                                                          'assets/logo/rideon_title.png',
+                                                          height: 150,
+                                                          width:
+                                                              double.infinity,
+                                                          fit: BoxFit.cover,
+                                                        );
+                                                      },
+                                                ),
                                         ),
                                         Padding(
                                           padding: const EdgeInsets.all(14),
@@ -339,14 +382,14 @@ class BengkelView extends GetView<BengkelController> {
                                                           item['nama'] ?? '',
                                                           style:
                                                               const TextStyle(
-                                                                fontSize: 16,
+                                                                fontSize: 14,
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .bold,
                                                               ),
                                                         ),
                                                         const SizedBox(
-                                                          height: 4,
+                                                          height: 3,
                                                         ),
                                                         Text(
                                                           item['jenis'] ?? '',
@@ -354,6 +397,7 @@ class BengkelView extends GetView<BengkelController> {
                                                               const TextStyle(
                                                                 color: Colors
                                                                     .black87,
+                                                                fontSize: 12,
                                                               ),
                                                         ),
                                                       ],
@@ -370,44 +414,67 @@ class BengkelView extends GetView<BengkelController> {
                                                       );
                                                     },
                                                     child: Container(
+                                                      width: 32,
+                                                      height: 32,
                                                       padding:
                                                           const EdgeInsets.all(
                                                             7,
                                                           ),
                                                       decoration: BoxDecoration(
-                                                        border: Border.all(
-                                                          color: const Color(
-                                                            0xFF2196F3,
-                                                          ),
-                                                        ),
-                                                        shape: BoxShape.circle,
+                                                        color: AppColors
+                                                            .primaryBlue,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8,
+                                                            ),
                                                       ),
                                                       child: Image.asset(
-                                                        "assets/icon/bagikan.png",
-                                                        width: 18,
-                                                        height: 18,
+                                                        "assets/image/bagikan.png",
+                                                        width: 24,
+                                                        height: 24,
                                                       ),
                                                     ),
                                                   ),
                                                 ],
                                               ),
-                                              const SizedBox(height: 10),
+                                              const SizedBox(height: 8),
                                               Row(
                                                 children: [
-                                                  Text(item['jarak'] ?? ''),
-                                                  const SizedBox(width: 10),
+                                                  Text(
+                                                    item['jarak'] ?? '',
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 5),
+                                                  Text("|"),
+                                                  const SizedBox(width: 5),
                                                   const Icon(
                                                     Icons.star,
                                                     color: Colors.amber,
                                                     size: 18,
                                                   ),
                                                   const SizedBox(width: 3),
-                                                  Text(item['rating'] ?? ''),
+                                                  Text(
+                                                    item['rating'] ?? '',
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                    ),
+                                                  ),
                                                   const SizedBox(width: 3),
                                                   Text(
                                                     item['ulasan'] ?? '',
                                                     style: const TextStyle(
-                                                      color: Colors.black54,
+                                                      fontSize: 12,
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.w400,
                                                     ),
                                                   ),
                                                 ],
@@ -522,7 +589,7 @@ class BengkelView extends GetView<BengkelController> {
                                       },
                                       style: OutlinedButton.styleFrom(
                                         side: const BorderSide(
-                                          color: Color(0xFF2196F3),
+                                          color: AppColors.primaryBlue,
                                           width: 1.5,
                                         ),
                                         shape: RoundedRectangleBorder(
@@ -537,7 +604,7 @@ class BengkelView extends GetView<BengkelController> {
                                       child: const Text(
                                         "Nanti",
                                         style: TextStyle(
-                                          color: Color(0xFF2196F3),
+                                          color: AppColors.primaryBlue,
                                           fontWeight: FontWeight.w400,
                                           fontSize: 16,
                                         ),

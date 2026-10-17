@@ -17,7 +17,8 @@ class NotifModel {
   final String vehiclePlate;
   final int? componentId;
   final String type; // 'schedule_reminder' atau 'daily_warning'
-  final String notificationType; // 'Pengingat Jadwal' atau 'Peringatan Cek Harian'
+  final String
+  notificationType; // 'Pengingat Jadwal' atau 'Peringatan Cek Harian'
   final String image;
   final String status;
   final String title;
@@ -44,7 +45,8 @@ class NotifModel {
   });
 
   factory NotifModel.fromJson(Map<String, dynamic> json) {
-    String iconKey = json["master_components"]?["icon"]?.toString().trim() ?? "";
+    String iconKey =
+        json["master_components"]?["icon"]?.toString().trim() ?? "";
     if (iconKey.endsWith(".png")) {
       iconKey = iconKey.substring(0, iconKey.length - 4);
     }
@@ -73,27 +75,33 @@ class NotifModel {
 
     final created =
         DateTime.tryParse(json["created_at"]?.toString() ?? '') ??
-            DateTime.now();
+        DateTime.now();
 
-    final isSchedule = json["severity"] == "Pengingat" ||
+    final isSchedule =
+        json["severity"] == "Pengingat" ||
         (json["title"]?.toString().toLowerCase().contains("jadwal") ?? false) ||
         json["type"] == "schedule_reminder";
 
     return NotifModel(
       id: json["id"] ?? 0,
       vehicleId: json["vehicle_id"]?.toString() ?? "",
-      vehicleName: json["vehicle_name"]?.toString() ??
+      vehicleName:
+          json["vehicle_name"]?.toString() ??
           (json["vehicles"] != null
-              ? "${json["vehicles"]["brand"] ?? ""} ${json["vehicles"]["model"] ?? ""}".trim()
+              ? "${json["vehicles"]["brand"] ?? ""} ${json["vehicles"]["model"] ?? ""}"
+                    .trim()
               : "Kendaraan"),
-      vehiclePlate: json["vehicle_plate"]?.toString() ??
+      vehiclePlate:
+          json["vehicle_plate"]?.toString() ??
           (json["vehicles"]?["plate_number"]?.toString() ?? "-"),
       componentId: json["component_id"] != null
           ? int.tryParse(json["component_id"].toString())
           : null,
-      type: json["type"]?.toString() ??
+      type:
+          json["type"]?.toString() ??
           (isSchedule ? "schedule_reminder" : "daily_warning"),
-      notificationType: json["notification_type"]?.toString() ??
+      notificationType:
+          json["notification_type"]?.toString() ??
           (isSchedule ? "Pengingat Jadwal" : "Peringatan Cek Harian"),
       image: img,
       status: json["severity"] ?? (isSchedule ? "Pengingat" : "Darurat"),
@@ -143,10 +151,7 @@ class TimeSectionGroup {
   final String title; // "Hari Ini", "Minggu Ini", "Bulan Ini", "Lebih Lama"
   final List<NotifModel> items;
 
-  TimeSectionGroup({
-    required this.title,
-    required this.items,
-  });
+  TimeSectionGroup({required this.title, required this.items});
 }
 
 class NotifController extends GetxController with WidgetsBindingObserver {
@@ -172,7 +177,10 @@ class NotifController extends GetxController with WidgetsBindingObserver {
     // Filter kendaraan terpilih saat ini
     if (currentVehicleId.isNotEmpty) {
       list = list
-          .where((notif) => notif.vehicleId.isEmpty || notif.vehicleId == currentVehicleId)
+          .where(
+            (notif) =>
+                notif.vehicleId.isEmpty || notif.vehicleId == currentVehicleId,
+          )
           .toList();
     }
 
@@ -303,8 +311,6 @@ class NotifController extends GetxController with WidgetsBindingObserver {
         headers: {"Authorization": "Bearer $token"},
       );
 
-      print("STATUS CODE : ${response.statusCode}");
-
       if (response.statusCode == 200) {
         try {
           final List data = jsonDecode(response.body);
@@ -313,7 +319,9 @@ class NotifController extends GetxController with WidgetsBindingObserver {
           // Pastikan hanya kendaraan yang sedang dipilih saat ini
           if (currentVehicleId.isNotEmpty) {
             newList = newList
-                .where((n) => n.vehicleId.isEmpty || n.vehicleId == currentVehicleId)
+                .where(
+                  (n) => n.vehicleId.isEmpty || n.vehicleId == currentVehicleId,
+                )
                 .toList();
           }
 
@@ -321,13 +329,9 @@ class NotifController extends GetxController with WidgetsBindingObserver {
             notifList.value = newList;
           }
           updateUnreadBadge();
-        } catch (e, s) {
-          print("FROM JSON ERROR: $e");
-          print(s);
-        }
+        } catch (_) {}
       }
     } catch (e) {
-      print("Error fetchNotifications: $e");
       ConnectivityService.handleNetworkError(e);
     } finally {
       if (shouldShowLoading) {
@@ -377,7 +381,7 @@ class NotifController extends GetxController with WidgetsBindingObserver {
         updateUnreadBadge();
       }
     } catch (error) {
-      print('Request status baca notifikasi gagal: $error');
+      ConnectivityService.handleNetworkError(error);
     }
   }
 
@@ -391,6 +395,15 @@ class NotifController extends GetxController with WidgetsBindingObserver {
       if (Get.isRegistered<HomeController>()) {
         Get.find<HomeController>().syncVehicleFromStorage();
       }
+    }
+
+    if (notif.type == 'odometer_reminder' ||
+        notif.title.toLowerCase().contains('odometer') ||
+        notif.desc.toLowerCase().contains('odometer')) {
+      Get.toNamed('/updtodometer')?.then((_) {
+        getNotifications(silent: true);
+      });
+      return;
     }
 
     Get.toNamed(

@@ -273,23 +273,51 @@ class DtlperformaController extends GetxController {
     v['daily_usage'] = '$formatted Km';
   }
 
-  /// Menghitung persentase perubahan performa dari minggu lalu
+  /// Mencari skor performa terakhir yang tercatat pada atau sebelum [cutoff].
+  /// Jika ada input baru di tanggal tersebut (sebelum cutoff), nilai terbaru tersebut yang diambil.
+  /// Jika tidak ada input baru, nilai terakhir dari waktu sebelumnya dibawa (forward-fill / carry over).
+  double? _getScoreUpToDate(DateTime cutoff) {
+    if (_history.isEmpty) {
+      return currentScore.value > 0 ? currentScore.value : null;
+    }
+
+    // _history sudah terurut ascending berdasarkan created_at
+    Map<String, dynamic>? latestBeforeCutoff;
+    for (final item in _history) {
+      final date = _recordDate(item);
+      if (date != null && !date.isAfter(cutoff)) {
+        latestBeforeCutoff = item;
+      }
+    }
+
+    if (latestBeforeCutoff != null) {
+      return _recordScore(latestBeforeCutoff);
+    }
+
+    // Jika cutoff berada pada hari yang sama dengan record pertama
+    final firstDate = _recordDate(_history.first);
+    if (firstDate != null) {
+      final isSameDay = firstDate.year == cutoff.year &&
+          firstDate.month == cutoff.month &&
+          firstDate.day == cutoff.day;
+      if (isSameDay) {
+        return _recordScore(_history.first);
+      }
+    }
+
+    return null;
+  }
+
+  /// Menghitung persentase perubahan performa dari 7 hari yang lalu
+  /// menggunakan data carry-over pada hari tersebut
   void _calculateWeeklyChange() {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final start = today.subtract(const Duration(days: 14));
-    final end = today.subtract(const Duration(days: 7));
+    final sevenDaysAgo = now.subtract(const Duration(days: 7));
+    final scoreLastWeek = _getScoreUpToDate(sevenDaysAgo);
 
-    final previousWeek = _history.where((item) {
-      final date = _recordDate(item);
-      return date != null && !date.isBefore(start) && date.isBefore(end);
-    }).map(_recordScore).whereType<double>().toList();
-
-    if (previousWeek.isNotEmpty) {
-      final avgPrevious = previousWeek.reduce((a, b) => a + b) / previousWeek.length;
-      weeklyChangeValue.value = _roundToOneDecimal(currentScore.value - avgPrevious);
+    if (scoreLastWeek != null) {
+      weeklyChangeValue.value = _roundToOneDecimal(currentScore.value - scoreLastWeek);
     } else if (_history.isNotEmpty) {
-      // Gunakan selisih dari catatan performa awal jika ada
       final firstScore = _recordScore(_history.first) ?? currentScore.value;
       weeklyChangeValue.value = _roundToOneDecimal(currentScore.value - firstScore);
     } else {
@@ -301,32 +329,51 @@ class DtlperformaController extends GetxController {
 
   // ==========================================
   // LOGIKA CHART (MINGGU, BULAN, TAHUN)
+  // Forward Fill / Carry Over: data hari sebelumnya
+  // tetap digunakan jika hari tersebut tidak ada update.
   // ==========================================
   void _buildChartPoints() {
     final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
 
     final List<String> labels;
     final List<PerformancePoint> points = [];
 
     switch (selectedFilter.value) {
       case 'Bulan':
+        // 4 Minggu dalam bulan berjalan: Mg 1, Mg 2, Mg 3, Mg 4
         labels = const ['Mg 1', 'Mg 2', 'Mg 3', 'Mg 4'];
         final currentWeekIdx = ((now.day - 1) ~/ 7).clamp(0, 3);
+        final lastDayOfMonth = DateTime(now.year, now.month + 1, 0).day;
+        final weekCutoffDays = [7, 14, 21, lastDayOfMonth];
 
         for (var i = 0; i < labels.length; i++) {
           if (i > currentWeekIdx) {
+            // Minggu masa depan -> null
             points.add(PerformancePoint(label: labels[i], score: null));
           } else if (i == currentWeekIdx) {
-            points.add(PerformancePoint(label: labels[i], score: currentScore.value));
+            // Minggu saat ini -> periksa hingga sekarang (now)
+            final score = _getScoreUpToDate(now) ?? currentScore.value;
+            points.add(PerformancePoint(label: labels[i], score: score));
           } else {
-            // Estimasi skor minggu lalu
-            final pastScore = (currentScore.value - (currentWeekIdx - i) * 2.5).clamp(20.0, 100.0);
-            points.add(PerformancePoint(label: labels[i], score: pastScore));
+            // Minggu yang sudah lewat -> cutoff akhir minggu (jam 23:59:59)
+            final cutoffDate = DateTime(
+              now.year,
+              now.month,
+              weekCutoffDays[i],
+              23,
+              59,
+              59,
+              999,
+            );
+            final score = _getScoreUpToDate(cutoffDate);
+            points.add(PerformancePoint(label: labels[i], score: score));
           }
         }
         break;
 
       case 'Tahun':
+        // 12 Bulan dalam tahun berjalan
         labels = const [
           'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
           'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
@@ -334,32 +381,63 @@ class DtlperformaController extends GetxController {
         final currentMonthIdx = now.month - 1;
 
         for (var i = 0; i < labels.length; i++) {
+          final monthNum = i + 1;
           if (i > currentMonthIdx) {
+            // Bulan masa depan -> null
             points.add(PerformancePoint(label: labels[i], score: null));
           } else if (i == currentMonthIdx) {
-            points.add(PerformancePoint(label: labels[i], score: currentScore.value));
+            // Bulan saat ini -> periksa hingga sekarang (now)
+            final score = _getScoreUpToDate(now) ?? currentScore.value;
+            points.add(PerformancePoint(label: labels[i], score: score));
           } else {
-            // Skor bulan-bulan sebelumnya
-            final pastScore = (currentScore.value - (currentMonthIdx - i) * 1.5).clamp(30.0, 100.0);
-            points.add(PerformancePoint(label: labels[i], score: pastScore));
+            // Bulan lewat -> cutoff akhir bulan jam 23:59:59
+            final lastDay = DateTime(now.year, monthNum + 1, 0).day;
+            final cutoffDate = DateTime(
+              now.year,
+              monthNum,
+              lastDay,
+              23,
+              59,
+              59,
+              999,
+            );
+            final score = _getScoreUpToDate(cutoffDate);
+            points.add(PerformancePoint(label: labels[i], score: score));
           }
         }
         break;
 
-      default: // 'Minggu'
+      default: // 'Minggu' (7 hari: Sen, Sel, Rab, Kam, Jum, Sab, Min)
         labels = const ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
         // DateTime.weekday: 1 = Senin, 7 = Minggu
         final currentDayIdx = now.weekday - 1;
+        final monday = todayStart.subtract(Duration(days: currentDayIdx));
 
         for (var i = 0; i < labels.length; i++) {
+          final dayDate = monday.add(Duration(days: i));
+
           if (i > currentDayIdx) {
+            // Hari esok / lusa yang belum terjadi -> null
             points.add(PerformancePoint(label: labels[i], score: null));
           } else if (i == currentDayIdx) {
-            points.add(PerformancePoint(label: labels[i], score: currentScore.value));
+            // Hari ini: jika user input data jam 12 siang atau kapanpun, skor itu yang diambil.
+            // Jika belum ada input hari ini, carry-over dari data terakhir kali.
+            final score = _getScoreUpToDate(now) ?? currentScore.value;
+            points.add(PerformancePoint(label: labels[i], score: score));
           } else {
-            // Skor hari sebelumnya dalam minggu ini
-            final pastScore = (currentScore.value - (currentDayIdx - i) * 1.0).clamp(10.0, 100.0);
-            points.add(PerformancePoint(label: labels[i], score: pastScore));
+            // Hari yang sudah lewat: periksa data di akhir hari tersebut (23:59:59).
+            // Jika tidak ada data baru di hari itu, bawa skor terakhir sebelumnya (carry-over).
+            final endOfDay = DateTime(
+              dayDate.year,
+              dayDate.month,
+              dayDate.day,
+              23,
+              59,
+              59,
+              999,
+            );
+            final score = _getScoreUpToDate(endOfDay);
+            points.add(PerformancePoint(label: labels[i], score: score));
           }
         }
     }
@@ -374,6 +452,8 @@ class DtlperformaController extends GetxController {
   // DUMMY / MOCK RESPONSE DATA
   // ==========================================
   void _applyDummyData() {
+    final now = DateTime.now();
+
     final mockVehicle = <String, dynamic>{
       'vehicle_image': '',
       'brand': 'Honda',
@@ -383,19 +463,34 @@ class DtlperformaController extends GetxController {
       'current_odometer': 12500,
       'initial_odometer': 10000,
       'estimated_km_per_day': 20,
-      'last_odometer_update': DateTime.now().subtract(const Duration(days: 15)).toIso8601String(),
-      'created_at': DateTime.now().subtract(const Duration(days: 120)).toIso8601String(),
+      'last_odometer_update': now.subtract(const Duration(days: 4)).toIso8601String(),
+      'created_at': now.subtract(const Duration(days: 120)).toIso8601String(),
     };
 
     calculateDailyUsage(mockVehicle);
     vehicle.assignAll(mockVehicle);
 
     currentScore.value = 85.0;
-    weeklyChangeValue.value = 5.0; // +5% dari minggu lalu
+
+    // Simulasi data riil:
+    // Update di 14 hari lalu (90%), update lagi di 4 hari lalu (85%).
+    // Dari tanggal tersebut hingga hari ini dibawa dengan carry-over murni tanpa formula dummy!
+    _history = [
+      {
+        'created_at': now.subtract(const Duration(days: 14)).toIso8601String(),
+        'performance_percent': 90.0,
+      },
+      {
+        'created_at': now.subtract(const Duration(days: 4)).toIso8601String(),
+        'performance_percent': 85.0,
+      },
+    ];
+
+    _calculateWeeklyChange();
 
     latestService.value = {
       'title': 'Ganti Oli & Busi',
-      'service_date': DateTime.now().subtract(const Duration(days: 10)).toIso8601String(),
+      'service_date': now.subtract(const Duration(days: 10)).toIso8601String(),
       'workshop_name': 'Bengkel AHASS Motor',
       'price': 150000,
       'master_components': {

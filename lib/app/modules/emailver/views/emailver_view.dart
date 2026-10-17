@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 import '../controllers/emailver_controller.dart';
+import '../../../widgets/form_label_with_tooltip.dart';
 
 class EmailverView extends GetView<EmailverController> {
   const EmailverView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const primaryBlue = Color(0xFF2196F3);
+    const primaryBlue = AppColors.primaryBlue;
 
     return Scaffold(
       backgroundColor: Colors.white, // Latar belakang putih bersih
@@ -56,6 +58,17 @@ class EmailverView extends GetView<EmailverController> {
               const SizedBox(height: 40),
 
               // ================= TEXT FIELD EMAIL =================
+              const FormLabelWithTooltip(
+                label: 'Email',
+                message:
+                    'Masukkan alamat email akun yang terdaftar agar kami dapat mengirim kode pemulihan.',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
               Obx(
                 () => TextField(
                   controller: controller.emailController,
@@ -77,7 +90,7 @@ class EmailverView extends GetView<EmailverController> {
                     backgroundColor: primaryBlue,
                     elevation: 2,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(50),
                     ),
                   ),
                   onPressed: controller.sendOtp,
@@ -104,7 +117,7 @@ class EmailverView extends GetView<EmailverController> {
       hintText: hint,
       errorText: errorText,
       errorMaxLines: 3,
-      errorStyle: const TextStyle(color: Colors.red, fontSize: 12),
+      errorStyle: const TextStyle(color: AppColors.red, fontSize: 12),
       hintStyle: TextStyle(
         color: Colors.grey.shade400,
         fontSize: 14,
@@ -123,15 +136,15 @@ class EmailverView extends GetView<EmailverController> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(color: Color(0xFF2196F3), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(color: Colors.red, width: 1.0),
+        borderSide: const BorderSide(color: AppColors.red, width: 1.0),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.red, width: 1.5),
       ),
     );
   }

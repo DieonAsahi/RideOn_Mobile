@@ -45,191 +45,192 @@ class ProfilView extends GetView<ProfilController> {
                     constraints: const BoxConstraints(maxWidth: 600),
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Obx(() {
-                      if (controller.isLoading.value) {
-                        return const ProfileSkeleton();
-                      }
+                        if (controller.isLoading.value) {
+                          return const ProfileSkeleton();
+                        }
 
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Card Profil (Foto, Nama, Bio)
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Colors.grey.shade300,
-                                width: 1.0,
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Card Profil (Foto, Nama, Bio)
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 1.0,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Obx(
+                                    () => Container(
+                                      // Menambahkan garis pinggir (border) biru
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: AppColors.primary,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                      child: CircleAvatar(
+                                        radius: 30,
+                                        backgroundColor: Colors.grey.shade200,
+                                        backgroundImage:
+                                            controller.imageUrl.value.isNotEmpty
+                                            ? NetworkImage(
+                                                controller.imageUrl.value,
+                                              )
+                                            : const AssetImage(
+                                                    "assets/images/profile.jpg",
+                                                  )
+                                                  as ImageProvider,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 24),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Obx(
+                                          () => Text(
+                                            controller.name.value,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Obx(
+                                          () => Text(
+                                            controller.bio.value,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade700,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Obx(
-                                  () => Container(
-                                    // Menambahkan garis pinggir (border) biru
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: AppColors.primary,
-                                        width: 2.0,
-                                      ),
-                                    ),
-                                    child: CircleAvatar(
-                                      radius: 30,
-                                      backgroundColor: Colors.grey.shade200,
-                                      backgroundImage:
-                                          controller.imageUrl.value.isNotEmpty
-                                          ? NetworkImage(
-                                              controller.imageUrl.value,
-                                            )
-                                          : const AssetImage(
-                                                  "assets/images/profile.jpg",
-                                                )
-                                                as ImageProvider,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 24),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Obx(
-                                        () => Text(
-                                          controller.name.value,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Obx(
-                                        () => Text(
-                                          controller.bio.value,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey.shade700,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
 
-                          const SizedBox(height: 18),
+                            const SizedBox(height: 18),
 
-                          // Section: Akun Saya
-                          _buildSectionTitle("Akun Saya"),
-                          ProfileMenuTile(
-                            title: "Edit Profil",
-                            onTap: () async {
-                              FocusScope.of(context).unfocus();
-                              await Get.toNamed('/editprofil');
-                              controller.getProfile(force: true);
-                            },
-                          ),
-                          ProfileMenuTile(
-                            title: "Ganti Password",
-                            onTap: () {
-                              FocusScope.of(context).unfocus();
-                              Get.toNamed(
-                                '/emailver',
-                                arguments: {'from': 'profile'},
-                              );
-                            },
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          // Section: Pengaturan
-                          _buildSectionTitle("Pengaturan"),
-                          ProfileMenuTile(
-                            title: "Pengingat Servis",
-                            trailing: CustomSwitch(
-                              value: false,
-                              activeColor: const Color(0xFF2583FD),
-                              width: 48,
-                              height: 24,
-                              onChanged: (value) {},
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          // Section: Lainnya
-                          _buildSectionTitle("Lainnya"),
-                          ProfileMenuTile(title: "FAQ", onTap: () {}),
-
-                          const SizedBox(height: 24),
-
-                          // Tombol Keluar (Logout)
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {
+                            // Section: Akun Saya
+                            _buildSectionTitle("Akun Saya"),
+                            ProfileMenuTile(
+                              title: "Edit Profil",
+                              onTap: () async {
                                 FocusScope.of(context).unfocus();
-                                _showLogoutDialog();
+                                await Get.toNamed('/editprofil');
+                                controller.getProfile(force: true);
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.red,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
+                            ),
+                            ProfileMenuTile(
+                              title: "Ganti Password",
+                              onTap: () {
+                                FocusScope.of(context).unfocus();
+                                Get.toNamed(
+                                  '/emailver',
+                                  arguments: {'from': 'profile'},
+                                );
+                              },
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            // Section: Pengaturan
+                            _buildSectionTitle("Pengaturan"),
+                            ProfileMenuTile(
+                              title: "Pengingat Servis",
+                              trailing: CustomSwitch(
+                                value: false,
+                                activeColor: AppColors.primaryBlue,
+                                width: 48,
+                                height: 24,
+                                onChanged: (value) {},
                               ),
-                              child: const Text(
-                                "Keluar",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            // Section: Lainnya
+                            _buildSectionTitle("Lainnya"),
+                            ProfileMenuTile(title: "FAQ", onTap: () {}),
+
+                            const SizedBox(height: 24),
+
+                            // Tombol Keluar (Logout)
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  FocusScope.of(context).unfocus();
+                                  _showLogoutDialog();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.red,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: const Text(
+                                  "Keluar",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
 
-                          // Versi Aplikasi
-                          Padding(
-                            padding: const EdgeInsets.only(top: 24, bottom: 40),
-                            child: Center(
-                              child: Text(
-                                "Versi 1.0.0",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade500,
+                            // Versi Aplikasi
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: 24,
+                                bottom: 40,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "Versi 1.0.0",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade500,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
 
-                          // Ruang bawah agar menu tidak tertutup bottom navigation bar
-                          const SizedBox(height: 50),
-                        ],
-                      );
-                    }),
+                            // Ruang bawah agar menu tidak tertutup bottom navigation bar
+                            const SizedBox(height: 50),
+                          ],
+                        );
+                      }),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildSectionTitle(String title) {
@@ -382,7 +383,7 @@ class CustomSwitch extends StatelessWidget {
     super.key,
     required this.value,
     required this.onChanged,
-    this.activeColor = const Color(0xFF2583FD),
+    this.activeColor = AppColors.primaryBlue,
     this.inactiveColor = const Color(
       0xFFE5E5EA,
     ), // Warna abu-abu terang sesuai gambar

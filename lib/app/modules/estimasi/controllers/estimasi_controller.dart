@@ -43,11 +43,22 @@ class ProductModel {
 
 class EstimasiController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
-  
+
   RxString search = ''.obs;
   RxBool isLoading = false.obs;
 
   final products = <ProductModel>[].obs;
+
+  // Daftar kategori yang tersedia
+  final List<String> categories = [
+    'Semua',
+    'Kampas Rem',
+    'Oli',
+    'Busi',
+    'Filter',
+    'CVT',
+  ];
+  RxString selectedCategory = 'Semua'.obs;
 
   @override
   void onInit() {
@@ -63,22 +74,16 @@ class EstimasiController extends GetxController {
         Uri.parse("$baseUrl/api/kerusakan/estimasi"),
       );
 
-      print("STATUS : ${response.statusCode}");
-      print("BODY : ${response.body}");
-
       final body = jsonDecode(response.body);
 
       if (response.statusCode == 200 && body["success"] == true) {
         products.assignAll(
           (body["data"] as List).map((e) => ProductModel.fromJson(e)).toList(),
         );
-
-        print("TOTAL DATA : ${products.length}");
       } else {
         Get.snackbar("Error", "Gagal mengambil data estimasi");
       }
     } catch (e) {
-      print(e);
       if (!ConnectivityService.handleNetworkError(e)) {
         Get.snackbar("Error", "Gagal mengambil data estimasi");
       }
@@ -87,17 +92,38 @@ class EstimasiController extends GetxController {
     }
   }
 
-  List<ProductModel> get filteredProducts {
-    if (search.value.isEmpty) return products;
+  // Fungsi untuk mengganti kategori
+  void setCategory(String category) {
+    selectedCategory.value = category;
+  }
 
-    return products.where((item) {
-      return item.title.toLowerCase().contains(search.value.toLowerCase());
-    }).toList();
+  // Getter data dengan filter text search & kategori aktif
+  List<ProductModel> get filteredProducts {
+    List<ProductModel> filtered = products;
+
+    if (selectedCategory.value != 'Semua') {
+      filtered = filtered.where((item) {
+        return item.componentName.toLowerCase().contains(
+              selectedCategory.value.toLowerCase(),
+            ) ||
+            item.title.toLowerCase().contains(
+              selectedCategory.value.toLowerCase(),
+            );
+      }).toList();
+    }
+
+    if (search.value.isNotEmpty) {
+      filtered = filtered.where((item) {
+        return item.title.toLowerCase().contains(search.value.toLowerCase());
+      }).toList();
+    }
+
+    return filtered;
   }
 
   void toggleProduct(ProductModel product) {
     product.isSelected.toggle();
-    products.refresh();
+    products.refresh(); // Memaksa update observer
   }
 
   int get totalSelected => products.where((e) => e.isSelected.value).length;

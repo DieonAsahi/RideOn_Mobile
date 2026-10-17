@@ -15,6 +15,9 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
   final isLoading = false.obs;
   final searchController = TextEditingController();
   final filteredBengkelList = <Map<String, dynamic>>[].obs;
+  Position? _userPosition;
+  Timer? _searchDebounce;
+  int _searchRequestVersion = 0;
 
   // Status Lokasi & Izin
   var isPermissionGranted = true.obs;
@@ -47,6 +50,7 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
     _serviceStatusSubscription?.cancel();
+    _searchDebounce?.cancel();
     searchController.dispose();
     super.onClose();
   }
@@ -83,18 +87,71 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
   }
 
   void searchBengkel(String keyword) {
-    if (keyword.isEmpty) {
+    final query = keyword.trim();
+    _searchDebounce?.cancel();
+
+    if (query.isEmpty) {
+      _searchRequestVersion++;
       filteredBengkelList.assignAll(bengkelList);
       return;
     }
 
-    filteredBengkelList.assignAll(
-      bengkelList.where(
-        (item) => item['nama'].toString().toLowerCase().contains(
-          keyword.toLowerCase(),
-        ),
-      ),
+    final requestVersion = ++_searchRequestVersion;
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () async {
+      try {
+        final results = await _searchWorkshops(query);
+
+        // Ignore an older response after the user changes the keyword.
+        if (requestVersion != _searchRequestVersion ||
+            searchController.text.trim() != query) {
+          return;
+        }
+
+        filteredBengkelList.assignAll(results);
+      } catch (e) {
+        if (requestVersion == _searchRequestVersion) {
+          ConnectivityService.handleNetworkError(e);
+        }
+      }
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> _searchWorkshops(String keyword) async {
+    final queryParameters = <String, dynamic>{'keyword': keyword};
+    if (_userPosition != null) {
+      queryParameters.addAll({
+        'lat': _userPosition!.latitude,
+        'lng': _userPosition!.longitude,
+      });
+    }
+
+    final response = await dio.get(
+      "$baseUrl/api/workshop/search",
+      queryParameters: queryParameters,
     );
+    final rawData = response.data is Map ? response.data['data'] : null;
+    if (rawData is! List) return [];
+
+    return rawData
+        .map((item) => _toBengkelItem(Map<String, dynamic>.from(item as Map)))
+        .toList();
+  }
+
+  Map<String, dynamic> _toBengkelItem(Map<String, dynamic> item) {
+    return {
+      'id': item['id'],
+      'nama': item['title'] ?? '',
+      'jenis': item['category'] ?? '',
+      'jarak': item['distance_km'] == null ? '-' : "${item['distance_km']} km",
+      'rating': (item['total_score'] ?? 0).toString(),
+      'ulasan': "(${item['review_count'] ?? 0} Ulasan)",
+      'image': item['image_url'] ?? '',
+      'address': item['address'] ?? '',
+      'phone': item['phone'] ?? '',
+      'latitude': item['latitude'],
+      'longitude': item['longitude'],
+      'google_maps_url': item['google_maps_url'] ?? '',
+    };
   }
 
   Future<void> requestLocationPermission() async {
@@ -149,13 +206,14 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
+      _userPosition = position;
 
       final response = await dio.get(
         "$baseUrl/api/workshop/nearest",
         queryParameters: {
           "lat": position.latitude,
           "lng": position.longitude,
-          "limit": 20,
+          "limit": 100,
         },
       );
 
@@ -164,20 +222,9 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
       bengkelList.assignAll(
         data
             .map(
-              (item) => {
-                "id": item["id"],
-                "nama": item["title"] ?? "",
-                "jenis": item["category"] ?? "",
-                "jarak": "${item["distance_km"]} km",
-                "rating": item["rating"].toString(),
-                "ulasan": "(${item["review_count"] ?? 0} Ulasan)",
-                "image": item["image_url"] ?? "https://via.placeholder.com/300",
-                "address": item["address"] ?? "",
-                "phone": item["phone"] ?? "",
-                "latitude": item["latitude"],
-                "longitude": item["longitude"],
-                "google_maps_url": item["google_maps_url"] ?? "",
-              },
+              (item) => _toBengkelItem(
+                Map<String, dynamic>.from(item as Map),
+              ),
             )
             .toList(),
       );

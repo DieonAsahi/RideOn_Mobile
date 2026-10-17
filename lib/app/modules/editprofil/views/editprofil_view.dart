@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
+import 'package:capbatu/app/widgets/form_label_with_tooltip.dart';
 
 import '../controllers/editprofil_controller.dart';
 import '../../../widgets/base_bottom_sheet.dart';
@@ -12,7 +14,7 @@ class EditprofilView extends GetView<EditprofilController> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) async {
+      onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
         FocusScope.of(context).unfocus();
 
@@ -74,221 +76,179 @@ class EditprofilView extends GetView<EditprofilController> {
                     const SizedBox(height: 24),
 
                     /// KONTEN UTAMA (Bisa di-scroll, dengan tombol simpan stay di bawah)
+                    /// KONTEN UTAMA (Bisa di-scroll)
                     Expanded(
-                      child: Obx(() {
-                        return LayoutBuilder(
-                          builder: (context, constraints) {
-                            return RefreshIndicator(
-                              onRefresh: controller.getProfile,
-                              child: SingleChildScrollView(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    minHeight: constraints.maxHeight,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                    ),
-                                    child: controller.isLoading.value
-                                        ? const EditProfileSkeleton()
-                                        : Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              // Bagian Atas (Foto & Form Input)
-                                              Column(
-                                                children: [
-                                                  /// FOTO PROFILE
-                                                  Stack(
-                                                    children: [
-                                                      Obx(
-                                                        () => GestureDetector(
-                                                          onTap: () =>
-                                                              _showImagePickerBottomSheet(
-                                                                context,
-                                                              ),
-                                                          child: Container(
-                                                            decoration: BoxDecoration(
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                              border: Border.all(
-                                                                color:
-                                                                    const Color(
-                                                                      0xFF2583FD,
-                                                                    ),
-                                                                width: 2.0,
-                                                              ),
-                                                            ),
-                                                            child: CircleAvatar(
-                                                              radius: 45,
-                                                              backgroundColor:
-                                                                  Colors
-                                                                      .grey
-                                                                      .shade200,
-                                                              backgroundImage:
-                                                                  controller
-                                                                          .selectedImage
-                                                                          .value !=
-                                                                      null
-                                                                  ? FileImage(
-                                                                      controller
-                                                                          .selectedImage
-                                                                          .value!,
-                                                                    )
-                                                                  : (controller.imageUrl.value.isNotEmpty
-                                                                            ? NetworkImage(
-                                                                                controller.imageUrl.value,
-                                                                              )
-                                                                            : const AssetImage(
-                                                                                'assets/images/profile.jpg',
-                                                                              ))
-                                                                        as ImageProvider,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Positioned(
-                                                        bottom: 0,
-                                                        right: 0,
-                                                        child: GestureDetector(
-                                                          onTap: () =>
-                                                              _showImagePickerBottomSheet(
-                                                                context,
-                                                              ),
-                                                          child: Container(
-                                                            padding:
-                                                                const EdgeInsets.all(
-                                                                  6,
-                                                                ),
-                                                            decoration:
-                                                                const BoxDecoration(
-                                                                  color: Color(
-                                                                    0xFF2196F3,
-                                                                  ),
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                ),
-                                                            child: const Icon(
-                                                              Icons
-                                                                  .camera_alt_outlined,
-                                                              color:
-                                                                  Colors.white,
-                                                              size: 16,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-
-                                                  const SizedBox(height: 30),
-
-                                                  /// NAMA
-                                                  CustomTextField(
-                                                    title: "Nama",
-                                                    hint: "Masukkan nama",
-                                                    controller: controller
-                                                        .nameController,
-                                                  ),
-
-                                                  const SizedBox(height: 18),
-
-                                                  /// EMAIL (ReadOnly / Disable)
-                                                  CustomTextField(
-                                                    title: "Email",
-                                                    hint: "Masukkan email",
-                                                    controller: controller
-                                                        .emailController,
-                                                    keyboardType: TextInputType
-                                                        .emailAddress,
-                                                    readOnly: true,
-                                                  ),
-
-                                                  const SizedBox(height: 18),
-
-                                                  /// BIO (Max 60 Karakter)
-                                                  CustomTextField(
-                                                    title: "Bio",
-                                                    hint: "Masukkan bio",
-                                                    controller: controller
-                                                        .bioController,
-                                                    maxLines: 2,
-                                                    maxLength: 60,
-                                                  ),
-                                                ],
+                      child: RefreshIndicator(
+                        onRefresh: controller.getProfile,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Obx(() {
+                            if (controller.isLoading.value) {
+                              return const EditProfileSkeleton();
+                            }
+                            return Column(
+                              children: [
+                                /// FOTO PROFILE
+                                Stack(
+                                  children: [
+                                    Obx(
+                                      () => GestureDetector(
+                                        onTap: () =>
+                                            _showImagePickerBottomSheet(
+                                              context,
+                                            ),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: const Color(
+                                                0xFF2583FD,
                                               ),
-
-                                              // Bagian Bawah (Tombol Simpan stay di bawah)
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                  top: 32,
-                                                  bottom: 20,
-                                                ),
-                                                child: SizedBox(
-                                                  width: double.infinity,
-                                                  height: 52,
-                                                  child: ElevatedButton(
-                                                    onPressed: () {
-                                                      FocusScope.of(
-                                                        context,
-                                                      ).unfocus();
-                                                      controller
-                                                          .updateProfile();
-                                                    },
-                                                    style: ElevatedButton.styleFrom(
-                                                      elevation: 0,
-                                                      backgroundColor:
-                                                          const Color(
-                                                            0xFF2196F3,
-                                                          ),
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              14,
-                                                            ),
-                                                      ),
-                                                    ),
-                                                    child: Obx(
-                                                      () =>
-                                                          controller
-                                                              .isSaving
-                                                              .value
-                                                          ? const SizedBox(
-                                                              width: 20,
-                                                              height: 20,
-                                                              child:
-                                                                  CircularProgressIndicator(
-                                                                    strokeWidth:
-                                                                        2,
-                                                                    color: Colors
-                                                                        .white,
-                                                                  ),
-                                                            )
-                                                          : const Text(
-                                                              "Simpan",
-                                                              style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontSize: 16,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                              ),
-                                                            ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
+                                              width: 2.0,
+                                            ),
                                           ),
-                                  ),
+                                          child: CircleAvatar(
+                                            radius: 45,
+                                            backgroundColor: Colors
+                                                .grey
+                                                .shade200,
+                                            backgroundImage:
+                                                controller
+                                                        .selectedImage
+                                                        .value !=
+                                                    null
+                                                ? FileImage(
+                                                    controller
+                                                        .selectedImage
+                                                        .value!,
+                                                  )
+                                                : (controller
+                                                              .imageUrl
+                                                              .value
+                                                              .isNotEmpty
+                                                          ? NetworkImage(
+                                                              controller
+                                                                  .imageUrl
+                                                                  .value,
+                                                            )
+                                                          : const AssetImage(
+                                                              'assets/images/profile.jpg',
+                                                            ))
+                                                      as ImageProvider,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: GestureDetector(
+                                        onTap: () =>
+                                            _showImagePickerBottomSheet(
+                                              context,
+                                            ),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF2196F3),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.camera_alt_outlined,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
+
+                                const SizedBox(height: 30),
+
+                                /// NAMA
+                                CustomTextField(
+                                  title: "Nama",
+                                  hint: "Masukkan nama",
+                                  helperText:
+                                      'Masukkan nama yang ingin ditampilkan pada profil Anda.',
+                                  controller: controller.nameController,
+                                ),
+
+                                const SizedBox(height: 18),
+
+                                /// EMAIL (ReadOnly / Disable)
+                                CustomTextField(
+                                  title: "Email",
+                                  hint: "Masukkan email",
+                                  helperText:
+                                      'Alamat email akun tidak dapat diubah dari halaman ini.',
+                                  controller: controller.emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  readOnly: true,
+                                ),
+
+                                const SizedBox(height: 18),
+
+                                /// BIO (Max 60 Karakter)
+                                CustomTextField(
+                                  title: "Bio",
+                                  hint: "Masukkan bio",
+                                  helperText:
+                                      'Bio bersifat opsional dan maksimal 60 karakter.',
+                                  controller: controller.bioController,
+                                  maxLines: 2,
+                                  maxLength: 60,
+                                ),
+
+                                const SizedBox(height: 20),
+                              ],
                             );
+                          }),
+                        ),
+                      ),
+                    ),
+
+                    // ================= TOMBOL SIMPAN (STICKY DI BAWAH) =================
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(6, 12, 6, 20),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            FocusScope.of(context).unfocus();
+                            controller.updateProfile();
                           },
-                        );
-                      }),
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: const Color(0xFF2196F3),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Obx(
+                            () => controller.isSaving.value
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    "Simpan",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -349,7 +309,7 @@ class EditprofilView extends GetView<EditprofilController> {
               width: 24,
               height: 24,
             ),
-            title: const Text("Hapus", style: TextStyle(color: Colors.red)),
+            title: const Text("Hapus", style: TextStyle(color: AppColors.red)),
             onTap: () {
               Get.back();
               controller.removeImage();
@@ -409,7 +369,7 @@ class EditprofilView extends GetView<EditprofilController> {
                           style: OutlinedButton.styleFrom(
                             padding: EdgeInsets.zero,
                             side: const BorderSide(
-                              color: Color(0xFF2583FD),
+                              color: AppColors.primaryBlue,
                               width: 1.5,
                             ),
                             shape: RoundedRectangleBorder(
@@ -423,7 +383,7 @@ class EditprofilView extends GetView<EditprofilController> {
                           child: const Text(
                             "Keluar",
                             style: TextStyle(
-                              color: Color(0xFF2583FD),
+                              color: AppColors.primaryBlue,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -438,7 +398,7 @@ class EditprofilView extends GetView<EditprofilController> {
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.zero,
-                            backgroundColor: const Color(0xFF2583FD),
+                            backgroundColor: AppColors.primaryBlue,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -474,6 +434,7 @@ class EditprofilView extends GetView<EditprofilController> {
 class CustomTextField extends StatelessWidget {
   final String title;
   final String hint;
+  final String helperText;
   final TextEditingController controller;
   final int maxLines;
   final int? maxLength;
@@ -484,6 +445,7 @@ class CustomTextField extends StatelessWidget {
     super.key,
     required this.title,
     required this.hint,
+    required this.helperText,
     required this.controller,
     this.maxLines = 1,
     this.maxLength,
@@ -496,8 +458,9 @@ class CustomTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
+        FormLabelWithTooltip(
+          label: title,
+          message: helperText,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
@@ -511,6 +474,7 @@ class CustomTextField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+            errorMaxLines: 3,
             filled: true,
             fillColor: readOnly ? Colors.grey.shade50 : Colors.white,
             contentPadding: const EdgeInsets.symmetric(
@@ -527,7 +491,7 @@ class CustomTextField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF2196F3)),
+              borderSide: const BorderSide(color: AppColors.primaryBlue),
             ),
             counterText: maxLength != null ? null : "",
           ),

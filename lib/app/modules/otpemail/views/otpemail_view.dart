@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 
 import '../controllers/otpemail_controller.dart';
+import '../../../widgets/form_label_with_tooltip.dart';
 
 class OtpemailView extends GetView<OtpemailController> {
   const OtpemailView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const primaryBlue = Color(0xFF2196F3);
+    const primaryBlue = AppColors.primaryBlue;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -76,6 +78,17 @@ class OtpemailView extends GetView<OtpemailController> {
               const SizedBox(height: 40),
 
               // ================= KOTAK INPUT OTP (6 DIGIT) =================
+              const FormLabelWithTooltip(
+                label: 'Kode OTP',
+                message:
+                    'Masukkan enam angka yang dikirim ke alamat email Anda. Kode berlaku selama tiga menit.',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(6, (index) {
@@ -102,14 +115,14 @@ class OtpemailView extends GetView<OtpemailController> {
                           counterText: "",
                           filled: true,
                           fillColor: hasError
-                              ? Colors.red.shade50
+                              ? AppColors.errorSurface
                               : Colors.grey.shade50,
                           contentPadding: EdgeInsets.zero,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
                               color: hasError
-                                  ? Colors.red
+                                  ? AppColors.red
                                   : Colors.grey.shade300,
                             ),
                           ),
@@ -117,14 +130,14 @@ class OtpemailView extends GetView<OtpemailController> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
                               color: hasError
-                                  ? Colors.red
+                                  ? AppColors.red
                                   : Colors.grey.shade300,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: hasError ? Colors.red : primaryBlue,
+                              color: hasError ? AppColors.red : primaryBlue,
                               width: 2,
                             ),
                           ),
@@ -144,7 +157,10 @@ class OtpemailView extends GetView<OtpemailController> {
                     padding: const EdgeInsets.only(top: 10),
                     child: Text(
                       controller.otpError.value!,
-                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                      style: const TextStyle(
+                        color: AppColors.red,
+                        fontSize: 12,
+                      ),
                     ),
                   );
                 }
@@ -158,7 +174,7 @@ class OtpemailView extends GetView<OtpemailController> {
                 if (controller.isOtpExpired.value) {
                   return const Text(
                     "Kode OTP sudah kadaluarsa.",
-                    style: TextStyle(color: Colors.red, fontSize: 13),
+                    style: TextStyle(color: AppColors.red, fontSize: 13),
                   );
                 } else {
                   final minutes = (controller.otpExpiredSeconds.value ~/ 60)
@@ -170,7 +186,7 @@ class OtpemailView extends GetView<OtpemailController> {
                   return Text(
                     "Sisa waktu: $minutes:$seconds",
                     style: TextStyle(
-                      color: Colors.orange.shade800,
+                      color: AppColors.orange,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -221,7 +237,7 @@ class OtpemailView extends GetView<OtpemailController> {
                     backgroundColor: primaryBlue,
                     elevation: 2,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(50),
                     ),
                   ),
                   onPressed: controller.verifyOtp,

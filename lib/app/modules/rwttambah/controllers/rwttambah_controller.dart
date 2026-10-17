@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/services/connectivity_service.dart';
 import 'package:capbatu/app/widgets/app_snackbar.dart';
+import 'package:capbatu/app/widgets/app_feedback_widgets.dart';
 import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dart';
 import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
 import 'package:capbatu/app/modules/Feature/service/controllers/service_controller.dart';
@@ -375,11 +376,13 @@ class RwttambahController extends GetxController {
             msg = err['message'] ?? err['error'];
           }
         } catch (_) {}
-        Get.snackbar("Error", msg);
+        AppFeedback.serviceHistoryAddFailed(message: msg);
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Gagal menyimpan riwayat servis");
+        AppFeedback.serviceHistoryAddFailed(
+          message: 'Gagal menyimpan riwayat servis, periksa koneksi Anda.',
+        );
       }
     } finally {
       isLoading.value = false;
@@ -456,11 +459,13 @@ class RwttambahController extends GetxController {
             msg = err['message'] ?? err['error'];
           }
         } catch (_) {}
-        Get.snackbar("Error", msg);
+        AppFeedback.serviceHistoryUpdateFailed(message: msg);
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Gagal memperbarui riwayat servis");
+        AppFeedback.serviceHistoryUpdateFailed(
+          message: 'Gagal memperbarui riwayat servis, periksa koneksi Anda.',
+        );
       }
     } finally {
       isLoading.value = false;

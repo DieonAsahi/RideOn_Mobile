@@ -40,127 +40,138 @@ class MainscreenView extends GetView<MainscreenController> {
               borderRadius: BorderRadius.circular(24),
             ),
             backgroundColor: Colors.white,
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 400),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
-                    'assets/icons/warning.png',
-                    width: 90,
-                    height: 90,
-                  ), // Ikon peringatan[cite: 8]
-                  const SizedBox(height: 20),
-
-                  const Text(
-                    "Keluar dari Akun?", // Judul disesuaikan[cite: 8]
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 400,
+                maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+              ),
+              child: SingleChildScrollView(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 24,
                   ),
-                  const SizedBox(height: 12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Image.asset(
+                        'assets/icons/warning.png',
+                        width: 90,
+                        height: 90,
+                      ), // Ikon peringatan[cite: 8]
+                      const SizedBox(height: 20),
 
-                  const Text(
-                    "Anda perlu masuk lagi untuk memantau kondisi motormu.", // Subjudul disesuaikan[cite: 8]
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF5C5C5C),
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 30),
+                      const Text(
+                        "Keluar dari Akun?", // Judul disesuaikan[cite: 8]
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
 
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 42,
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                side: const BorderSide(
-                                  color: Colors.grey,
-                                  width: 1.5,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onPressed: () => Get.back(),
-                              child: const Text(
-                                "Batal",
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                      const Text(
+                        "Anda perlu masuk lagi untuk memantau kondisi motormu.", // Subjudul disesuaikan[cite: 8]
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF5C5C5C),
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: SizedBox(
+                                height: 42,
+                                child: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    side: const BorderSide(
+                                      color: Colors.grey,
+                                      width: 1.5,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  onPressed: () => Get.back(),
+                                  child: const Text(
+                                    "Batal",
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
+                            const SizedBox(width: 12),
 
-                        // Tombol Keluar[cite: 8]
-                        Expanded(
-                          child: SizedBox(
-                            height: 42,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                backgroundColor: AppColors.red,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onPressed: () async {
-                                // ====== LOGIKA SIGN OUT ANDA TETAP DIPERTAHANKAN ======
-                                final box = GetStorage();
-                                final serverClientId =
-                                    dotenv.env['GOOGLE_SERVER_CLIENT_ID'];
+                            // Tombol Keluar[cite: 8]
+                            Expanded(
+                              child: SizedBox(
+                                height: 42,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    backgroundColor: AppColors.red,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  onPressed: () async {
+                                    // ====== LOGIKA SIGN OUT ANDA TETAP DIPERTAHANKAN ======
+                                    final box = GetStorage();
+                                    final serverClientId =
+                                        dotenv.env['GOOGLE_SERVER_CLIENT_ID'];
 
-                                if (serverClientId != null) {
-                                  final googleSignIn = GoogleSignIn(
-                                    serverClientId: serverClientId,
-                                  );
-                                  try {
-                                    await googleSignIn.signOut();
-                                  } catch (_) {}
-                                }
+                                    if (serverClientId != null) {
+                                      final googleSignIn = GoogleSignIn(
+                                        serverClientId: serverClientId,
+                                      );
+                                      try {
+                                        await googleSignIn.signOut();
+                                      } catch (_) {}
+                                    }
 
-                                try {
-                                  await Supabase.instance.client.auth.signOut();
-                                } catch (_) {}
+                                    try {
+                                      await Supabase.instance.client.auth
+                                          .signOut();
+                                    } catch (_) {}
 
-                                await box.remove("token");
-                                await box.remove("user");
-                                await box.remove("vehicle_id");
+                                    await box.remove("token");
+                                    await box.remove("user");
+                                    await box.remove("vehicle_id");
 
-                                Get.back();
-                                SystemNavigator.pop();
-                              },
-                              child: const Text(
-                                "Keluar",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
+                                    Get.back();
+                                    SystemNavigator.pop();
+                                  },
+                                  child: const Text(
+                                    "Keluar",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -237,9 +248,7 @@ class MainscreenView extends GetView<MainscreenController> {
                                     12, // Kurangi width sesuai margin kiri-kanan
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFFEEF5FF,
-                                    ), // Warna pill (biru sangat muda)
+                                    color: AppColors.primarySoft,
                                     borderRadius: BorderRadius.circular(100),
                                   ),
                                 ),
@@ -267,7 +276,7 @@ class MainscreenView extends GetView<MainscreenController> {
                                               data: ThemeData(
                                                 iconTheme: IconThemeData(
                                                   color: isSelected
-                                                      ? const Color(0xFF2196F3)
+                                                      ? AppColors.primaryBlue
                                                       : Colors.black,
                                                 ),
                                               ),
@@ -283,7 +292,7 @@ class MainscreenView extends GetView<MainscreenController> {
                                                 ),
                                                 size: 24,
                                                 color: isSelected
-                                                    ? const Color(0xFF2196F3)
+                                                    ? AppColors.primaryBlue
                                                     : Colors.black,
                                               ),
                                             ),
@@ -292,16 +301,18 @@ class MainscreenView extends GetView<MainscreenController> {
                                               duration: const Duration(
                                                 milliseconds: 200,
                                               ),
-                                              style: TextStyle(
-                                                fontFamily: 'Poppins',
-                                                fontSize: 12,
-                                                color: isSelected
-                                                    ? const Color(0xFF2196F3)
-                                                    : Colors.black,
-                                                fontWeight: isSelected
-                                                    ? FontWeight.w600
-                                                    : FontWeight.w400,
-                                              ),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelSmall!
+                                                  .copyWith(
+                                                    fontSize: 12,
+                                                    color: isSelected
+                                                        ? AppColors.primaryBlue
+                                                        : Colors.black,
+                                                    fontWeight: isSelected
+                                                        ? FontWeight.w600
+                                                        : FontWeight.w400,
+                                                  ),
                                               child: Text(item['label']!),
                                             ),
                                           ],

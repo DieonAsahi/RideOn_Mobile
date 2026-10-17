@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../services/connectivity_service.dart';
 import '../../../widgets/app_snackbar.dart';
+import '../../../widgets/app_feedback_widgets.dart';
 
 class ChangepassController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -86,8 +87,7 @@ class ChangepassController extends GetxController {
       newPassError.value = "Kata sandi maksimal 15 karakter";
       isValid = false;
     } else if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(newPass)) {
-      newPassError.value =
-          "Harus berisi huruf besar, huruf kecil, dan angka";
+      newPassError.value = "Harus berisi huruf besar, huruf kecil, dan angka";
       isValid = false;
     }
 
@@ -140,12 +140,16 @@ class ChangepassController extends GetxController {
           Get.offNamed('/login');
         }
       } else {
-        Get.snackbar("Error", data['error'] ?? "Gagal mengubah password");
+        AppFeedback.passwordChangeFailed(
+          message:
+              data['message'] ?? data['error'] ?? 'Gagal mengubah kata sandi.',
+        );
       }
     } catch (e) {
-      print("Error update password: $e");
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Tidak bisa konek ke server. Silakan coba lagi.");
+        AppFeedback.passwordChangeFailed(
+          message: 'Gagal mengubah kata sandi, periksa koneksi Anda.',
+        );
       }
     } finally {
       isLoading.value = false;

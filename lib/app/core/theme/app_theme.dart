@@ -8,14 +8,16 @@ class AppColors {
   /// Warna Utama
   static const Color primaryBlue = Color(0xFF2196F3);
   static const Color primary = primaryBlue;
+  static const Color primarySoft = Color(0xFFEAF4FE);
 
   /// Warna Status & Aksen
   static const Color orange = Color(0xFFFF6200);
   static const Color red = Color(0xFFFF0000);
   static const Color green = Color(0xFF09B200);
+  static const Color errorSurface = Color(0xFFFFEBEE);
 
   /// Warna Border Card & Shadow (0.05)
-  static const Color bar = Color(0xFFAEAEAE );
+  static const Color bar = Color(0xFFAEAEAE);
   static const Color cardBorder = Color(0xFFE1E1E1);
   static const BoxShadow cardShadow = BoxShadow(
     color: Color(0x0D000000), // Black with 0.05 opacity
@@ -212,9 +214,7 @@ class AppCard extends StatelessWidget {
         color: backgroundColor,
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(color: borderColor, width: borderWidth),
-        boxShadow: const [
-          AppColors.cardShadow,
-        ],
+        boxShadow: const [AppColors.cardShadow],
       ),
       child: child,
     );
@@ -236,7 +236,18 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get lightTheme {
-    final baseTextTheme = GoogleFonts.poppinsTextTheme();
+    final baseTextTheme =
+        GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme).apply(
+          bodyColor: AppColors.textPrimary,
+          displayColor: AppColors.textPrimary,
+          fontFamily: GoogleFonts.poppins().fontFamily,
+        );
+    final primaryTextTheme =
+        GoogleFonts.poppinsTextTheme(ThemeData.light().primaryTextTheme).apply(
+          bodyColor: Colors.white,
+          displayColor: Colors.white,
+          fontFamily: GoogleFonts.poppins().fontFamily,
+        );
 
     return ThemeData(
       useMaterial3: true,
@@ -250,10 +261,26 @@ class AppTheme {
         surface: AppColors.background,
       ),
       fontFamily: GoogleFonts.poppins().fontFamily,
-      textTheme: baseTextTheme.apply(
-        bodyColor: AppColors.textPrimary,
-        displayColor: AppColors.textPrimary,
-        fontFamily: GoogleFonts.poppins().fontFamily,
+      textTheme: baseTextTheme,
+      primaryTextTheme: primaryTextTheme,
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        selectedLabelStyle: baseTextTheme.labelMedium?.copyWith(
+          color: AppColors.primaryBlue,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: baseTextTheme.labelMedium?.copyWith(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w400,
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final isSelected = states.contains(WidgetState.selected);
+          return baseTextTheme.labelMedium?.copyWith(
+            color: isSelected ? AppColors.primaryBlue : AppColors.textPrimary,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          );
+        }),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.white,
@@ -304,7 +331,10 @@ class AppTheme {
         ),
         filled: true,
         fillColor: Colors.grey.shade100,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.cardBorder),
@@ -315,8 +345,12 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.8),
+          borderSide: const BorderSide(
+            color: AppColors.primaryBlue,
+            width: 1.8,
+          ),
         ),
+        errorMaxLines: 3,
       ),
       cardTheme: CardThemeData(
         color: Colors.white,

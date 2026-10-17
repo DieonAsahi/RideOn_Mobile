@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 
 import '../controllers/changepass_controller.dart';
+import '../../../widgets/form_label_with_tooltip.dart';
 
 class ChangepassView extends GetView<ChangepassController> {
   const ChangepassView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const primaryBlue = Color(0xFF2196F3);
+    const primaryBlue = AppColors.primaryBlue;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -34,17 +35,15 @@ class ChangepassView extends GetView<ChangepassController> {
             // Bagian Form (Bisa di-scroll jika layar kecil)
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     // ================= KATA SANDI LAMA (HANYA PROFIL) =================
                     if (controller.isFromProfile) ...[
-                      const Text(
-                        "Kata Sandi Lama",
+                      const FormLabelWithTooltip(
+                        label: 'Kata Sandi Lama',
+                        message: 'Masukkan kata sandi yang sedang digunakan.',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -79,8 +78,10 @@ class ChangepassView extends GetView<ChangepassController> {
                     ],
 
                     // ================= KATA SANDI BARU =================
-                    const Text(
-                      "Kata Sandi Baru",
+                    const FormLabelWithTooltip(
+                      label: 'Kata Sandi Baru',
+                      message:
+                          'Minimal 8 karakter dan wajib mengandung huruf besar, huruf kecil, serta angka.',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -114,8 +115,10 @@ class ChangepassView extends GetView<ChangepassController> {
                     const SizedBox(height: 20),
 
                     // ================= KONFIRMASI KATA SANDI BARU =================
-                    const Text(
-                      "Konfirmasi Kata Sandi Baru",
+                    const FormLabelWithTooltip(
+                      label: 'Konfirmasi Kata Sandi Baru',
+                      message:
+                          'Ketik ulang kata sandi baru dengan persis sama.',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -152,7 +155,7 @@ class ChangepassView extends GetView<ChangepassController> {
               ),
             ),
 
-            // ================= TOMBOL LANJUTKAN (DI BAWAH) =================
+            // ================= TOMBOL AKSI (DI BAWAH) =================
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: Obx(
@@ -164,7 +167,9 @@ class ChangepassView extends GetView<ChangepassController> {
                       backgroundColor: primaryBlue,
                       elevation: 2,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
+                        borderRadius: BorderRadius.circular(
+                          controller.isFromProfile ? 12 : 50,
+                        ),
                       ),
                     ),
                     onPressed: controller.isLoading.value
@@ -179,9 +184,9 @@ class ChangepassView extends GetView<ChangepassController> {
                               strokeWidth: 2.5,
                             ),
                           )
-                        : const Text(
-                            "Lanjutkan", // Mengikuti teks tombol di desain
-                            style: TextStyle(
+                        : Text(
+                            controller.isFromProfile ? "Simpan" : "Lanjutkan",
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -202,7 +207,8 @@ class ChangepassView extends GetView<ChangepassController> {
     return InputDecoration(
       hintText: hint,
       errorText: errorText, // Menampilkan error text otomatis
-      errorStyle: const TextStyle(color: Colors.red, fontSize: 12),
+      errorStyle: const TextStyle(color: AppColors.red, fontSize: 12),
+      errorMaxLines: 3,
       hintStyle: TextStyle(
         color: Colors.grey.shade400,
         fontSize: 14,
@@ -221,15 +227,15 @@ class ChangepassView extends GetView<ChangepassController> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2196F3), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 1.0),
+        borderSide: const BorderSide(color: AppColors.red, width: 1.0),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.red, width: 1.5),
       ),
     );
   }

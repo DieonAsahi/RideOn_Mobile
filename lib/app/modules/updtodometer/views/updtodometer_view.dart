@@ -2,7 +2,9 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 import '../controllers/updtodometer_controller.dart';
+import '../../../widgets/form_label_with_tooltip.dart';
 
 class UpdtodometerView extends GetView<UpdtodometerController> {
   const UpdtodometerView({super.key});
@@ -14,14 +16,14 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
       backgroundColor: Colors.white,
       body: Obx(() {
         if (controller.pageState.value == 0) {
-          return _cameraView();
+          return _cameraView(context);
         }
         return _resultView();
       }),
     );
   }
 
-  Widget _cameraView() {
+  Widget _cameraView(BuildContext context) {
     return Obx(() {
       final cam = controller.cameraController;
       if (!controller.isCameraInitialized.value ||
@@ -48,12 +50,14 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 280,
+                  width: (MediaQuery.sizeOf(context).width * 0.75)
+                      .clamp(180.0, 280.0)
+                      .toDouble(),
                   height: 100,
                   decoration: BoxDecoration(
                     border: Border.all(
                       color: controller.isScanning.value
-                          ? Colors.greenAccent
+                          ? AppColors.green
                           : Colors.white,
                       width: 3,
                     ),
@@ -61,7 +65,7 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
                     boxShadow: [
                       if (controller.isScanning.value)
                         BoxShadow(
-                          color: Colors.greenAccent.withOpacity(0.2),
+                          color: AppColors.green.withOpacity(0.2),
                           blurRadius: 15,
                           spreadRadius: 2,
                         ),
@@ -87,7 +91,7 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.greenAccent,
+                            AppColors.green,
                           ),
                         ),
                       ),
@@ -121,7 +125,9 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
           ),
 
           Positioned(
-            bottom: 100,
+            bottom: MediaQuery.of(context).orientation == Orientation.landscape
+                ? 24
+                : 100,
             left: 0,
             right: 0,
             child: Column(
@@ -177,91 +183,112 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
 
   Widget _resultView() {
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const SizedBox(height: 14),
-            const Text(
-              "Hasil Deteksi Odometer",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: (constraints.maxHeight - 32).clamp(0, double.infinity),
             ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey),
-              ),
-              child: TextField(
-                controller: controller.odometerController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: const TextStyle(color: Colors.black),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: "Ubah angka jika ada kekeliruan",
-                  hintStyle: TextStyle(color: Colors.grey),
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      controller.pageState.value = 0;
-                      await controller.disposeCamera();
-                      await controller.initCamera();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[200],
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: const Text("Scan Ulang"),
+                const SizedBox(height: 14),
+                const Text(
+                  "Hasil Deteksi Odometer",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                const SizedBox(height: 24),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: FormLabelWithTooltip(
+                    label: 'Angka Odometer',
+                    message:
+                        'Masukkan hanya angka kilometer saat ini, tanpa titik atau huruf.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey),
+                  ),
+                  child: TextField(
+                    controller: controller.odometerController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    style: const TextStyle(color: Colors.black),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: "Ubah angka jika ada kekeliruan",
+                      hintStyle: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          controller.pageState.value = 0;
+                          await controller.disposeCamera();
+                          await controller.initCamera();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[200],
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        child: const Text("Scan Ulang"),
                       ),
                     ),
-                    onPressed: controller.isLoading.value
-                        ? null
-                        : controller.updateOdometer,
-                    child: Obx(() {
-                      if (controller.isLoading.value) {
-                        return const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryBlue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                        );
-                      }
-                      return const Text(
-                        "Simpan",
-                        style: TextStyle(color: Colors.white),
-                      );
-                    }),
-                  ),
+                        ),
+                        onPressed: controller.isLoading.value
+                            ? null
+                            : controller.updateOdometer,
+                        child: Obx(() {
+                          if (controller.isLoading.value) {
+                            return const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            );
+                          }
+                          return const Text(
+                            "Simpan",
+                            style: TextStyle(color: Colors.white),
+                          );
+                        }),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );

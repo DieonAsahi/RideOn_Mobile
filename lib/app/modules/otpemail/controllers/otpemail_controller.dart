@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/services/connectivity_service.dart';
 import 'package:capbatu/app/widgets/app_snackbar.dart';
+import 'package:capbatu/app/widgets/otp_limit_dialog.dart';
 
 class OtpemailController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -139,11 +140,12 @@ class OtpemailController extends GetxController {
         }
       } else {
         // Tampilkan error dari server di bawah kotak OTP
-        otpError.value = data['error'] ?? "Verifikasi gagal";
+        otpError.value =
+            data['message'] ?? data['error'] ?? 'Verifikasi gagal.';
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Tidak bisa konek ke server");
+        otpError.value = 'Tidak bisa terhubung ke server. Silakan coba lagi.';
       }
     }
   }
@@ -152,7 +154,7 @@ class OtpemailController extends GetxController {
     if (isCooldown.value) return;
 
     if (email.isEmpty) {
-      Get.snackbar("Error", "Email kosong");
+      otpError.value = 'Email tidak tersedia. Kembali dan masukkan email Anda.';
       return;
     }
 
@@ -182,11 +184,22 @@ class OtpemailController extends GetxController {
         startCooldown(180);
         startOtpExpiredTimer();
       } else {
-        Get.snackbar("Error", data['error']);
+        if (response.statusCode == 429 ||
+            data['code'] == 'OTP_RATE_LIMIT' ||
+            data['is_rate_limit'] == true ||
+            OtpLimitDialog.isOtpLimitError(
+              data['error'] ?? data['message'],
+              statusCode: response.statusCode,
+            )) {
+          OtpLimitDialog.show(customTime: data['reset_time']?.toString());
+        } else {
+          otpError.value =
+              data['message'] ?? data['error'] ?? 'Gagal mengirim ulang OTP.';
+        }
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Gagal kirim ulang OTP");
+        otpError.value = 'Gagal mengirim ulang OTP. Silakan coba lagi.';
       }
     }
   }

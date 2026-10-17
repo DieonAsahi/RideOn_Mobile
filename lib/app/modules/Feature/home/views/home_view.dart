@@ -102,7 +102,7 @@ class HomeView extends GetView<HomeController> {
                                       child: Container(
                                         padding: const EdgeInsets.all(4),
                                         decoration: const BoxDecoration(
-                                          color: Colors.red,
+                                          color: AppColors.red,
                                           shape: BoxShape.circle,
                                         ),
                                         constraints: const BoxConstraints(
@@ -318,11 +318,11 @@ class FeatureCard extends StatelessWidget {
 
   Color getProgressColor(double progress) {
     if (progress <= 0.3) {
-      return Colors.red;
+      return AppColors.red;
     } else if (progress <= 0.65) {
-      return Colors.orange;
+      return AppColors.orange;
     } else {
-      return Colors.green;
+      return AppColors.green;
     }
   }
 
@@ -642,7 +642,7 @@ class OdometerCard extends GetView<HomeController> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2196F3),
+                    backgroundColor: AppColors.primaryBlue,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 12,
@@ -693,13 +693,13 @@ class PerformaSection extends GetView<HomeController> {
 
       if (score >= 75) {
         status = "Baik";
-        progressColor = Colors.green;
+        progressColor = AppColors.green;
       } else if (score >= 50) {
         status = "perlu perhatian";
-        progressColor = Colors.orange;
+        progressColor = AppColors.orange;
       } else {
         status = "Buruk";
-        progressColor = Colors.red;
+        progressColor = AppColors.red;
       }
 
       return Container(

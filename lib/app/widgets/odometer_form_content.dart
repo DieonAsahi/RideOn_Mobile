@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../modules/Feature/home/controllers/home_controller.dart';
+import 'app_snackbar.dart';
+import 'form_label_with_tooltip.dart';
 
 class OdometerFormContent extends StatefulWidget {
   final int currentOdometer;
@@ -23,6 +25,7 @@ class OdometerFormContent extends StatefulWidget {
 class _OdometerFormContentState extends State<OdometerFormContent> {
   late final TextEditingController _controller;
   int? _newOdometer;
+  String? _odometerError;
   bool _isLoading = false;
 
   @override
@@ -32,6 +35,7 @@ class _OdometerFormContentState extends State<OdometerFormContent> {
     _controller.addListener(() {
       setState(() {
         _newOdometer = int.tryParse(_controller.text.replaceAll('.', ''));
+        _odometerError = null;
       });
     });
   }
@@ -44,19 +48,17 @@ class _OdometerFormContentState extends State<OdometerFormContent> {
 
   Future<void> _handleUpdate() async {
     if (_newOdometer == null) {
-      Get.snackbar("Perhatian", "Silakan masukkan angka odometer");
+      setState(() => _odometerError = 'Silakan masukkan angka odometer.');
       return;
     }
     if (_newOdometer! <= widget.currentOdometer) {
-      Get.snackbar(
-        "Gagal",
-        "Odometer baru harus lebih besar dari saat ini",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      setState(
+        () => _odometerError = 'Odometer baru harus lebih besar dari saat ini.',
       );
       return;
     }
 
+    setState(() => _odometerError = null);
     setState(() => _isLoading = true);
     final homeController = Get.find<HomeController>();
     final success = await homeController.updateOdometerManual(_newOdometer!);
@@ -64,19 +66,7 @@ class _OdometerFormContentState extends State<OdometerFormContent> {
     if (mounted) setState(() => _isLoading = false);
     if (success) {
       Get.back(result: true);
-      Get.snackbar(
-        "Berhasil",
-        "Odometer berhasil diperbarui",
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-    } else {
-      Get.snackbar(
-        "Error",
-        "Gagal memperbarui odometer",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      AppSnackbar.success('Odometer berhasil diperbarui.');
     }
   }
 
@@ -95,20 +85,23 @@ class _OdometerFormContentState extends State<OdometerFormContent> {
           ),
         ),
         const SizedBox(height: 24),
-        const Text(
-          'Odometer saat ini',
+        const FormLabelWithTooltip(
+          label: 'Odometer baru',
+          message:
+              'Masukkan hanya angka kilometer yang lebih besar dari odometer saat ini.',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: _controller,
           keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
-          ],
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(
             hintText: widget.currentOdometer.toString(),
             suffixText: 'Km',
+            errorText: _odometerError,
+            errorStyle: const TextStyle(color: Colors.red, fontSize: 12),
+            errorMaxLines: 3,
             filled: true,
             fillColor: const Color(0xFFF9FAFB),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/services/connectivity_service.dart';
 import 'package:capbatu/app/widgets/app_snackbar.dart';
+import 'package:capbatu/app/widgets/app_feedback_widgets.dart';
 import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dart';
 import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
 import 'package:capbatu/app/modules/Feature/service/controllers/service_controller.dart';
@@ -89,9 +90,10 @@ class RwtservisController extends GetxController {
             .cast<Map<String, dynamic>>();
       }
     } catch (e) {
-      print("ERROR RIWAYAT UI: $e");
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Gagal memuat riwayat servis");
+        AppFeedback.serviceHistoryLoadFailed(
+          message: 'Gagal memuat riwayat servis, periksa koneksi Anda.',
+        );
       }
     } finally {
       isLoading.value = false;
@@ -134,11 +136,13 @@ class RwtservisController extends GetxController {
             msg = err['message'] ?? err['error'];
           }
         } catch (_) {}
-        Get.snackbar("Error", msg);
+        AppFeedback.serviceHistoryCancelFailed(message: msg);
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Gagal membatalkan servis");
+        AppFeedback.serviceHistoryCancelFailed(
+          message: 'Gagal membatalkan servis, periksa koneksi Anda.',
+        );
       }
     } finally {
       isLoading.value = false;
@@ -179,11 +183,13 @@ class RwtservisController extends GetxController {
             msg = err['message'] ?? err['error'];
           }
         } catch (_) {}
-        Get.snackbar("Error", msg);
+        AppFeedback.serviceHistoryDeleteFailed(message: msg);
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Gagal menghapus riwayat servis");
+        AppFeedback.serviceHistoryDeleteFailed(
+          message: 'Gagal menghapus riwayat servis, periksa koneksi Anda.',
+        );
       }
     } finally {
       isLoading.value = false;

@@ -10,6 +10,7 @@ import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dar
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/services/connectivity_service.dart';
 import 'package:capbatu/app/widgets/app_snackbar.dart';
+import 'package:capbatu/app/widgets/app_feedback_widgets.dart';
 
 // Import kamera dan isolate OCR (dipertahankan untuk referensi)
 // import 'dart:async';
@@ -37,10 +38,9 @@ class PluskendaraanController extends GetxController {
     "Suzuki": ["Satria F150", "Address", "Nex II", "Smash"],
   };
 
-  List<String> get availableModels =>
-      selectedBrand.value.isNotEmpty
-          ? (vehicleData[selectedBrand.value] ?? [])
-          : [];
+  List<String> get availableModels => selectedBrand.value.isNotEmpty
+      ? (vehicleData[selectedBrand.value] ?? [])
+      : [];
 
   bool get isModelDropdownEnabled => selectedBrand.value.isNotEmpty;
 
@@ -336,7 +336,9 @@ class PluskendaraanController extends GetxController {
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Gagal mengunggah gambar");
+        AppFeedback.vehicleAddFailed(
+          message: 'Gagal mengunggah gambar kendaraan.',
+        );
       }
     } finally {
       isUploading.value = false;
@@ -501,32 +503,37 @@ class PluskendaraanController extends GetxController {
 
     try {
       isLoading.value = true;
-      final token = box.read("token");
-      final currentOdo = int.tryParse(odometerController.text.trim()) ?? 0;
+      int parseIntSafe(String text, [int defaultVal = 0]) {
+        final clean = text.replaceAll(RegExp(r'[^0-9.]'), '');
+        if (clean.isEmpty) return defaultVal;
+        final d = double.tryParse(clean);
+        return d != null ? d.round() : defaultVal;
+      }
+
+      final currentOdo = parseIntSafe(odometerController.text);
 
       final components = komponen.map((item) {
         return {
           "component_id": componentIds[item],
           "last_replaced_date": DateTime.now().toIso8601String(),
           "last_replaced_odometer": currentOdo,
-          "service_days":
-              int.tryParse(komponenControllers[item]!.text.trim()) ?? 0,
+          "service_days": parseIntSafe(komponenControllers[item]!.text),
         };
       }).toList();
 
       final body = {
         "brand": selectedBrand.value,
         "model": selectedModel.value,
-        "year": int.tryParse(selectedYear.value) ?? 0,
+        "year": parseIntSafe(selectedYear.value),
         "plate_number": platController.text.trim(),
         "vehicle_image": vehicleImageUrl.value,
         "odometer_image": "", // OCR dibypass, gambar odometer kosong
-        "estimated_km_per_day":
-            int.tryParse(estimasiHarianController.text.trim()) ?? 0,
+        "estimated_km_per_day": parseIntSafe(estimasiHarianController.text, 15),
         "current_odometer": currentOdo,
         "components": components,
       };
 
+      final token = box.read("token");
       final response = await http.post(
         Uri.parse("$baseUrl/api/vehicle/add-vehicle"),
         headers: {
@@ -560,11 +567,18 @@ class PluskendaraanController extends GetxController {
           Get.offNamed('/mainscreen', arguments: 1);
         }
       } else {
-        Get.snackbar("Error", data['message'] ?? "Terjadi kesalahan");
+        AppFeedback.vehicleAddFailed(
+          message:
+              data['message'] ??
+              data['error'] ??
+              'Gagal menambahkan kendaraan.',
+        );
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Gagal menambahkan kendaraan");
+        AppFeedback.vehicleAddFailed(
+          message: 'Gagal menambahkan kendaraan, periksa koneksi Anda.',
+        );
       }
     } finally {
       isLoading.value = false;

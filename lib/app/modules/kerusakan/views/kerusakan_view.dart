@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
-
 import 'package:get/get.dart';
-
+import 'package:flutter/material.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 import '../controllers/kerusakan_controller.dart';
 
 class KerusakanView extends GetView<KerusakanController> {
@@ -12,116 +11,129 @@ class KerusakanView extends GetView<KerusakanController> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Obx(() {
-          double progress = controller.step.value / 4;
-
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 30, 16, 25),
-
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-
-              children: [
-                const Center(
-                  child: Text(
-                    "Cek Kerusakan",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-
-                  children: [
-                    Text(
-                      "Langkah ${controller.step.value} dari 4",
-                      style: const TextStyle(fontSize: 12, color: Colors.black),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 30, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header & Back Button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: controller.prevStep,
+                    child: const Icon(
+                      Icons.arrow_back_ios_new,
+                      size: 20,
+                      color: Colors.black,
                     ),
-                  ],
+                  ),
+                  const Text(
+                    "Cek Kerusakan",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(
+                    width: 20,
+                  ), // Placeholder agar text center sempurna
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Progress Bar
+              Obx(
+                () => Row(
+                  children: List.generate(4, (index) {
+                    return Expanded(
+                      child: Container(
+                        margin: EdgeInsets.only(right: index < 3 ? 8 : 0),
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: controller.step.value > index
+                              ? AppColors.primaryBlue
+                              : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    );
+                  }),
                 ),
+              ),
 
-                const SizedBox(height: 8),
+              const SizedBox(height: 30),
 
-                LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 5,
-                  backgroundColor: Colors.grey.shade300,
-                  valueColor: const AlwaysStoppedAnimation(Color(0xFF2196F3)),
-                ),
-
-                const SizedBox(height: 40),
-
-                Expanded(
-                  child: SingleChildScrollView(
+              // Konten Step
+              Expanded(
+                child: Obx(() {
+                  return SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
                     child: _buildStepContent(controller.step.value),
-                  ),
-                ),
+                  );
+                }),
+              ),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 42,
-
-                          child: ElevatedButton(
-                            onPressed: controller.prevStep,
-
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey.shade300,
-
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
+              // Tombol Bawah (Berubah sesuai step terakhir)
+              Obx(() {
+                bool isLastStep = controller.step.value == 4;
+                return SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: isLastStep
+                      ? ElevatedButton(
+                          onPressed: controller.isLoading.value
+                              ? null
+                              : controller.nextStep,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryBlue,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-
-                            child: Text(
-                              controller.step.value == 1 ? "Batal" : "Kembali",
-
-                              style: const TextStyle(color: Colors.black),
+                            elevation: 0,
+                          ),
+                          child: controller.isLoading.value
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  "Cek Kerusakan",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        )
+                      : OutlinedButton(
+                          onPressed: controller.nextStep,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: AppColors.primaryBlue,
+                              width: 1.2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            "Lanjut",
+                            style: TextStyle(
+                              color: AppColors.primaryBlue,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      Expanded(
-                        child: SizedBox(
-                          height: 42,
-
-                          child: ElevatedButton(
-                            onPressed: controller.nextStep,
-
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2196F3),
-
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                            ),
-
-                            child: Text(
-                              controller.step.value == 4 ? "Periksa" : "Lanjut",
-
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
+                );
+              }),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -129,245 +141,226 @@ class KerusakanView extends GetView<KerusakanController> {
   Widget _buildStepContent(int step) {
     switch (step) {
       case 1:
-        return _stepMesin();
-
-      case 2:
         return _stepKelistrikan();
-
-      case 3:
+      case 2:
         return _stepTransmisi();
-
-      case 4:
+      case 3:
         return _stepRem();
-
-      // case 5:
-      //   return _stepPenggunaan();
-
+      case 4:
+        return _stepRiwayat();
       default:
-        return const Center(child: Text("Step berikutnya..."));
+        return const Center(child: Text("Memuat..."));
     }
   }
 
-  Widget gejalaItem(String kode, String label) {
-    return Obx(
-      () => CheckboxListTile(
-        value: controller.isSelected(kode),
-        onChanged: (_) => controller.toggleGejala(kode),
-        title: Text(label),
-        controlAffinity: ListTileControlAffinity.leading,
-        contentPadding: EdgeInsets.zero,
-      ),
-    );
-  }
-
-  Widget _stepMesin() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Center(
-          child: Text(
-            "Mesin & Performa",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+  // Komponen Item Gejala (Multi-select)
+  Widget _buildGejalaItem(String kode, String label) {
+    return Obx(() {
+      bool isSel = controller.isSelected(kode);
+      return GestureDetector(
+        onTap: () => controller.toggleGejala(kode),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: isSel ? AppColors.primaryBlue : Colors.grey.shade200,
+              width: 1.2,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+          ),
+          child: Row(
+            children: [
+              Image.asset(
+                isSel
+                    ? 'assets/image/circle_fill.png'
+                    : 'assets/image/circle.png',
+                width: 14,
+                height: 14,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isSel ? Colors.black : Colors.black87,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
+      );
+    });
+  }
 
-        const SizedBox(height: 25),
-
-        const Text(
-          "Pilih sesuai keluhan yang Anda rasakan ketika berkendara",
-          style: TextStyle(fontSize: 14),
+  // Komponen Item Radio (Single-select untuk Step 4)
+  Widget _buildRadioItem(String value, String label, RxString groupValue) {
+    return Obx(() {
+      bool isSel = groupValue.value == value;
+      return GestureDetector(
+        onTap: () => groupValue.value = value,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: isSel ? AppColors.primaryBlue : Colors.grey.shade200,
+              width: 1.2,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isSel
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                color: isSel ? AppColors.primaryBlue : Colors.grey.shade400,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isSel ? Colors.black : Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-
-        const SizedBox(height: 20),
-
-        gejalaItem("G01", "Motor susah dihidupkan saat mesin dingin"),
-        gejalaItem("G02", "Tarikan motor terasa berat / ngempos"),
-        gejalaItem("G03", "Keluar asap putih tebal dari knalpot"),
-        gejalaItem(
-          "G04",
-          "Mesin sering mati mendadak saat posisi idle/langsam",
-        ),
-        gejalaItem("G05", "Terdengar suara letupan (nembak) dari knalpot"),
-        gejalaItem("G06", "Mesin cepat sangat panas (overheat)"),
-        gejalaItem("G07", "Konsumsi bensin terasa jauh lebih boros"),
-      ],
-    );
+      );
+    });
   }
 
   Widget _stepKelistrikan() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Center(
-          child: Text(
-            "Kelistrikan",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
+        const Text(
+          "Kelistrikan",
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
         ),
-
-        const SizedBox(height: 25),
-
+        const SizedBox(height: 8),
         const Text(
           "Pilih sesuai keluhan yang Anda rasakan ketika berkendara",
-          style: TextStyle(fontSize: 14),
+          style: TextStyle(fontSize: 12, color: Colors.black54),
+          textAlign: TextAlign.center,
         ),
-
-        const SizedBox(height: 20),
-
-        gejalaItem("G08", "Lampu utama/speedometer redup saat mesin idle"),
-        gejalaItem("G09", "Klakson suaranya lemah atau mati total"),
-        gejalaItem("G10", "Starter tangan tidak merespon"),
-        gejalaItem("G11", "Lampu indikator mesin menyala terus"),
+        const SizedBox(height: 24),
+        _buildGejalaItem("K01", "Starter tidak berfungsi"),
+        _buildGejalaItem("K02", "Lampu indikator mesin terus menyala"),
+        _buildGejalaItem("K03", "Lampu motor redup"),
+        _buildGejalaItem("K04", "Klakson lemah"),
+        _buildGejalaItem("K05", "Indikator speedometer tidak normal"),
       ],
     );
   }
 
   Widget _stepTransmisi() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Center(
-          child: Text(
-            "Transmisi",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
+        const Text(
+          "Transmisi",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
-
-        const SizedBox(height: 25),
-
+        const SizedBox(height: 8),
         const Text(
           "Pilih sesuai keluhan yang Anda rasakan ketika berkendara",
-          style: TextStyle(fontSize: 14),
+          style: TextStyle(fontSize: 12, color: Colors.black54),
+          textAlign: TextAlign.center,
         ),
-
-        const SizedBox(height: 20),
-
-        gejalaItem("G12", "Motor matic bergetar hebat (gredek)"),
-        gejalaItem("G13", "RPM mesin tinggi tapi laju motor lambat"),
-        gejalaItem("G14", "Oper gigi terasa keras"),
-        gejalaItem("G15", "Suara kasar dari CVT atau rantai"),
+        const SizedBox(height: 24),
+        _buildGejalaItem("T01", "RPM tinggi tapi laju lambat"),
+        _buildGejalaItem("T02", "Motor menyentak saat digas"),
       ],
     );
   }
 
   Widget _stepRem() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Center(
-          child: Text(
-            "Pengereman dan Ban",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
+        const Text(
+          "Pengereman & Ban",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
-
-        const SizedBox(height: 25),
-
+        const SizedBox(height: 8),
         const Text(
           "Pilih sesuai keluhan yang Anda rasakan ketika berkendara",
-          style: TextStyle(fontSize: 14),
+          style: TextStyle(fontSize: 12, color: Colors.black54),
+          textAlign: TextAlign.center,
         ),
-
-        const SizedBox(height: 20),
-
-        gejalaItem("G16", "Rem terasa kurang pakem / blong"),
-        gejalaItem("G17", "Terdengar suara mendecit saat mengerem"),
-        gejalaItem("G18", "Stang terasa tidak stabil atau oleng"),
+        const SizedBox(height: 24),
+        _buildGejalaItem("P01", "Rem kurang pakem"),
+        _buildGejalaItem("P02", "Rem berbunyi"),
+        _buildGejalaItem("P03", "Motor oleng saat dikendarai"),
+        _buildGejalaItem("P04", "Setang bergetar"),
       ],
     );
   }
 
-  // Widget _stepPenggunaan() {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _stepRiwayat() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text(
+          "Riwayat Penggunaan",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          "Pilih kondisi sesuai dengan yang Anda alami",
+          style: TextStyle(fontSize: 12, color: Colors.black54),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
 
-  //     children: [
-  //       const Center(
-  //         child: Text(
-  //           "Riwayat Penggunaan",
-  //           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-  //         ),
-  //       ),
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Intensitas Pemakaian",
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildRadioItem("I01", "Jarang dipakai", controller.intensitas),
+        _buildRadioItem("I02", "Dipakai harian", controller.intensitas),
+        _buildRadioItem(
+          "I03",
+          "Rutin dipakai jarak jauh",
+          controller.intensitas,
+        ),
 
-  //       const SizedBox(height: 25),
+        const SizedBox(height: 16),
 
-  //       const Text(
-  //         "Pilih kondisi sesuai dengan yang Anda alami",
-  //         style: TextStyle(fontSize: 14),
-  //       ),
-
-  //       const SizedBox(height: 15),
-
-  //       const Padding(
-  //         padding: EdgeInsets.only(left: 16),
-
-  //         child: Text(
-  //           "Intensitas Pemakaian",
-  //           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-  //         ),
-  //       ),
-  //       const SizedBox(height: 15),
-
-  //       ...["Jarang dipakai", "Dipakai harian", "Rutin dipakai jarak jauh"].map(
-  //         (item) => Padding(
-  //           padding: const EdgeInsets.only(left: 16, bottom: 14),
-
-  //           child: Row(
-  //             children: [
-  //               Icon(
-  //                 Icons.radio_button_unchecked,
-  //                 size: 18,
-  //                 color: Colors.grey.shade600,
-  //               ),
-
-  //               const SizedBox(width: 10),
-
-  //               Expanded(
-  //                 child: Text(item, style: const TextStyle(fontSize: 14)),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-
-  //       const SizedBox(height: 10),
-
-  //       const Padding(
-  //         padding: EdgeInsets.only(left: 16),
-  //         child: Text(
-  //           "Kondisi Jalan",
-  //           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-  //         ),
-  //       ),
-
-  //       const SizedBox(height: 15),
-
-  //       ...[
-  //         "Jalan mulus",
-  //         "Jalan berlubang atau rusak",
-  //         "Sering melalui tanjakan dan turunan",
-  //       ].map(
-  //         (item) => Padding(
-  //           padding: const EdgeInsets.only(left: 16, bottom: 14),
-
-  //           child: Row(
-  //             children: [
-  //               Icon(
-  //                 Icons.radio_button_unchecked,
-  //                 size: 18,
-  //                 color: Colors.grey.shade600,
-  //               ),
-
-  //               const SizedBox(width: 10),
-
-  //               Expanded(
-  //                 child: Text(item, style: const TextStyle(fontSize: 14)),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Kondisi Jalan",
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildRadioItem("J01", "Jalan mulus", controller.kondisiJalan),
+        _buildRadioItem(
+          "J02",
+          "Jalan berlubang atau rusak",
+          controller.kondisiJalan,
+        ),
+        _buildRadioItem(
+          "J03",
+          "Sering melalui tanjakan dan turunan",
+          controller.kondisiJalan,
+        ),
+      ],
+    );
+  }
 }

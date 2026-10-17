@@ -9,6 +9,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/modules/Feature/profil/controllers/profil_controller.dart';
 import 'package:capbatu/app/services/connectivity_service.dart';
 import 'package:capbatu/app/widgets/app_snackbar.dart';
+import 'package:capbatu/app/widgets/app_feedback_widgets.dart';
 
 class EditprofilController extends GetxController {
   final box = GetStorage();
@@ -60,12 +61,9 @@ class EditprofilController extends GetxController {
 
     if (image != null) {
       if (!_isValidImage(image.path)) {
-        Get.snackbar(
-          "Format Salah",
-          "Harap pilih foto dengan format JPG, JPEG, atau PNG (bukan video/file lain).",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+        AppFeedback.inputRequired(
+          message:
+              'Harap pilih foto dengan format JPG, JPEG, atau PNG (bukan video/file lain).',
         );
         return;
       }
@@ -81,12 +79,8 @@ class EditprofilController extends GetxController {
 
     if (image != null) {
       if (!_isValidImage(image.path)) {
-        Get.snackbar(
-          "Format Salah",
-          "Harap ambil foto dengan format JPG/PNG.",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+        AppFeedback.inputRequired(
+          message: 'Harap ambil foto dengan format JPG atau PNG.',
         );
         return;
       }
@@ -123,7 +117,7 @@ class EditprofilController extends GetxController {
       bioController.text = initialBio;
       imageUrl.value = data["image_url"] ?? "";
     } catch (e) {
-      print(e);
+      ConnectivityService.handleNetworkError(e);
     } finally {
       isLoading.value = false;
     }
@@ -132,20 +126,12 @@ class EditprofilController extends GetxController {
   Future<void> updateProfile() async {
     // Validasi tambahan sebelum kirim
     if (nameController.text.trim().isEmpty) {
-      Get.snackbar(
-        "Validasi",
-        "Nama tidak boleh kosong",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppFeedback.inputRequired(message: 'Nama tidak boleh kosong.');
       return;
     }
 
     if (bioController.text.length > 60) {
-      Get.snackbar(
-        "Validasi",
-        "Bio maksimal 60 karakter",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppFeedback.inputRequired(message: 'Bio maksimal 60 karakter.');
       return;
     }
 
@@ -183,13 +169,15 @@ class EditprofilController extends GetxController {
         String errorMsg = "Gagal update profil";
         try {
           final errJson = jsonDecode(resBody);
-          errorMsg = errJson["error"] ?? errJson["message"] ?? errorMsg;
+          errorMsg = errJson["message"] ?? errJson["error"] ?? errorMsg;
         } catch (_) {}
-        Get.snackbar("Error", errorMsg);
+        AppFeedback.profileUpdateFailed(message: errorMsg);
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Gagal memperbarui profil");
+        AppFeedback.profileUpdateFailed(
+          message: 'Gagal memperbarui profil, periksa koneksi Anda.',
+        );
       }
     } finally {
       isSaving.value = false;

@@ -9,6 +9,7 @@ import 'package:capbatu/app/services/connectivity_service.dart';
 import 'package:capbatu/app/modules/Feature/kendaraan/controllers/kendaraan_controller.dart';
 import 'package:capbatu/app/modules/Feature/service/controllers/service_controller.dart';
 import 'package:capbatu/app/modules/notif/controllers/notif_controller.dart';
+import 'package:capbatu/app/widgets/app_feedback_widgets.dart';
 
 class VehicleComponent {
   final String title;
@@ -154,14 +155,11 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    print("INIT HASH = $hashCode");
-
     vehicleId = box.read("vehicle_id") ?? "";
 
     getVehicles();
 
     if (vehicleId.isEmpty) {
-      print("Vehicle ID kosong");
       return;
     }
 
@@ -361,12 +359,20 @@ class HomeController extends GetxController {
 
         return true;
       } else {
-        print("Gagal update odometer: ${response.body}");
+        String message = 'Gagal memperbarui odometer.';
+        try {
+          final data = jsonDecode(response.body);
+          message = data['message'] ?? data['error'] ?? message;
+        } catch (_) {}
+        AppFeedback.odometerUpdateFailed(message: message);
         return false;
       }
     } catch (e) {
-      print("Error update odometer manual: $e");
-      ConnectivityService.handleNetworkError(e);
+      if (!ConnectivityService.handleNetworkError(e)) {
+        AppFeedback.odometerUpdateFailed(
+          message: 'Gagal memperbarui odometer, periksa koneksi Anda.',
+        );
+      }
       return false;
     }
   }
@@ -419,7 +425,6 @@ class HomeController extends GetxController {
         }
       }
     } catch (e) {
-      print("Error getVehicles: $e");
       ConnectivityService.handleNetworkError(e);
     }
   }
@@ -445,9 +450,6 @@ class HomeController extends GetxController {
       final response = await http.get(
         Uri.parse("$baseUrl/api/analisis/artikel?${params.join("&")}"),
       );
-      print(response.statusCode);
-      print(response.body);
-
       final json = jsonDecode(response.body);
       if (json["status"] == "success") {
         lastUpdateArtikel.value = json["lastUpdate"];
@@ -457,7 +459,6 @@ class HomeController extends GetxController {
             .toList();
       }
     } catch (e) {
-      print(e);
       ConnectivityService.handleNetworkError(e);
     } finally {
       isLoadingArtikel.value = false;
@@ -500,9 +501,6 @@ class HomeController extends GetxController {
           "Authorization": "Bearer $token",
         },
       );
-
-      print("STATUS CODE: ${response.statusCode}");
-      print("RESPONSE BODY: ${response.body}");
 
       if (response.statusCode == 401) {
         await AuthService.logout();
@@ -577,7 +575,6 @@ class HomeController extends GetxController {
 
       await fetchUnreadNotifications();
     } catch (e) {
-      print("Error fetchHome: $e");
       ConnectivityService.handleNetworkError(e);
     } finally {
       isLoadingOdometer.value = false;
@@ -606,11 +603,7 @@ class HomeController extends GetxController {
       url += "?${params.join("&")}";
     }
 
-    print("FILTER URL = $url");
-
     final response = await http.get(Uri.parse(url));
-    print(response.statusCode);
-    print(response.body);
 
     final json = jsonDecode(response.body);
 
@@ -652,9 +645,6 @@ class HomeController extends GetxController {
       final response = await http.get(
         Uri.parse("$baseUrl/api/analisis/artikel-trend?${params.join("&")}"),
       );
-      print(response.statusCode);
-      print(response.body);
-
       final json = jsonDecode(response.body);
 
       if (json["status"] == "success") {
@@ -664,8 +654,7 @@ class HomeController extends GetxController {
             .map((e) => TrendTopikModel.fromJson(e))
             .toList();
       }
-    } catch (e) {
-      print(e);
+    } catch (_) {
     } finally {
       isLoadingTrendTopik.value = false;
     }
@@ -719,9 +708,7 @@ class HomeController extends GetxController {
       // }
 
       // print("FETCH HASH = $hashCode");
-    } catch (e, stack) {
-      print(e);
-      print(stack);
+    } catch (e) {
       ConnectivityService.handleNetworkError(e);
     } finally {
       isLoadingKomponen.value = false;
@@ -749,12 +736,7 @@ class HomeController extends GetxController {
       url += "?${params.join("&")}";
     }
 
-    print(url);
-
     final response = await http.get(Uri.parse(url));
-
-    print(response.statusCode);
-    print(response.body);
 
     final json = jsonDecode(response.body);
 
@@ -785,8 +767,6 @@ class HomeController extends GetxController {
         final unread = data.where((item) => item['is_read'] != true).length;
         unreadNotifCount.value = unread;
       }
-    } catch (e) {
-      print("Error fetchUnreadNotifications: $e");
-    }
+    } catch (_) {}
   }
 }

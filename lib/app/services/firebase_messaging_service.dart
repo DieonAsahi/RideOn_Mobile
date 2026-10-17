@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -19,8 +20,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 class FirebaseMessagingService {
-  static final FirebaseMessaging messaging =
-      FirebaseMessaging.instance;
+  static const _installationIdKey = 'fcm_installation_id';
+
+  static final FirebaseMessaging messaging = FirebaseMessaging.instance;
 
   static Future<void> init() async {
     LocalNotificationService.onNotificationTap = _openNotification;
@@ -31,33 +33,27 @@ class FirebaseMessagingService {
       sound: true,
     );
 
-    print(
-      'FCM permission: ${settings.authorizationStatus}',
-    );
+    print('FCM permission: ${settings.authorizationStatus}');
 
     // Ambil token
     await syncToken();
 
     // Foreground
-    FirebaseMessaging.onMessage.listen(
-      (RemoteMessage message) async {
-        print('FCM FOREGROUND');
-        print('Title: ${message.notification?.title}');
-        print('Body: ${message.notification?.body}');
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      print('FCM FOREGROUND');
+      print('Title: ${message.notification?.title}');
+      print('Body: ${message.notification?.body}');
 
-        await showMessageNotification(message);
-        InAppNotificationBanner.show(message);
-      },
-    );
+      await showMessageNotification(message);
+      InAppNotificationBanner.show(message);
+    });
 
     FirebaseMessaging.onMessageOpenedApp.listen(_openRemoteMessage);
 
     // Token berubah
-    messaging.onTokenRefresh.listen(
-      (newToken) async {
-        await syncToken(newToken);
-      },
-    );
+    messaging.onTokenRefresh.listen((newToken) async {
+      await syncToken(newToken);
+    });
   }
 
   static Future<void> handleInitialMessage() async {
@@ -82,7 +78,8 @@ class FirebaseMessagingService {
         : null;
 
     await LocalNotificationService.show(
-      id: notificationId ??
+      id:
+          notificationId ??
           DateTime.now().millisecondsSinceEpoch.remainder(1 << 31),
       title: message.data['title'] ?? message.notification?.title ?? 'RideOn',
       body: message.data['body'] ?? message.notification?.body ?? '',
@@ -94,29 +91,88 @@ class FirebaseMessagingService {
     );
   }
 
-  // Dipanggil lagi setelah login agar token yang sebelumnya diperoleh saat
-  // aplikasi dibuka dapat dikaitkan ke pengguna yang baru masuk.
+  static String? _devicePlatform() {
+    if (Platform.isAndroid) return 'android';
+    if (Platform.isIOS) return 'ios';
+    return null;
+  }
+
+  // Dipanggil saat aplikasi dibuka, token berubah, dan setelah login agar token
+  // guest yang sama dapat ditautkan ke user yang baru masuk.
   static Future<void> syncToken([String? latestToken]) async {
-    final token = latestToken ?? await messaging.getToken();
-    final accessToken = GetStorage().read<String>('token');
+    try {
+      final token = latestToken ?? await messaging.getToken();
+      final platform = _devicePlatform();
+      final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
+      final box = GetStorage();
+      final accessToken = box.read<String>('token');
+      final installationId = box.read<String>(_installationIdKey);
+
+      if (token == null ||
+          token.isEmpty ||
+          platform == null ||
+          baseUrl == null) {
+        return;
+      }
+
+      final headers = <String, String>{'Content-Type': 'application/json'};
+      if (accessToken != null && accessToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $accessToken';
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/fcm/register-token'),
+        headers: headers,
+        body: jsonEncode({
+          'token': token,
+          'platform': platform,
+          'installation_id': installationId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final payload = jsonDecode(response.body);
+        final returnedInstallationId = payload is Map<String, dynamic>
+            ? payload['installation_id']?.toString()
+            : null;
+
+        if (returnedInstallationId != null &&
+            returnedInstallationId.isNotEmpty) {
+          await box.write(_installationIdKey, returnedInstallationId);
+        }
+      }
+    } catch (_) {
+      // Token akan dicoba lagi pada pembukaan aplikasi atau refresh berikutnya.
+    }
+  }
+
+  /// Saat logout, pertahankan identitas perangkat agar tetap bisa menjadi guest.
+  /// Backend hanya melepas relasi `user_id`; token FCM dan installation_id aman.
+  static Future<void> disassociateTokenFromUser() async {
+    final box = GetStorage();
+    final accessToken = box.read<String>('token');
+    final installationId = box.read<String>(_installationIdKey);
     final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
 
-    if (token == null || accessToken == null || baseUrl == null) return;
+    if (accessToken == null ||
+        accessToken.isEmpty ||
+        installationId == null ||
+        installationId.isEmpty ||
+        baseUrl == null) {
+      return;
+    }
 
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/fcm/token'),
+      await http.post(
+        Uri.parse('$baseUrl/api/fcm/token/disassociate'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $accessToken',
         },
-        body: jsonEncode({'token': token, 'platform': 'android'}),
+        body: jsonEncode({'installation_id': installationId}),
       );
-      if (response.statusCode != 200) {
-        print('Gagal menyimpan token FCM: ${response.statusCode} ${response.body}');
-      }
     } catch (_) {
-      // Token akan dicoba lagi pada pembukaan aplikasi atau refresh berikutnya.
+      // Relasi akan dicoba diperbarui lagi saat token disinkronkan berikutnya.
     }
   }
 
@@ -152,12 +208,13 @@ class FirebaseMessagingService {
     }
   }
 
-
   static Future<void> _openRemoteMessage(RemoteMessage message) =>
-      _openNotification(jsonEncode({
-        'vehicle_id': message.data['vehicle_id'],
-        'notification_id': message.data['notification_id'],
-      }));
+      _openNotification(
+        jsonEncode({
+          'vehicle_id': message.data['vehicle_id'],
+          'notification_id': message.data['notification_id'],
+        }),
+      );
 
   static Future<bool> openPendingNotificationAfterLogin() async {
     final box = GetStorage();
@@ -180,7 +237,10 @@ class FirebaseMessagingService {
       final data = jsonDecode(payload) as Map<String, dynamic>;
       final vehicleId = data['vehicle_id']?.toString();
       final notificationId = data['notification_id']?.toString();
-      if (vehicleId == null || vehicleId.isEmpty || notificationId == null || notificationId.isEmpty) {
+      if (vehicleId == null ||
+          vehicleId.isEmpty ||
+          notificationId == null ||
+          notificationId.isEmpty) {
         return;
       }
 

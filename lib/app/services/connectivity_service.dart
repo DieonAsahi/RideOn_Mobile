@@ -205,6 +205,9 @@ class ConnectivityService extends GetxService {
         str.contains('network unreachable') ||
         str.contains('connection refused') ||
         str.contains('connection timed out') ||
+        str.contains('connection timeout') ||
+        str.contains('receive timeout') ||
+        str.contains('send timeout') ||
         str.contains('connection closed') ||
         str.contains('connection reset') ||
         str.contains('clientexception') ||
@@ -214,7 +217,6 @@ class ConnectivityService extends GetxService {
         str.contains('os error: no address associated') ||
         str.contains('software caused connection abort') ||
         str.contains('network error') ||
-        str.contains('dioexception') ||
         str.contains('connectionerror') ||
         str.contains('errno = 7') ||
         str.contains('errno = 101') ||

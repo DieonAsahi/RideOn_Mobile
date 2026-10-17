@@ -45,94 +45,101 @@ class KendaraanView extends GetView<KendaraanController> {
                             child: Column(
                               children: [
                                 Obx(() {
-                            if (controller.isLoading.value) {
-                              return const KendaraanSkeleton();
-                            }
+                                  if (controller.isLoading.value) {
+                                    return const KendaraanSkeleton();
+                                  }
 
-                            if (controller.kendaraanList.isEmpty) {
-                              return const Padding(
-                                padding: EdgeInsets.only(top: 80),
-                                child: Center(
-                                  child: Text(
-                                    "Belum ada kendaraan",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey,
+                                  if (controller.kendaraanList.isEmpty) {
+                                    return const Padding(
+                                      padding: EdgeInsets.only(top: 80),
+                                      child: Center(
+                                        child: Text(
+                                          "Belum ada kendaraan",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+
+                                  return ListView.separated(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
                                     ),
-                                  ),
-                                ),
-                              );
-                            }
+                                    itemCount: controller.kendaraanList.length,
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(height: 16),
+                                    itemBuilder: (context, index) {
+                                      final data =
+                                          controller.kendaraanList[index];
+                                      final isActive =
+                                          controller.activeVehicleId.value ==
+                                          data.id;
 
-                            return ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              itemCount: controller.kendaraanList.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: 16),
-                              itemBuilder: (context, index) {
-                                final data = controller.kendaraanList[index];
-                                final isActive =
-                                    controller.activeVehicleId.value == data.id;
-
-                                return KendaraanCard(
-                                  id: data.id,
-                                  nama: data.nama,
-                                  plat: data.plat,
-                                  km: data.km,
-                                  status: data.status,
-                                  image: data.image,
-                                  lastServiceDate: data.lastServiceDate,
-                                  nextServiceComponent:
-                                      data.nextServiceComponent,
-                                  isActive: isActive,
-                                );
-                              },
-                            );
-                          }),
-                          const SizedBox(height: 100),
-                        ],
+                                      return KendaraanCard(
+                                        id: data.id,
+                                        nama: data.nama,
+                                        plat: data.plat,
+                                        km: data.km,
+                                        status: data.status,
+                                        image: data.image,
+                                        lastServiceDate: data.lastServiceDate,
+                                        nextServiceComponent:
+                                            data.nextServiceComponent,
+                                        isActive: isActive,
+                                      );
+                                    },
+                                  );
+                                }),
+                                const SizedBox(height: 100),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-            ),
 
-            // TOMBOL TAMBAH KENDARAAN (FAB)
-            Positioned(
-              right: 16,
-              bottom: 96,
-              child: SizedBox(
-                width: 54,
-                height: 54,
-                child: FloatingActionButton(
-                  heroTag: 'addKendaraanFab',
-                  backgroundColor: const Color(0xFF0085FF),
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                  // TOMBOL TAMBAH KENDARAAN (FAB)
+                  Positioned(
+                    right: 16,
+                    bottom: 96,
+                    child: SizedBox(
+                      width: 54,
+                      height: 54,
+                      child: FloatingActionButton(
+                        heroTag: 'addKendaraanFab',
+                        backgroundColor: AppColors.primaryBlue,
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        onPressed: () async {
+                          final result = await Get.toNamed('/pluskendaraan');
+                          if (result == true) {
+                            await controller.getVehicles(force: true);
+                          }
+                        },
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                    ),
                   ),
-                  onPressed: () async {
-                    final result = await Get.toNamed('/pluskendaraan');
-                    if (result == true) {
-                      await controller.getVehicles(force: true);
-                    }
-                  },
-                  child: const Icon(Icons.add, color: Colors.white, size: 28),
-                ),
+                ],
               ),
             ),
           ],
         ),
       ),
-    ],
-  ),
-),
     );
   }
 }
@@ -166,10 +173,11 @@ class KendaraanCard extends StatelessWidget {
     Color statusTextColor;
     String statusIcon;
 
-    if (status == "Perlu Servis") {
+    final lower = status.toLowerCase();
+    if (lower == "buruk" || lower == "perlu servis") {
       statusTextColor = AppColors.red;
       statusIcon = "assets/icon/danger.png";
-    } else if (status == "Perlu Perhatian") {
+    } else if (lower == "perlu perhatian") {
       statusTextColor = AppColors.orange;
       statusIcon = "assets/icon/warning.png";
     } else {
@@ -223,7 +231,7 @@ class KendaraanCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF0085FF),
+                              color: AppColors.primaryBlue,
                             ),
                           ),
                         ],
@@ -507,7 +515,7 @@ class KendaraanCard extends StatelessWidget {
                               await kendaraanController.deleteVehicle(id);
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
+                              backgroundColor: AppColors.red,
                             ),
                             child: const Text(
                               "Ya",
@@ -529,7 +537,7 @@ class KendaraanCard extends StatelessWidget {
                   value: 'hapus',
                   label: 'Hapus',
                   iconAsset: 'assets/image/hapus_fill.png',
-                  color: Colors.red,
+                  color: AppColors.red,
                 ),
               ],
             ),

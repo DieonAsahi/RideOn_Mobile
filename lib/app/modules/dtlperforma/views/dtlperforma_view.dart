@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 
 import '../../../widgets/base_bottom_sheet.dart';
 import '../../../widgets/odometer_form_content.dart';
@@ -117,7 +118,11 @@ class DtlperformaView extends GetView<DtlperformaController> {
   }
 
   Widget _vehiclePlaceholder() {
-    return const Icon(Icons.two_wheeler, color: Color(0xFF2196F3), size: 100);
+    return const Icon(
+      Icons.two_wheeler,
+      color: AppColors.primaryBlue,
+      size: 100,
+    );
   }
 
   // 2. Card Performa Kondisi
@@ -134,13 +139,13 @@ class DtlperformaView extends GetView<DtlperformaController> {
     // Logika Warna Persentase Mingguan
     Color weeklyColor;
     if (weeklyChange <= -15) {
-      weeklyColor = Colors.red;
+      weeklyColor = AppColors.red;
     } else if (weeklyChange < 0) {
       // -1 sampai -14
-      weeklyColor = Colors.orange;
+      weeklyColor = AppColors.orange;
     } else {
       // 0 atau plus
-      weeklyColor = Colors.green;
+      weeklyColor = AppColors.green;
     }
 
     final changeText = weeklyChange > 0
@@ -237,7 +242,7 @@ class DtlperformaView extends GetView<DtlperformaController> {
                 child: const Text(
                   'Perbarui',
                   style: TextStyle(
-                    color: Color(0xFF2196F3),
+                    color: AppColors.primaryBlue,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -342,9 +347,7 @@ class DtlperformaView extends GetView<DtlperformaController> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: selected
-                      ? const Color(0xFF2196F3)
-                      : Colors.transparent,
+                  color: selected ? AppColors.primaryBlue : Colors.transparent,
                   borderRadius: BorderRadius.circular(30),
                 ),
                 alignment: Alignment.center,
@@ -415,9 +418,9 @@ class DtlperformaView extends GetView<DtlperformaController> {
           spacing: 20,
           runSpacing: 10,
           children: [
-            _legend(Colors.green, '75-100% Baik'),
-            _legend(Colors.orange, '50-74% Perlu perhatian'),
-            _legend(Colors.red, '<50% Buruk'),
+            _legend(AppColors.green, '75-100% Baik'),
+            _legend(AppColors.orange, '50-74% Perlu perhatian'),
+            _legend(AppColors.red, '<50% Buruk'),
           ],
         ),
       ],
@@ -463,7 +466,7 @@ class DtlperformaView extends GetView<DtlperformaController> {
                 child: const Text(
                   'Lihat riwayat',
                   style: TextStyle(
-                    color: Color(0xFF2196F3),
+                    color: AppColors.primaryBlue,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -675,7 +678,7 @@ class _PerformanceChartPainter extends CustomPainter {
     if (segment.isNotEmpty) segments.add(segment);
 
     final linePaint = Paint()
-      ..color = const Color(0xFF2196F3)
+      ..color = AppColors.primaryBlue
       ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -717,7 +720,7 @@ class _PerformanceChartPainter extends CustomPainter {
 
       // Draw Points
       for (final point in linePoints) {
-        canvas.drawCircle(point, 4, Paint()..color = const Color(0xFF2196F3));
+        canvas.drawCircle(point, 4, Paint()..color = AppColors.primaryBlue);
         canvas.drawCircle(point, 2, Paint()..color = Colors.white);
       }
     }
@@ -753,18 +756,18 @@ class _PerformanceChartPainter extends CustomPainter {
       );
 
       // Menggambar point khusus paling ujung yang lebih besar & beda warna (sesuai statusnya)
-      Color dotColor = Colors.green;
+      Color dotColor = AppColors.green;
       if (score < 50) {
-        dotColor = Colors.red;
+        dotColor = AppColors.red;
       } else if (score < 75) {
-        dotColor = Colors.orange;
+        dotColor = AppColors.orange;
       }
 
       canvas.drawCircle(selectedPoint, 6, Paint()..color = dotColor);
       canvas.drawCircle(
         selectedPoint,
         3,
-        Paint()..color = const Color(0xFF2196F3),
+        Paint()..color = AppColors.primaryBlue,
       );
     }
 

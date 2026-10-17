@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:capbatu/app/core/theme/app_theme.dart';
 import '../controllers/onboarding_controller.dart';
 
 class OnboardingView extends GetView<OnboardingController> {
@@ -50,7 +51,7 @@ class OnboardingView extends GetView<OnboardingController> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: controller.currentPage.value == 0
-                          ? const Color(0xFF0085FF)
+                          ? AppColors.primaryBlue
                           : const Color(0xFFBDBDBD),
                     ),
                   ),
@@ -61,7 +62,7 @@ class OnboardingView extends GetView<OnboardingController> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: controller.currentPage.value == 1
-                          ? const Color(0xFF0085FF)
+                          ? AppColors.primaryBlue
                           : const Color(0xFFBDBDBD),
                     ),
                   ),
@@ -85,7 +86,7 @@ class OnboardingView extends GetView<OnboardingController> {
                         height: isLandscape ? 44 : 52,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0085FF),
+                            backgroundColor: AppColors.primaryBlue,
                             elevation: 4,
                             shadowColor: const Color(
                               0xFF0085FF,

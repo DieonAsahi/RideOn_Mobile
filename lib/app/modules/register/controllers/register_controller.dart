@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:capbatu/app/services/connectivity_service.dart';
 import 'package:capbatu/app/widgets/app_snackbar.dart';
 import 'package:capbatu/app/widgets/otp_limit_dialog.dart';
+import 'package:capbatu/app/widgets/app_feedback_widgets.dart';
 
 class RegisterController extends GetxController {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -69,7 +70,8 @@ class RegisterController extends GetxController {
       passwordError.value = "Kata sandi minimal 8 karakter";
       isValid = false;
     } else if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(password)) {
-      passwordError.value = "Kata sandi harus berisi huruf besar, huruf kecil, dan angka";
+      passwordError.value =
+          "Kata sandi harus berisi huruf besar, huruf kecil, dan angka";
       isValid = false;
     }
 
@@ -114,16 +116,19 @@ class RegisterController extends GetxController {
               data['error'],
               statusCode: response.statusCode,
             )) {
-          OtpLimitDialog.show();
+          OtpLimitDialog.show(customTime: data['reset_time']?.toString());
         } else {
-          Get.snackbar("Error", data['error'] ?? "Register gagal");
+          AppFeedback.registerFailed(
+            message: data['message'] ?? data['error'] ?? 'Register gagal.',
+          );
         }
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Tidak bisa konek ke server");
+        AppFeedback.registerFailed(
+          message: 'Gagal mendaftar, periksa koneksi Anda.',
+        );
       }
-      print(e);
     }
   }
 

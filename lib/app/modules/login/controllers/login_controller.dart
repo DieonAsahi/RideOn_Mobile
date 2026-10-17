@@ -9,6 +9,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../services/firebase_messaging_service.dart';
 import '../../../services/local_notification_service.dart';
 import '../../../services/connectivity_service.dart';
+import '../../../widgets/app_feedback_widgets.dart';
 
 class LoginController extends GetxController with GetTickerProviderStateMixin {
   final baseUrl = dotenv.env['PUBLIC_API_BASE_URL'];
@@ -141,7 +142,8 @@ class LoginController extends GetxController with GetTickerProviderStateMixin {
       passwordError.value = "Kata sandi minimal 8 karakter";
       isValid = false;
     } else if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(password)) {
-      passwordError.value = "Kata sandi harus berisi huruf besar, huruf kecil, dan angka";
+      passwordError.value =
+          "Kata sandi harus berisi huruf besar, huruf kecil, dan angka";
       isValid = false;
     }
 
@@ -170,12 +172,14 @@ class LoginController extends GetxController with GetTickerProviderStateMixin {
         await checkVehicle();
       } else {
         isLoggingIn.value = false;
-        Get.snackbar("Error", data['error'] ?? "Login gagal");
+        AppFeedback.loginFailed(
+          message: data['message'] ?? data['error'] ?? 'Login gagal.',
+        );
       }
     } catch (e) {
       isLoggingIn.value = false;
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Tidak bisa terhubung ke server");
+        AppFeedback.loginFailed(message: 'Gagal masuk, periksa koneksi Anda.');
       }
     }
   }
@@ -204,7 +208,7 @@ class LoginController extends GetxController with GetTickerProviderStateMixin {
 
       if (idToken == null) {
         isLoggingIn.value = false;
-        Get.snackbar("Error", "Gagal mendapatkan token Google");
+        AppFeedback.loginFailed(message: 'Gagal mendapatkan token Google.');
         return;
       }
 
@@ -217,7 +221,7 @@ class LoginController extends GetxController with GetTickerProviderStateMixin {
 
       if (token == null) {
         isLoggingIn.value = false;
-        Get.snackbar("Error", "Autentikasi gagal");
+        AppFeedback.loginFailed(message: 'Autentikasi Google gagal.');
         return;
       }
 
@@ -231,7 +235,9 @@ class LoginController extends GetxController with GetTickerProviderStateMixin {
     } catch (e) {
       isLoggingIn.value = false;
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Terjadi kesalahan saat login Google");
+        AppFeedback.loginFailed(
+          message: 'Login Google gagal. Silakan coba lagi.',
+        );
       }
     }
   }

@@ -10,6 +10,7 @@ import 'package:capbatu/app/modules/Feature/home/controllers/home_controller.dar
 import 'package:capbatu/app/modules/Feature/service/controllers/service_controller.dart';
 import 'package:capbatu/app/modules/notif/controllers/notif_controller.dart';
 import 'package:capbatu/app/widgets/app_snackbar.dart';
+import 'package:capbatu/app/widgets/app_feedback_widgets.dart';
 
 class Kendaraan {
   final String id;
@@ -171,15 +172,18 @@ class KendaraanController extends GetxController {
         String errorMsg = "Gagal menghapus kendaraan";
         try {
           final body = jsonDecode(response.body);
-          if (body is Map && (body['error'] != null || body['message'] != null)) {
-            errorMsg = body['error'] ?? body['message'];
+          if (body is Map &&
+              (body['error'] != null || body['message'] != null)) {
+            errorMsg = body['message'] ?? body['error'];
           }
         } catch (_) {}
-        Get.snackbar("Error", errorMsg);
+        AppFeedback.vehicleDeleteFailed(message: errorMsg);
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
-        Get.snackbar("Error", "Gagal menghapus kendaraan");
+        AppFeedback.vehicleDeleteFailed(
+          message: 'Gagal menghapus kendaraan, periksa koneksi Anda.',
+        );
       }
     } finally {
       isLoading.value = false;
@@ -222,15 +226,32 @@ class KendaraanController extends GetxController {
             final odo = int.tryParse(item["current_odometer"].toString()) ?? 0;
             final kmStr = "${formatter.format(odo)} km";
 
+            final perf =
+                double.tryParse(item["performance"].toString()) ?? 100.0;
+            final score = perf.round().clamp(0, 100);
+
+            // Sinkronkan status dengan aturan yang sama persis seperti Home
+            String statusStr = item["status"]?.toString() ?? "";
+            if (statusStr.isEmpty ||
+                statusStr.toLowerCase() == "optimal" ||
+                statusStr.toLowerCase() == "perlu servis") {
+              if (score >= 75) {
+                statusStr = "Baik";
+              } else if (score >= 50) {
+                statusStr = "Perlu perhatian";
+              } else {
+                statusStr = "Buruk";
+              }
+            }
+
             return Kendaraan(
               id: item["id"].toString(),
               nama: "${item["brand"] ?? ''} ${item["model"] ?? ''}".trim(),
               plat: item["plate_number"] ?? "-",
               km: kmStr,
-              status: item["status"] ?? "Optimal",
+              status: statusStr,
               image: item["vehicle_image"] ?? "",
-              performance:
-                  double.tryParse(item["performance"].toString()) ?? 100,
+              performance: perf,
               lastServiceDate: formatServiceDate(item["last_service_date"]),
               nextServiceComponent: item["next_service_component"] ?? "-",
             );
@@ -256,7 +277,6 @@ class KendaraanController extends GetxController {
         }
       }
     } catch (e) {
-      print("Error getVehicles: $e");
       ConnectivityService.handleNetworkError(e);
     } finally {
       isLoading.value = false;
