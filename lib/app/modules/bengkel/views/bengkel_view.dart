@@ -338,7 +338,7 @@ class BengkelView extends GetView<BengkelController> {
                                                       .trim()
                                                       .isEmpty)
                                               ? Image.asset(
-                                                  'assets/logo/placeholder.png',
+                                                  'assets/image/placeholder.png',
                                                   height: 150,
                                                   width: double.infinity,
                                                   fit: BoxFit.cover,
@@ -355,7 +355,7 @@ class BengkelView extends GetView<BengkelController> {
                                                         stackTrace,
                                                       ) {
                                                         return Image.asset(
-                                                          'assets/logo/rideon_title.png',
+                                                          'assets/image/placeholder.png',
                                                           height: 150,
                                                           width:
                                                               double.infinity,

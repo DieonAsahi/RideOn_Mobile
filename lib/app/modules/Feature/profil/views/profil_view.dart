@@ -1,15 +1,11 @@
 import 'package:get/get.dart';
-import 'package:flutter/services.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../controllers/profil_controller.dart';
 import "package:capbatu/app/widgets/skeleton_widget.dart";
 import 'package:capbatu/app/core/theme/app_theme.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:capbatu/app/services/auth_service.dart';
+import 'faq_view.dart';
 
 class ProfilView extends GetView<ProfilController> {
   const ProfilView({super.key});
@@ -154,12 +150,15 @@ class ProfilView extends GetView<ProfilController> {
                             _buildSectionTitle("Pengaturan"),
                             ProfileMenuTile(
                               title: "Pengingat Servis",
-                              trailing: CustomSwitch(
-                                value: false,
-                                activeColor: AppColors.primaryBlue,
-                                width: 48,
-                                height: 24,
-                                onChanged: (value) {},
+                              trailing: Obx(
+                                () => CustomSwitch(
+                                  value: controller.isReminderEnabled.value,
+                                  activeColor: AppColors.primaryBlue,
+                                  width: 48,
+                                  height: 24,
+                                  onChanged: (value) =>
+                                      controller.toggleReminder(value),
+                                ),
                               ),
                             ),
 
@@ -167,7 +166,13 @@ class ProfilView extends GetView<ProfilController> {
 
                             // Section: Lainnya
                             _buildSectionTitle("Lainnya"),
-                            ProfileMenuTile(title: "FAQ", onTap: () {}),
+                            ProfileMenuTile(
+                              title: "FAQ",
+                              onTap: () {
+                                FocusScope.of(context).unfocus();
+                                Get.to(() => const FaqView());
+                              },
+                            ),
 
                             const SizedBox(height: 24),
 
@@ -324,29 +329,7 @@ class ProfilView extends GetView<ProfilController> {
                             ),
                           ),
                           onPressed: () async {
-                            final box = GetStorage();
-                            final serverClientId =
-                                dotenv.env['GOOGLE_SERVER_CLIENT_ID'];
-
-                            if (serverClientId != null) {
-                              final googleSignIn = GoogleSignIn(
-                                serverClientId: serverClientId,
-                              );
-                              try {
-                                await googleSignIn.signOut();
-                              } catch (_) {}
-                            }
-
-                            try {
-                              await Supabase.instance.client.auth.signOut();
-                            } catch (_) {}
-
-                            await box.remove("token");
-                            await box.remove("user");
-                            await box.remove("vehicle_id");
-
-                            Get.back();
-                            Get.offAllNamed('/login');
+                            await AuthService.logout();
                           },
                           child: const Text(
                             "Keluar",

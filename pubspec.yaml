@@ -77,7 +77,11 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: true
-  image_path: assets/logo/RideOn_app.png
+  ios: true
+  image_path: "assets/icon_master.png"
+  adaptive_icon_background: "#2196F3"
+  adaptive_icon_foreground: "assets/icon_foreground.png"
+  remove_alpha_ios: true
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

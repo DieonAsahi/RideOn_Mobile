@@ -45,3 +45,40 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ========================================================
+# SECURITY & SENSITIVE CREDENTIALS (KEAMANAN REPOSITORY)
+# ========================================================
+# 1. Environment files
+.env
+.env.*
+.env.local
+!.env.example
+
+# 2. Assets (seluruh aset dan gambar aplikasi)
+assets/
+
+# 3. Firebase Configuration & Service Accounts
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+*GoogleService-Info.plist
+*google-services.json
+*-service-account*.json
+*service-account*.json
+*firebase-adminsdk*.json
+*serviceAccountKey*.json
+
+# 4. Android Keystore & Signing Credentials
+*.jks
+*.keystore
+android/key.properties
+android/local.properties
+key.properties
+local.properties
+
+# 5. Local Database & Secrets
+*.db
+*.sqlite
+*.sqlite3
+secrets.json
+credentials.json
