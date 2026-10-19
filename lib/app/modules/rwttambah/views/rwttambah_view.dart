@@ -28,10 +28,15 @@ class RwttambahView extends GetView<RwttambahController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 30, 16, 24),
+                padding: const EdgeInsets.fromLTRB(8, 16, 16, 24),
                 child: Row(
                   children: [
                     IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 36,
+                        height: 36,
+                      ),
                       onPressed: () {
                         // Logika yang sama juga diterapkan di tombol back AppBar
                         if (controller.isEdit.value) {
@@ -135,79 +140,47 @@ class RwttambahView extends GetView<RwttambahController> {
                             ),
                             const SizedBox(height: 8),
 
-                            DropdownButtonFormField<int>(
-                              value: controller.selectedComponentId.value == 0
-                                  ? null
-                                  : controller.selectedComponentId.value,
-                              hint: const Text(
-                                "Pilih Komponen",
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
+                            Obx(() {
+                              final selectedComponentId =
+                                  controller.selectedComponentId.value;
+                              final componentError =
+                                  controller.componentError.value;
+                              final isComponentEnabled =
+                                  controller.isComponentEnabled;
+                              return _responsiveDropdown<int>(
+                                value: selectedComponentId == 0
+                                    ? null
+                                    : selectedComponentId,
+                                items: controller.components.map((item) {
+                                  return DropdownMenuItem<int>(
+                                    value: item["id"],
+                                    child: Text(item["name"]),
+                                  );
+                                }).toList(),
+                                hint: const Text(
+                                  "Pilih Komponen",
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w400,
+                                  ),
                                 ),
-                              ),
-                              items: controller.components.map((item) {
-                                return DropdownMenuItem<int>(
-                                  value: item["id"],
-                                  child: Text(item["name"]),
-                                );
-                              }).toList(),
-                              onChanged: controller.isComponentEnabled
-                                  ? (value) {
-                                      if (value != null) {
-                                        controller.selectedComponentId.value =
-                                            value;
-                                        controller.componentError.value = null;
+                                onChanged: isComponentEnabled
+                                    ? (value) {
+                                        if (value != null) {
+                                          controller.selectedComponentId.value =
+                                              value;
+                                          controller.componentError.value =
+                                              null;
+                                        }
                                       }
-                                    }
-                                  : null,
-                              decoration: InputDecoration(
-                                fillColor: controller.isComponentEnabled
-                                    ? Colors.white
-                                    : Colors.grey.shade100,
-                                filled: !controller.isComponentEnabled,
-                                errorText: controller.componentError.value,
-                                errorStyle: const TextStyle(
-                                  color: AppColors.red,
-                                  fontSize: 11,
+                                    : null,
+                                decoration: _dropdownDecoration(
+                                  enabled: isComponentEnabled,
+                                  errorText: componentError,
                                 ),
-                                errorMaxLines: 3,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 14,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                    color: AppColors.primaryBlue,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                    color: AppColors.red,
-                                  ),
-                                ),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(
-                                    color: AppColors.red,
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ),
+                              );
+                            }),
                           ],
                         );
                       }),
@@ -463,17 +436,12 @@ class RwttambahView extends GetView<RwttambahController> {
                                 controller.selectedStatus.value.isNotEmpty
                             ? controller.selectedStatus.value
                             : null;
+                        final statusError = controller.statusError.value;
+                        final isStatusEnabled =
+                            controller.isStatusDropdownEnabled;
 
-                        return DropdownButtonFormField<String>(
+                        return _responsiveDropdown<String>(
                           value: currentValue,
-                          hint: const Text(
-                            "Pilih Status",
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
                           items: options
                               .map(
                                 (status) => DropdownMenuItem(
@@ -485,60 +453,24 @@ class RwttambahView extends GetView<RwttambahController> {
                                 ),
                               )
                               .toList(),
-                          onChanged: controller.isStatusDropdownEnabled
+                          hint: const Text(
+                            "Pilih Status",
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          onChanged: isStatusEnabled
                               ? (value) {
                                   if (value != null) {
                                     controller.changeStatus(value);
                                   }
                                 }
                               : null,
-                          decoration: InputDecoration(
-                            fillColor: controller.isStatusDropdownEnabled
-                                ? Colors.white
-                                : Colors.grey.shade100,
-                            filled: !controller.isStatusDropdownEnabled,
-                            errorText: controller.statusError.value,
-                            errorStyle: const TextStyle(
-                              color: AppColors.red,
-                              fontSize: 11,
-                            ),
-                            errorMaxLines: 3,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: Colors.grey.shade300,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: Colors.grey.shade300,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(
-                                color: AppColors.primaryBlue,
-                                width: 1.5,
-                              ),
-                            ),
-                            errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(
-                                color: AppColors.red,
-                              ),
-                            ),
-                            focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(
-                                color: AppColors.red,
-                                width: 1.5,
-                              ),
-                            ),
+                          decoration: _dropdownDecoration(
+                            enabled: isStatusEnabled,
+                            errorText: statusError,
                           ),
                         );
                       }),
@@ -552,29 +484,29 @@ class RwttambahView extends GetView<RwttambahController> {
               // ================= TOMBOL SIMPAN (STICKY DI BAWAH) =================
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                ),
+                decoration: const BoxDecoration(color: Colors.white),
                 child: SizedBox(
                   width: double.infinity,
                   height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  child: Obx(
+                    () => ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                    ),
-                    onPressed: () {
-                      if (controller.isEdit.value) {
-                        controller.updateRiwayat();
-                      } else {
-                        controller.simpanRiwayat();
-                      }
-                    },
-                    child: Obx(
-                      () => controller.isLoading.value
+                      onPressed: controller.isLoading.value
+                          ? null
+                          : () {
+                              if (controller.isEdit.value) {
+                                controller.updateRiwayat();
+                              } else {
+                                controller.simpanRiwayat();
+                              }
+                            },
+                      child: controller.isLoading.value
                           ? const SizedBox(
                               width: 22,
                               height: 22,
@@ -610,6 +542,78 @@ class RwttambahView extends GetView<RwttambahController> {
         fontWeight: FontWeight.w400,
         fontSize: 12,
         color: Colors.black,
+      ),
+    );
+  }
+
+  Widget _responsiveDropdown<T>({
+    required T? value,
+    required List<DropdownMenuItem<T>>? items,
+    required ValueChanged<T?>? onChanged,
+    required Widget hint,
+    required InputDecoration decoration,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth * 0.84;
+        final menuWidth = availableWidth < 320 ? availableWidth : 320.0;
+        return InputDecorator(
+          decoration: decoration,
+          isEmpty: value == null,
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<T>(
+              value: value,
+              items: items,
+              onChanged: onChanged,
+              hint: hint,
+              icon: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: AppColors.primaryBlue,
+              ),
+              menuWidth: menuWidth,
+              menuMaxHeight: 4 * 48,
+              borderRadius: BorderRadius.circular(14),
+              dropdownColor: Colors.white,
+              elevation: 8,
+              isExpanded: true,
+              isDense: true,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  InputDecoration _dropdownDecoration({
+    required bool enabled,
+    required String? errorText,
+  }) {
+    return InputDecoration(
+      fillColor: enabled ? const Color(0xFFF8FAFC) : Colors.grey.shade100,
+      filled: true,
+      errorText: errorText,
+      errorStyle: const TextStyle(color: AppColors.red, fontSize: 11),
+      errorMaxLines: 3,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.red),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.red, width: 1.5),
       ),
     );
   }

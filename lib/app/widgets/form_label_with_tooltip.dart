@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Label form yang menjelaskan format atau aturan input tanpa memenuhi layar.
 class FormLabelWithTooltip extends StatelessWidget {
@@ -43,7 +44,7 @@ class FormLabelWithTooltip extends StatelessWidget {
               ),
             ],
           ),
-          textStyle: const TextStyle(
+          textStyle: GoogleFonts.poppins(
             color: Colors.white,
             fontSize: 12,
             height: 1.4,
@@ -51,11 +52,7 @@ class FormLabelWithTooltip extends StatelessWidget {
           ),
           child: const Padding(
             padding: EdgeInsets.all(2.0),
-            child: Icon(
-              Icons.info_outline,
-              size: 17,
-              color: Color(0xFF64748B),
-            ),
+            child: Icon(Icons.info_outline, size: 17, color: Color(0xFF64748B)),
           ),
         ),
       ],

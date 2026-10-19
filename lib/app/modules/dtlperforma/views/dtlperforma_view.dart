@@ -21,12 +21,16 @@ class DtlperformaView extends GetView<DtlperformaController> {
           children: [
             // AppBar
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              padding: const EdgeInsets.fromLTRB(8, 16, 16, 12),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: Get.back,
-                    child: const Icon(Icons.arrow_back_ios_new, size: 20),
+                  SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: GestureDetector(
+                      onTap: Get.back,
+                      child: const Icon(Icons.arrow_back_ios_new, size: 20),
+                    ),
                   ),
                   const Expanded(
                     child: Text(
@@ -38,7 +42,7 @@ class DtlperformaView extends GetView<DtlperformaController> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 20), // Placeholder agar text center
+                  const SizedBox(width: 36), // Placeholder agar text center
                 ],
               ),
             ),
@@ -50,6 +54,9 @@ class DtlperformaView extends GetView<DtlperformaController> {
                     padding: EdgeInsets.fromLTRB(16, 8, 16, 24),
                     child: DtlperformaSkeleton(),
                   );
+                }
+                if (!_hasVehicleData()) {
+                  return _buildEmptyVehicleView();
                 }
                 return RefreshIndicator(
                   onRefresh: controller.fetchPerformanceHistory,
@@ -78,6 +85,61 @@ class DtlperformaView extends GetView<DtlperformaController> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  bool _hasVehicleData() {
+    return [
+      controller.vehicle['brand'],
+      controller.vehicle['model'],
+      controller.vehicle['plate_number'],
+      controller.vehicle['current_odometer'],
+    ].any((value) => value != null && value.toString().trim().isNotEmpty);
+  }
+
+  Widget _buildEmptyVehicleView() {
+    return RefreshIndicator(
+      onRefresh: controller.fetchPerformanceHistory,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Align(
+                alignment: const Alignment(0.0, -0.3),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/logo/empty_notification.png',
+                      width: 150,
+                      height: 150,
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Data Kendaraan Tidak Tersedia',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Detail performa akan muncul setelah data kendaraan tersedia.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -323,6 +385,8 @@ class DtlperformaView extends GetView<DtlperformaController> {
         currentOdometer:
             int.tryParse(controller.vehicle['current_odometer'].toString()) ??
             0,
+        lastOdometerUpdate: controller.vehicle['last_odometer_update']
+            ?.toString(),
         namaMotor: name.isEmpty ? 'Kendaraan' : name,
         platNomor: controller.vehicle['plate_number']?.toString() ?? '',
       ),

@@ -118,6 +118,8 @@ class LoginController extends GetxController with GetTickerProviderStateMixin {
   }
 
   void login() async {
+    if (isLoggingIn.value) return;
+
     String email = emailController.text.trim();
     String password = passwordController.text;
 
@@ -185,6 +187,8 @@ class LoginController extends GetxController with GetTickerProviderStateMixin {
   }
 
   Future<void> loginGoogle() async {
+    if (isLoggingIn.value) return;
+
     try {
       isLoggingIn.value = true;
       final serverClientId =

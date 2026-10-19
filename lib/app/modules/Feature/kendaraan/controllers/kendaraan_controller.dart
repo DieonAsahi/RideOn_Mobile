@@ -127,6 +127,8 @@ class KendaraanController extends GetxController {
   }
 
   Future<void> deleteVehicle(String id) async {
+    if (isLoading.value) return;
+
     try {
       isLoading.value = true;
       final token = box.read("token");

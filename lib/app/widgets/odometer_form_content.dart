@@ -8,12 +8,14 @@ import 'form_label_with_tooltip.dart';
 
 class OdometerFormContent extends StatefulWidget {
   final int currentOdometer;
+  final String? lastOdometerUpdate;
   final String namaMotor;
   final String platNomor;
 
   const OdometerFormContent({
     super.key,
     required this.currentOdometer,
+    this.lastOdometerUpdate,
     required this.namaMotor,
     required this.platNomor,
   });
@@ -27,6 +29,41 @@ class _OdometerFormContentState extends State<OdometerFormContent> {
   int? _newOdometer;
   String? _odometerError;
   bool _isLoading = false;
+
+  String _formatOdometer(int value) {
+    return value.toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => '.',
+    );
+  }
+
+  Widget? _buildLastUpdatedInfo() {
+    final updatedAt = DateTime.tryParse(
+      widget.lastOdometerUpdate ?? '',
+    )?.toLocal();
+    if (updatedAt == null) return null;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final updateDate = DateTime(updatedAt.year, updatedAt.month, updatedAt.day);
+    final daysAgo = today.difference(updateDate).inDays;
+    final relativeDate = daysAgo <= 0 ? 'hari ini' : '$daysAgo hari lalu';
+
+    return Text.rich(
+      TextSpan(
+        style: const TextStyle(fontSize: 12, color: Colors.black87),
+        children: [
+          const TextSpan(text: 'Terakhir diperbaharui '),
+          TextSpan(text: relativeDate),
+          const TextSpan(text: '  '),
+          TextSpan(
+            text: '${_formatOdometer(widget.currentOdometer)} Km',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -47,6 +84,8 @@ class _OdometerFormContentState extends State<OdometerFormContent> {
   }
 
   Future<void> _handleUpdate() async {
+    if (_isLoading) return;
+
     if (_newOdometer == null) {
       setState(() => _odometerError = 'Silakan masukkan angka odometer.');
       return;
@@ -55,6 +94,10 @@ class _OdometerFormContentState extends State<OdometerFormContent> {
       setState(
         () => _odometerError = 'Odometer baru harus lebih besar dari saat ini.',
       );
+      return;
+    }
+    if (_newOdometer! > 999999) {
+      setState(() => _odometerError = 'Odometer maksimal 999.999 km.');
       return;
     }
 
@@ -72,6 +115,8 @@ class _OdometerFormContentState extends State<OdometerFormContent> {
 
   @override
   Widget build(BuildContext context) {
+    final lastUpdatedInfo = _buildLastUpdatedInfo();
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +140,10 @@ class _OdometerFormContentState extends State<OdometerFormContent> {
         TextField(
           controller: _controller,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(6),
+          ],
           decoration: InputDecoration(
             hintText: widget.currentOdometer.toString(),
             suffixText: 'Km',
@@ -107,15 +155,32 @@ class _OdometerFormContentState extends State<OdometerFormContent> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         if (_newOdometer != null && _newOdometer! > widget.currentOdometer)
-          Text(
-            '📈 Bertambah ${_newOdometer! - widget.currentOdometer} Km',
-            style: const TextStyle(
-              color: Colors.green,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/image/grafik.png',
+                width: 16,
+                height: 16,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Bertambah ${_formatOdometer(_newOdometer! - widget.currentOdometer)} Km',
+                style: const TextStyle(
+                  color: Colors.green,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        if (lastUpdatedInfo != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: lastUpdatedInfo,
           ),
         const SizedBox(height: 24),
         SizedBox(

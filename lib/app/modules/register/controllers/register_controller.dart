@@ -19,6 +19,7 @@ class RegisterController extends GetxController {
   // State untuk Toggle UI Password
   var isPasswordObscure = true.obs;
   var isConfirmPasswordObscure = true.obs;
+  var isRegistering = false.obs;
 
   // State untuk Error Validasi Form
   var nameError = RxnString();
@@ -35,6 +36,8 @@ class RegisterController extends GetxController {
   }
 
   void register() async {
+    if (isRegistering.value) return;
+
     String name = nameController.text.trim();
     String email = emailController.text.trim();
     String password = passwordController.text;
@@ -86,6 +89,7 @@ class RegisterController extends GetxController {
 
     if (!isValid) return;
 
+    isRegistering.value = true;
     try {
       final url = Uri.parse("$baseUrl/api/auth/register");
 
@@ -129,6 +133,8 @@ class RegisterController extends GetxController {
           message: 'Gagal mendaftar, periksa koneksi Anda.',
         );
       }
+    } finally {
+      isRegistering.value = false;
     }
   }
 

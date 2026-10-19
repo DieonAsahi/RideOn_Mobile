@@ -209,7 +209,7 @@ class DtlperformaController extends GetxController {
                 'title': s['service_type'] ?? s['title'] ?? s['master_components']?['name'] ?? 'Servis Kendaraan',
                 'service_date': s['service_date'] ?? DateTime.now().toIso8601String(),
                 'workshop_name': s['workshop_name'] ?? 'Bengkel',
-                'price': s['price'] ?? 0,
+                'price': s['cost'] ?? 0,
                 'master_components': s['master_components'] is Map
                     ? Map<String, dynamic>.from(s['master_components'])
                     : {'name': s['service_type'] ?? 'Servis', 'icon': 'bengkel'},

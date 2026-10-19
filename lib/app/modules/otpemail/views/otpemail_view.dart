@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:capbatu/app/core/theme/app_theme.dart';
 
 import '../controllers/otpemail_controller.dart';
-import '../../../widgets/form_label_with_tooltip.dart';
 
 class OtpemailView extends GetView<OtpemailController> {
   const OtpemailView({super.key});
@@ -26,7 +25,7 @@ class OtpemailView extends GetView<OtpemailController> {
               // ================= GAMBAR ASET =================
               Image.asset(
                 'assets/logo/otp.png',
-                height: 120,
+                height: 160,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => const Icon(
                   Icons.mark_email_read,
@@ -34,7 +33,7 @@ class OtpemailView extends GetView<OtpemailController> {
                   color: primaryBlue,
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
 
               // ================= TEKS JUDUL =================
               const Text(
@@ -57,7 +56,7 @@ class OtpemailView extends GetView<OtpemailController> {
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
 
               RichText(
                 textAlign: TextAlign.center,
@@ -75,20 +74,8 @@ class OtpemailView extends GetView<OtpemailController> {
                   ],
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
 
-              // ================= KOTAK INPUT OTP (6 DIGIT) =================
-              const FormLabelWithTooltip(
-                label: 'Kode OTP',
-                message:
-                    'Masukkan enam angka yang dikirim ke alamat email Anda. Kode berlaku selama tiga menit.',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(6, (index) {
@@ -167,7 +154,7 @@ class OtpemailView extends GetView<OtpemailController> {
                 return const SizedBox.shrink();
               }),
 
-              const SizedBox(height: 25),
+              const SizedBox(height: 24),
 
               // ================= INFO SISA WAKTU =================
               Obx(() {
@@ -206,15 +193,23 @@ class OtpemailView extends GetView<OtpemailController> {
                   ),
                   Obx(
                     () => GestureDetector(
-                      onTap: controller.isCooldown.value
+                      onTap:
+                          controller.isCooldown.value ||
+                              controller.isResendingOtp.value ||
+                              controller.isVerifyingOtp.value
                           ? null
                           : controller.resendOtp,
                       child: Text(
-                        controller.isCooldown.value
+                        controller.isResendingOtp.value
+                            ? "Mengirim..."
+                            : controller.isCooldown.value
                             ? "Kirim ulang dalam ${controller.secondsRemaining.value}s"
                             : "Kirim ulang",
                         style: TextStyle(
-                          color: controller.isCooldown.value
+                          color:
+                              controller.isCooldown.value ||
+                                  controller.isResendingOtp.value ||
+                                  controller.isVerifyingOtp.value
                               ? Colors.grey.shade400
                               : primaryBlue,
                           fontWeight: FontWeight.bold,
@@ -232,22 +227,37 @@ class OtpemailView extends GetView<OtpemailController> {
               SizedBox(
                 width: double.infinity,
                 height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
+                child: Obx(
+                  () => ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryBlue,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
                     ),
-                  ),
-                  onPressed: controller.verifyOtp,
-                  child: const Text(
-                    "Lanjutkan",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                    onPressed:
+                        controller.isVerifyingOtp.value ||
+                            controller.isResendingOtp.value
+                        ? null
+                        : controller.verifyOtp,
+                    child: controller.isVerifyingOtp.value
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            "Lanjutkan",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                   ),
                 ),
               ),

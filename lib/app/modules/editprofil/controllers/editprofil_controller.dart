@@ -124,6 +124,8 @@ class EditprofilController extends GetxController {
   }
 
   Future<void> updateProfile() async {
+    if (isSaving.value) return;
+
     // Validasi tambahan sebelum kirim
     if (nameController.text.trim().isEmpty) {
       AppFeedback.inputRequired(message: 'Nama tidak boleh kosong.');

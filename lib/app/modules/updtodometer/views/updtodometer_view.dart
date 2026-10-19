@@ -225,7 +225,10 @@ class UpdtodometerView extends GetView<UpdtodometerController> {
                   child: TextField(
                     controller: controller.odometerController,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(6),
+                    ],
                     style: const TextStyle(color: Colors.black),
                     decoration: const InputDecoration(
                       border: InputBorder.none,

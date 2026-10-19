@@ -220,13 +220,27 @@ class UpdtodometerController extends GetxController {
   }
 
   Future<void> updateOdometer() async {
+    if (isLoading.value) return;
+
     try {
       isLoading.value = true;
       final vehicleId = Get.arguments;
       final token = box.read("token");
 
-      final cleanText = odometerController.text.replaceAll(RegExp(r'[^0-9.]'), '');
-      final parsedInt = int.tryParse(cleanText) ?? (double.tryParse(cleanText)?.round() ?? 0);
+      final cleanText = odometerController.text.replaceAll(
+        RegExp(r'[^0-9.]'),
+        '',
+      );
+      final parsedInt =
+          int.tryParse(cleanText) ?? (double.tryParse(cleanText)?.round() ?? 0);
+
+      if (parsedInt > 999999) {
+        isLoading.value = false;
+        AppFeedback.odometerUpdateFailed(
+          message: "Odometer maksimal 999.999 km.",
+        );
+        return;
+      }
 
       final response = await http.put(
         Uri.parse("$baseUrl/api/vehicle/update-odometer"),

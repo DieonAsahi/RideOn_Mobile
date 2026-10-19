@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +24,8 @@ class WorkshopModel {
   final String openingHours;
 
   double distanceKm; // Hapus kata 'final' agar bisa dikalkulasi ulang
+
+  String get name => title;
 
   WorkshopModel({
     this.id,
@@ -83,17 +84,17 @@ class PetabengkelController extends GetxController
 
   final searchController = TextEditingController();
   final filteredWorkshops = <WorkshopModel>[].obs;
+  final isSearchingSuggestions = false.obs;
+  final hasSearchText = false.obs;
   final isLoading = false.obs;
   Timer? _searchDebounce;
   int _searchRequestVersion = 0;
-  String? _lastNotFoundQuery;
-  List<WorkshopModel>? _allWorkshopsSearchCache;
-  bool _searchEndpointUnavailable = false;
   bool _isMapReady = false;
   bool _hasCenteredOnUser = false;
 
   final searchSuggestions = <WorkshopModel>[].obs;
   final showSuggestions = false.obs;
+  int? _pendingWorkshopId;
 
   final currentZoom = 13.0.obs;
 
@@ -106,16 +107,14 @@ class PetabengkelController extends GetxController
 
   List<WorkshopModel> get otherWorkshops {
     if (selectedWorkshop.value == null) return [];
-    return workshops
-        .where((e) => e.id != selectedWorkshop.value!.id)
-        .take(10)
-        .toList();
+    return workshops.where((e) => e.id != selectedWorkshop.value!.id).toList();
   }
 
   @override
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+    _pendingWorkshopId = _workshopIdFromArguments(Get.arguments);
 
     _serviceStatusSubscription = LocationService.getServiceStatusStream()
         .listen((status) {
@@ -191,6 +190,27 @@ class PetabengkelController extends GetxController
   void onMapReady() {
     _isMapReady = true;
     _centerMapOnUserIfNeeded();
+    _openPendingWorkshopIfReady();
+  }
+
+  int? _workshopIdFromArguments(dynamic arguments) {
+    if (arguments is! Map) return null;
+    final id = arguments['workshop_id'];
+    if (id is int) return id;
+    return int.tryParse(id?.toString() ?? '');
+  }
+
+  void _openPendingWorkshopIfReady() {
+    final workshopId = _pendingWorkshopId;
+    if (!_isMapReady || workshopId == null) return;
+
+    for (final workshop in workshops) {
+      if (workshop.id == workshopId) {
+        _pendingWorkshopId = null;
+        onSelectSuggestion(workshop);
+        return;
+      }
+    }
   }
 
   void _centerMapOnUserIfNeeded() {
@@ -281,10 +301,12 @@ class PetabengkelController extends GetxController
   void onSearchChanged(String keyword) {
     final query = keyword.trim();
     _searchDebounce?.cancel();
+    final requestVersion = ++_searchRequestVersion;
 
     if (query.isEmpty) {
-      _searchRequestVersion++;
-      _lastNotFoundQuery = null;
+      isSearchActive.value = false;
+      hasSearchText.value = false;
+      isSearchingSuggestions.value = false;
       showSuggestions.value = false;
       searchSuggestions.clear();
       filteredWorkshops.clear();
@@ -295,7 +317,15 @@ class PetabengkelController extends GetxController
     }
 
     showSuggestions.value = true;
-    final requestVersion = ++_searchRequestVersion;
+    isSearchActive.value = true;
+    hasSearchText.value = true;
+    isSearchingSuggestions.value = true;
+    searchSuggestions.clear();
+    filteredWorkshops.clear();
+    selectedWorkshop.value = null;
+    showBottomSheet.value = false;
+    _updateMarkers();
+
     _searchDebounce = Timer(const Duration(milliseconds: 300), () async {
       try {
         final results = await _searchWorkshops(query);
@@ -303,10 +333,18 @@ class PetabengkelController extends GetxController
             searchController.text.trim() != query) {
           return;
         }
+
         searchSuggestions.assignAll(results);
-      } catch (_) {
-        if (requestVersion == _searchRequestVersion) {
-          searchSuggestions.clear();
+        isSearchingSuggestions.value = false;
+      } catch (e) {
+        if (requestVersion != _searchRequestVersion) return;
+        isSearchingSuggestions.value = false;
+        if (!ConnectivityService.handleNetworkError(e)) {
+          Get.snackbar(
+            'Pencarian bengkel gagal',
+            'Tidak dapat memuat hasil pencarian. Silakan coba lagi.',
+            snackPosition: SnackPosition.BOTTOM,
+          );
         }
       }
     });
@@ -321,8 +359,10 @@ class PetabengkelController extends GetxController
     FocusManager.instance.primaryFocus?.unfocus();
 
     if (query.isEmpty) {
-      _lastNotFoundQuery = null;
       isSearchActive.value = false;
+      hasSearchText.value = false;
+      isSearchingSuggestions.value = false;
+      showSuggestions.value = false;
       filteredWorkshops.clear();
       selectedWorkshop.value = null;
       showBottomSheet.value = false;
@@ -330,134 +370,86 @@ class PetabengkelController extends GetxController
       return;
     }
 
-    try {
-      final results = await _searchWorkshops(query);
-      if (requestVersion != _searchRequestVersion) return;
-
-      _applySearchResults(query, results);
-
-      if (results.isEmpty) {
-        showSuggestions.value = false;
-        return; // UI akan menampilkan empty state
-      }
-
-      // Hasil ditemukan, tutup layar pencarian penuh
-      isSearchActive.value = false;
-      showSuggestions.value = false;
-
-      // Zoom logic
-      if (results.length == 1) {
-        animatedMapMove(
-          LatLng(results.first.latitude, results.first.longitude),
-          16.0,
-        );
-      } else {
-        // flutter_map v6: CameraFit bounds
-        final points = results
-            .map((e) => LatLng(e.latitude, e.longitude))
-            .toList();
-        final bounds = LatLngBounds.fromPoints(points);
-        mapController.fitCamera(
-          CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(50)),
-        );
-      }
-    } catch (e) {
-      if (requestVersion == _searchRequestVersion) {
-        if (!ConnectivityService.handleNetworkError(e)) {
-          _showSearchError();
-        }
-      }
-    }
-  }
-
-  void _applySearchResults(String query, List<WorkshopModel> results) {
-    filteredWorkshops.assignAll(results);
+    isSearchActive.value = true;
+    hasSearchText.value = true;
+    isSearchingSuggestions.value = true;
+    showSuggestions.value = true;
+    searchSuggestions.clear();
+    filteredWorkshops.clear();
     selectedWorkshop.value = null;
     showBottomSheet.value = false;
     _updateMarkers();
 
-    if (results.isNotEmpty) {
-      _lastNotFoundQuery = null;
-    } else {
-      _lastNotFoundQuery = query; // Simpan untuk mendeteksi empty state
+    List<WorkshopModel> results;
+    try {
+      results = await _searchWorkshops(query);
+    } catch (e) {
+      if (requestVersion != _searchRequestVersion) return;
+      isSearchingSuggestions.value = false;
+      if (!ConnectivityService.handleNetworkError(e)) {
+        Get.snackbar(
+          'Pencarian bengkel gagal',
+          'Tidak dapat memuat hasil pencarian. Silakan coba lagi.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+      return;
+    }
+    if (requestVersion != _searchRequestVersion ||
+        searchController.text.trim() != query) {
+      return;
+    }
+
+    isSearchingSuggestions.value = false;
+    searchSuggestions.assignAll(results);
+
+    if (results.isEmpty) {
+      showSuggestions.value = false;
+      return; // UI akan menampilkan empty state
+    }
+
+    if (results.length == 1) {
+      onSelectSuggestion(results.first);
     }
   }
 
-  Future<List<WorkshopModel>> _searchWorkshops(String keyword) async {
-    if (_searchEndpointUnavailable) {
-      return _searchFromPetaFallback(keyword);
-    }
-
-    final queryParameters = <String, dynamic>{'keyword': keyword};
-    if (userLocation.value != null) {
+  Future<List<WorkshopModel>> _searchWorkshops(String query) async {
+    final queryParameters = <String, dynamic>{'keyword': query};
+    final location = userLocation.value;
+    if (location != null) {
       queryParameters.addAll({
-        'lat': userLocation.value!.latitude,
-        'lng': userLocation.value!.longitude,
+        'lat': location.latitude,
+        'lng': location.longitude,
       });
     }
 
-    try {
-      final response = await dio.get(
-        "$baseUrl/api/workshop/search",
-        queryParameters: queryParameters,
-      );
-      return _workshopsFromResponse(response.data);
-    } on DioException catch (error) {
-      if (error.response?.statusCode != 404) rethrow;
-      _searchEndpointUnavailable = true;
-      return _searchFromPetaFallback(keyword);
+    final response = await dio.get(
+      "$baseUrl/api/workshop/search",
+      queryParameters: queryParameters,
+    );
+    final responseData = response.data;
+    final rawWorkshops = responseData is Map ? responseData['data'] : null;
+    if (rawWorkshops is! List) {
+      throw const FormatException('Respons pencarian bengkel tidak valid.');
     }
-  }
 
-  Future<List<WorkshopModel>> _searchFromPetaFallback(String keyword) async {
-    _allWorkshopsSearchCache ??= await _loadAllWorkshopsForSearch();
-    final normalizedKeyword = keyword.toLowerCase();
-    final results = _allWorkshopsSearchCache!
+    final results = rawWorkshops
+        .whereType<Map>()
+        .map(
+          (item) => _calculateDistanceIfNeeded(
+            WorkshopModel.fromJson(Map<String, dynamic>.from(item)),
+          ),
+        )
         .where(
-          (workshop) => [
-            workshop.title,
-            workshop.category,
-            workshop.address,
-          ].any((value) => value.toLowerCase().contains(normalizedKeyword)),
+          (workshop) =>
+              workshop.latitude >= -90 &&
+              workshop.latitude <= 90 &&
+              workshop.longitude >= -180 &&
+              workshop.longitude <= 180,
         )
         .toList();
-
     results.sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
     return results;
-  }
-
-  Future<List<WorkshopModel>> _loadAllWorkshopsForSearch() async {
-    final response = await dio.get("$baseUrl/api/workshop/peta");
-    return _workshopsFromResponse(response.data);
-  }
-
-  List<WorkshopModel> _workshopsFromResponse(dynamic responseData) {
-    final rawData = responseData is List
-        ? responseData
-        : responseData is Map
-        ? responseData['data']
-        : null;
-    if (rawData is! List) return [];
-
-    return rawData.map((item) {
-      final workshop = WorkshopModel.fromJson(
-        Map<String, dynamic>.from(item as Map),
-      );
-      return _calculateDistanceIfNeeded(workshop);
-    }).toList();
-  }
-
-  void _showSearchError() {
-    Get.snackbar(
-      "Pencarian Belum Tersedia",
-      "Data bengkel belum dapat dimuat. Silakan coba lagi.",
-      backgroundColor: Colors.orangeAccent,
-      colorText: Colors.white,
-      icon: const Icon(Icons.error_outline, color: Colors.white),
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-      duration: const Duration(seconds: 4),
-    );
   }
 
   WorkshopModel _calculateDistanceIfNeeded(WorkshopModel workshop) {
@@ -473,8 +465,12 @@ class PetabengkelController extends GetxController
   }
 
   void onSelectSuggestion(WorkshopModel workshop) {
+    _searchDebounce?.cancel();
+    _searchRequestVersion++;
     showSuggestions.value = false;
     isSearchActive.value = false;
+    isSearchingSuggestions.value = false;
+    hasSearchText.value = true;
     FocusManager.instance.primaryFocus?.unfocus();
     searchController.text = workshop.title;
 
@@ -515,6 +511,7 @@ class PetabengkelController extends GetxController
       _updateMarkers();
 
       animatedMapMove(userLocation.value!, 14.0);
+      _openPendingWorkshopIfReady();
     } catch (e) {
       ConnectivityService.handleNetworkError(e);
     }

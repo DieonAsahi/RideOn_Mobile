@@ -37,10 +37,15 @@ class EditprofilView extends GetView<EditprofilController> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(top: 30),
+                      padding: const EdgeInsets.only(top: 16),
                       child: Row(
                         children: [
                           IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints.tightFor(
+                              width: 36,
+                              height: 36,
+                            ),
                             onPressed: () {
                               FocusScope.of(context).unfocus();
                               if (controller.hasChanges()) {
@@ -102,17 +107,14 @@ class EditprofilView extends GetView<EditprofilController> {
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
                                             border: Border.all(
-                                              color: const Color(
-                                                0xFF2583FD,
-                                              ),
+                                              color: const Color(0xFF2583FD),
                                               width: 2.0,
                                             ),
                                           ),
                                           child: CircleAvatar(
                                             radius: 45,
-                                            backgroundColor: Colors
-                                                .grey
-                                                .shade200,
+                                            backgroundColor:
+                                                Colors.grey.shade200,
                                             backgroundImage:
                                                 controller
                                                         .selectedImage
@@ -183,7 +185,7 @@ class EditprofilView extends GetView<EditprofilController> {
                                   title: "Email",
                                   hint: "Masukkan email",
                                   helperText:
-                                      'Alamat email akun tidak dapat diubah dari halaman ini.',
+                                      'Alamat email akun tidak dapat diubah.',
                                   controller: controller.emailController,
                                   keyboardType: TextInputType.emailAddress,
                                   readOnly: true,
@@ -216,20 +218,22 @@ class EditprofilView extends GetView<EditprofilController> {
                       child: SizedBox(
                         width: double.infinity,
                         height: 52,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            FocusScope.of(context).unfocus();
-                            controller.updateProfile();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            elevation: 0,
-                            backgroundColor: const Color(0xFF2196F3),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                        child: Obx(
+                          () => ElevatedButton(
+                            onPressed: controller.isSaving.value
+                                ? null
+                                : () {
+                                    FocusScope.of(context).unfocus();
+                                    controller.updateProfile();
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                              backgroundColor: const Color(0xFF2196F3),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
-                          ),
-                          child: Obx(
-                            () => controller.isSaving.value
+                            child: controller.isSaving.value
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,

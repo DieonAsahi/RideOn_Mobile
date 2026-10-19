@@ -21,30 +21,42 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
       },
       child: Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              size: 20,
-              color: Colors.black,
-            ),
-            onPressed: () => _handleBackPress(context),
-          ),
-          centerTitle: true,
-          title: const Text(
-            "Tambah Kendaraan",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-        ),
         body: SafeArea(
           child: Column(
             children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 16, 16, 24),
+                child: Row(
+                  children: [
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 36,
+                        height: 36,
+                      ),
+                      onPressed: () => _handleBackPress(context),
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 20,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const Expanded(
+                      child: Text(
+                        "Tambah Kendaraan",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 40),
+                  ],
+                ),
+              ),
+
               // ================= PROGRESS BAR 3 SEGMEN =================
               Obx(() => _buildProgressBar()),
 
@@ -122,27 +134,36 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
           helperText: 'Pilih merek kendaraan sesuai STNK atau kendaraan Anda.',
         ),
         const SizedBox(height: 8),
-        Obx(
-          () => DropdownButtonFormField<String>(
-            value: controller.selectedBrand.value.isEmpty
-                ? null
-                : controller.selectedBrand.value,
-            hint: Text(
-              "Merek",
-              style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+        Obx(() {
+          final selectedBrand = controller.selectedBrand.value;
+          final brandError = controller.brandError.value;
+          return _dropdownWithResponsiveMenu(
+            (menuWidth) => _dropdownField<String>(
+              menuWidth: menuWidth,
+              value: selectedBrand.isEmpty ? null : selectedBrand,
+              hint: Text(
+                "Merek",
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+              ),
+              icon: const Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.black54,
+              ),
+              items: controller.brandOptions
+                  .map(
+                    (brand) =>
+                        DropdownMenuItem(value: brand, child: Text(brand)),
+                  )
+                  .toList(),
+              onChanged: controller.onBrandChanged,
+              decoration: _inputDecoration(
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                errorText: brandError,
+              ),
             ),
-            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
-            items: controller.brandOptions
-                .map(
-                  (brand) => DropdownMenuItem(value: brand, child: Text(brand)),
-                )
-                .toList(),
-            onChanged: controller.onBrandChanged,
-            decoration: _inputDecoration(
-              errorText: controller.brandError.value,
-            ),
-          ),
-        ),
+          );
+        }),
 
         const SizedBox(height: 18),
 
@@ -158,33 +179,43 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
               availableModels.contains(controller.selectedModel.value)
               ? controller.selectedModel.value
               : null;
+          final modelError = controller.modelError.value;
 
-          return DropdownButtonFormField<String>(
-            value: isEnabled ? currentVal : null,
-            hint: Text(
-              "Model",
-              style: TextStyle(
-                color: isEnabled ? Colors.grey.shade400 : Colors.grey.shade400,
-                fontSize: 13,
+          return _dropdownWithResponsiveMenu(
+            (menuWidth) => _dropdownField<String>(
+              menuWidth: menuWidth,
+              value: isEnabled ? currentVal : null,
+              hint: Text(
+                "Model",
+                style: TextStyle(
+                  color: isEnabled
+                      ? Colors.grey.shade400
+                      : Colors.grey.shade400,
+                  fontSize: 13,
+                ),
               ),
-            ),
-            icon: Icon(
-              Icons.keyboard_arrow_down,
-              color: isEnabled ? Colors.black54 : Colors.grey.shade400,
-            ),
-            items: isEnabled
-                ? availableModels
-                      .map(
-                        (model) =>
-                            DropdownMenuItem(value: model, child: Text(model)),
-                      )
-                      .toList()
-                : null,
-            onChanged: isEnabled ? controller.onModelChanged : null,
-            decoration: _inputDecoration(
-              filled: !isEnabled,
-              fillColor: isEnabled ? Colors.white : Colors.grey.shade100,
-              errorText: controller.modelError.value,
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                color: isEnabled ? Colors.black54 : Colors.grey.shade400,
+              ),
+              items: isEnabled
+                  ? availableModels
+                        .map(
+                          (model) => DropdownMenuItem(
+                            value: model,
+                            child: Text(model),
+                          ),
+                        )
+                        .toList()
+                  : null,
+              onChanged: isEnabled ? controller.onModelChanged : null,
+              decoration: _inputDecoration(
+                filled: true,
+                fillColor: !isEnabled
+                    ? Colors.grey.shade100
+                    : const Color(0xFFF8FAFC),
+                errorText: modelError,
+              ),
             ),
           );
         }),
@@ -197,23 +228,35 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
               'Pilih tahun produksi kendaraan yang tertera pada dokumen kendaraan.',
         ),
         const SizedBox(height: 8),
-        Obx(
-          () => DropdownButtonFormField<String>(
-            value: controller.selectedYear.value.isEmpty
-                ? null
-                : controller.selectedYear.value,
-            hint: Text(
-              "Tahun",
-              style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+        Obx(() {
+          final selectedYear = controller.selectedYear.value;
+          final yearError = controller.yearError.value;
+          return _dropdownWithResponsiveMenu(
+            (menuWidth) => _dropdownField<String>(
+              menuWidth: menuWidth,
+              value: selectedYear.isEmpty ? null : selectedYear,
+              hint: Text(
+                "Tahun",
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+              ),
+              icon: const Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.black54,
+              ),
+              items: controller.yearOptions
+                  .map(
+                    (year) => DropdownMenuItem(value: year, child: Text(year)),
+                  )
+                  .toList(),
+              onChanged: controller.onYearChanged,
+              decoration: _inputDecoration(
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                errorText: yearError,
+              ),
             ),
-            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black54),
-            items: controller.yearOptions
-                .map((year) => DropdownMenuItem(value: year, child: Text(year)))
-                .toList(),
-            onChanged: controller.onYearChanged,
-            decoration: _inputDecoration(errorText: controller.yearError.value),
-          ),
-        ),
+          );
+        }),
 
         const SizedBox(height: 18),
 
@@ -385,7 +428,10 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
           () => TextField(
             controller: controller.odometerController,
             keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(6),
+            ],
 
             style: const TextStyle(fontSize: 14),
             onChanged: (val) {
@@ -706,6 +752,49 @@ class PluskendaraanView extends GetView<PluskendaraanController> {
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: AppColors.red, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _dropdownWithResponsiveMenu(
+    Widget Function(double menuWidth) builder,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth * 0.84;
+        final menuWidth = availableWidth < 320 ? availableWidth : 320.0;
+        return SizedBox(width: constraints.maxWidth, child: builder(menuWidth));
+      },
+    );
+  }
+
+  Widget _dropdownField<T>({
+    required double menuWidth,
+    required T? value,
+    required List<DropdownMenuItem<T>>? items,
+    required ValueChanged<T?>? onChanged,
+    required Widget hint,
+    required InputDecoration decoration,
+    required Widget icon,
+  }) {
+    return InputDecorator(
+      decoration: decoration,
+      isEmpty: value == null,
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          items: items,
+          onChanged: onChanged,
+          hint: hint,
+          icon: icon,
+          menuWidth: menuWidth,
+          menuMaxHeight: 4 * 48,
+          borderRadius: BorderRadius.circular(14),
+          dropdownColor: Colors.white,
+          elevation: 8,
+          isExpanded: true,
+          isDense: true,
+        ),
       ),
     );
   }

@@ -16,8 +16,11 @@ class EmailverController extends GetxController {
 
   // State untuk menyimpan pesan error
   var emailError = RxnString();
+  final isSendingOtp = false.obs;
 
   Future<void> sendOtp() async {
+    if (isSendingOtp.value) return;
+
     final email = emailController.text.trim();
 
     // Reset error text setiap kali tombol ditekan
@@ -38,6 +41,7 @@ class EmailverController extends GetxController {
     // Hentikan eksekusi API jika validasi gagal
     if (!isValid) return;
 
+    isSendingOtp.value = true;
     try {
       // ================= CHECK EMAIL =================
       final checkUrl = Uri.parse("$baseUrl/api/auth/check-email");
@@ -52,10 +56,14 @@ class EmailverController extends GetxController {
 
       // EMAIL TIDAK ADA / ERROR LAINNYA
       if (checkResponse.statusCode != 200) {
-        emailError.value =
-            checkData['message'] ??
-            checkData['error'] ??
-            'Email tidak ditemukan.';
+        if (_isOtpLimitResponse(checkData, checkResponse.statusCode)) {
+          OtpLimitDialog.show(customTime: checkData['reset_time']?.toString());
+        } else {
+          emailError.value =
+              checkData['message'] ??
+              checkData['error'] ??
+              'Email tidak ditemukan.';
+        }
         return;
       }
 
@@ -77,12 +85,7 @@ class EmailverController extends GetxController {
 
         Get.toNamed('/otpemail', arguments: {"email": email, "from": fromPage});
       } else {
-        if (response.statusCode == 429 ||
-            data['is_rate_limit'] == true ||
-            OtpLimitDialog.isOtpLimitError(
-              data['error'],
-              statusCode: response.statusCode,
-            )) {
+        if (_isOtpLimitResponse(data, response.statusCode)) {
           OtpLimitDialog.show(customTime: data['reset_time']?.toString());
         } else {
           emailError.value =
@@ -93,7 +96,19 @@ class EmailverController extends GetxController {
       if (!ConnectivityService.handleNetworkError(e)) {
         emailError.value = 'Tidak bisa terhubung ke server. Silakan coba lagi.';
       }
+    } finally {
+      isSendingOtp.value = false;
     }
+  }
+
+  bool _isOtpLimitResponse(dynamic data, int statusCode) {
+    return statusCode == 429 ||
+        data['code'] == 'OTP_RATE_LIMIT' ||
+        data['is_rate_limit'] == true ||
+        OtpLimitDialog.isOtpLimitError(
+          data['error'] ?? data['message'],
+          statusCode: statusCode,
+        );
   }
 
   @override

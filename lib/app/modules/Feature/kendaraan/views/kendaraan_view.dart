@@ -472,60 +472,117 @@ class KendaraanCard extends StatelessWidget {
 
                   Future.delayed(const Duration(milliseconds: 100), () {
                     Get.dialog(
-                      AlertDialog(
+                      Dialog(
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                        title: const Text(
-                          "Konfirmasi Hapus",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
+                        backgroundColor: Colors.white,
+                        child: Container(
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 24,
                           ),
-                        ),
-                        content: Text(
-                          isLast
-                              ? "Ini adalah satu-satunya kendaraan Anda. Jika Anda menghapus maka Anda wajib menambahkan kendaraan baru.\n\nApakah Anda yakin ingin menghapus?"
-                              : "Apakah Anda yakin ingin menghapus kendaraan ini?",
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.black,
-                          ),
-                        ),
-                        actions: [
-                          OutlinedButton(
-                            onPressed: () {
-                              Get.back();
-                            },
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                            ),
-                            child: const Text(
-                              "Tidak",
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 14,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.asset(
+                                'assets/icons/warning.png',
+                                width: 90,
+                                height: 90,
                               ),
-                            ),
-                          ),
-                          ElevatedButton(
-                            onPressed: () async {
-                              Get.back();
-                              await kendaraanController.deleteVehicle(id);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.red,
-                            ),
-                            child: const Text(
-                              "Ya",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
+                              const SizedBox(height: 20),
+                              const Text(
+                                "Konfirmasi Hapus",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 12),
+                              Text(
+                                isLast
+                                    ? "Ini adalah satu-satunya kendaraan Anda. Jika dihapus, Anda wajib menambahkan kendaraan baru. Apakah Anda yakin ingin menghapus?"
+                                    : "Apakah Anda yakin ingin menghapus kendaraan ini?",
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF4A4A4A),
+                                  height: 1.4,
+                                ),
+                              ),
+                              const SizedBox(height: 30),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: 42,
+                                        child: OutlinedButton(
+                                          onPressed: Get.back,
+                                          style: OutlinedButton.styleFrom(
+                                            padding: EdgeInsets.zero,
+                                            side: const BorderSide(
+                                              color: Colors.grey,
+                                              width: 1.5,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            "Tidak",
+                                            style: TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: 42,
+                                        child: ElevatedButton(
+                                          onPressed: () async {
+                                            Get.back();
+                                            await kendaraanController
+                                                .deleteVehicle(id);
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            padding: EdgeInsets.zero,
+                                            backgroundColor: AppColors.red,
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            "Hapus",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                       barrierDismissible: false,
                     );

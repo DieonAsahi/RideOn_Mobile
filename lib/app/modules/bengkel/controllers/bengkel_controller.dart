@@ -15,9 +15,7 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
   final isLoading = false.obs;
   final searchController = TextEditingController();
   final filteredBengkelList = <Map<String, dynamic>>[].obs;
-  Position? _userPosition;
   Timer? _searchDebounce;
-  int _searchRequestVersion = 0;
 
   // Status Lokasi & Izin
   var isPermissionGranted = true.obs;
@@ -87,54 +85,23 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
   }
 
   void searchBengkel(String keyword) {
-    final query = keyword.trim();
+    final query = keyword.trim().toLowerCase();
     _searchDebounce?.cancel();
 
     if (query.isEmpty) {
-      _searchRequestVersion++;
       filteredBengkelList.assignAll(bengkelList);
       return;
     }
 
-    final requestVersion = ++_searchRequestVersion;
-    _searchDebounce = Timer(const Duration(milliseconds: 350), () async {
-      try {
-        final results = await _searchWorkshops(query);
+    final filtered = bengkelList.where((bengkel) {
+      final name = (bengkel['nama'] ?? bengkel['name'] ?? bengkel['title'] ?? '')
+          .toString()
+          .toLowerCase();
+      final address = (bengkel['address'] ?? '').toString().toLowerCase();
+      return name.contains(query) || address.contains(query);
+    }).toList();
 
-        // Ignore an older response after the user changes the keyword.
-        if (requestVersion != _searchRequestVersion ||
-            searchController.text.trim() != query) {
-          return;
-        }
-
-        filteredBengkelList.assignAll(results);
-      } catch (e) {
-        if (requestVersion == _searchRequestVersion) {
-          ConnectivityService.handleNetworkError(e);
-        }
-      }
-    });
-  }
-
-  Future<List<Map<String, dynamic>>> _searchWorkshops(String keyword) async {
-    final queryParameters = <String, dynamic>{'keyword': keyword};
-    if (_userPosition != null) {
-      queryParameters.addAll({
-        'lat': _userPosition!.latitude,
-        'lng': _userPosition!.longitude,
-      });
-    }
-
-    final response = await dio.get(
-      "$baseUrl/api/workshop/search",
-      queryParameters: queryParameters,
-    );
-    final rawData = response.data is Map ? response.data['data'] : null;
-    if (rawData is! List) return [];
-
-    return rawData
-        .map((item) => _toBengkelItem(Map<String, dynamic>.from(item as Map)))
-        .toList();
+    filteredBengkelList.assignAll(filtered);
   }
 
   Map<String, dynamic> _toBengkelItem(Map<String, dynamic> item) {
@@ -206,7 +173,6 @@ class BengkelController extends GetxController with WidgetsBindingObserver {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      _userPosition = position;
 
       final response = await dio.get(
         "$baseUrl/api/workshop/nearest",

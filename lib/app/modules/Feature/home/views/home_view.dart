@@ -630,6 +630,8 @@ class OdometerCard extends GetView<HomeController> {
                       title: "Perbaharui Odometer",
                       child: OdometerFormContent(
                         currentOdometer: controller.odometer.value,
+                        lastOdometerUpdate:
+                            currentVehicle["last_odometer_update"]?.toString(),
                         namaMotor: namaMotor.isEmpty
                             ? "Kendaraan"
                             : namaMotor, // Garis merah akan hilang
@@ -767,9 +769,13 @@ class PerformaSection extends GetView<HomeController> {
             const SizedBox(width: 8),
 
             OutlinedButton(
-              onPressed: () {
-                Get.toNamed('/dtlperforma');
-              },
+              onPressed: (controller.isLoading.value ||
+                      controller.vehicles.isEmpty ||
+                      controller.selectedVehicleId.value.isEmpty)
+                  ? null
+                  : () {
+                      Get.toNamed('/dtlperforma');
+                    },
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -779,12 +785,23 @@ class PerformaSection extends GetView<HomeController> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                side: BorderSide(color: Colors.grey.shade300, width: 1),
+                side: BorderSide(
+                  color: (controller.isLoading.value ||
+                          controller.vehicles.isEmpty ||
+                          controller.selectedVehicleId.value.isEmpty)
+                      ? Colors.grey.shade200
+                      : Colors.grey.shade300,
+                  width: 1,
+                ),
               ),
-              child: const Text(
+              child: Text(
                 "Lihat Detail",
                 style: TextStyle(
-                  color: Colors.black,
+                  color: (controller.isLoading.value ||
+                          controller.vehicles.isEmpty ||
+                          controller.selectedVehicleId.value.isEmpty)
+                      ? Colors.grey.shade400
+                      : Colors.black,
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                 ),

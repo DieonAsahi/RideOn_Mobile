@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:capbatu/app/core/theme/app_theme.dart';
 import '../controllers/emailver_controller.dart';
-import '../../../widgets/form_label_with_tooltip.dart';
 
 class EmailverView extends GetView<EmailverController> {
   const EmailverView({super.key});
@@ -19,12 +18,12 @@ class EmailverView extends GetView<EmailverController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 50),
+              const SizedBox(height: 30),
 
               // ================= GAMBAR ASET =================
               Image.asset(
                 'assets/logo/verif.png', // Sesuai permintaan
-                height: 140, // Ukuran disesuaikan agar proporsional
+                height: 160, // Ukuran disesuaikan agar proporsional
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => const Icon(
                   Icons.security, // Fallback icon jika gambar belum ada
@@ -32,7 +31,7 @@ class EmailverView extends GetView<EmailverController> {
                   color: primaryBlue,
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
 
               // ================= TEKS JUDUL =================
               const Text(
@@ -55,20 +54,9 @@ class EmailverView extends GetView<EmailverController> {
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
 
               // ================= TEXT FIELD EMAIL =================
-              const FormLabelWithTooltip(
-                label: 'Email',
-                message:
-                    'Masukkan alamat email akun yang terdaftar agar kami dapat mengirim kode pemulihan.',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 8),
               Obx(
                 () => TextField(
                   controller: controller.emailController,
@@ -79,28 +67,41 @@ class EmailverView extends GetView<EmailverController> {
                   ),
                 ),
               ),
-              const SizedBox(height: 35),
+              const SizedBox(height: 24),
 
               // ================= TOMBOL LANJUTKAN =================
               SizedBox(
                 width: double.infinity,
                 height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
+                child: Obx(
+                  () => ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryBlue,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
                     ),
-                  ),
-                  onPressed: controller.sendOtp,
-                  child: const Text(
-                    "Lanjutkan",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                    onPressed: controller.isSendingOtp.value
+                        ? null
+                        : controller.sendOtp,
+                    child: controller.isSendingOtp.value
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            "Lanjutkan",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                   ),
                 ),
               ),

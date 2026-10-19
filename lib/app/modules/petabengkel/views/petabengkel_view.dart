@@ -150,7 +150,9 @@ class PetabengkelView extends GetView<PetabengkelController> {
                           ),
                           child: _buildSearchContent(context),
                         )
-                      : const SizedBox.shrink(key: ValueKey('search_overlay_hidden')),
+                      : const SizedBox.shrink(
+                          key: ValueKey('search_overlay_hidden'),
+                        ),
                 ),
               ),
             );
@@ -196,7 +198,10 @@ class PetabengkelView extends GetView<PetabengkelController> {
                             Get.back();
                           }
                         },
-                        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.black87,
+                        ),
                       ),
                     ),
                     Expanded(
@@ -226,19 +231,33 @@ class PetabengkelView extends GetView<PetabengkelController> {
                           textInputAction: TextInputAction.search,
                           decoration: InputDecoration(
                             hintText: "Cari bengkel...",
-                            suffixIcon: GestureDetector(
-                              onTap: () => controller.onSubmitSearch(
-                                controller.searchController.text,
-                              ),
-                              child: Center(
-                                widthFactor: 1,
-                                child: Image.asset(
-                                  "assets/icon/search.png",
-                                  width: 20,
-                                  height: 20,
+                            suffixIcon: Obx(() {
+                              if (controller.hasSearchText.value) {
+                                return IconButton(
+                                  onPressed: () {
+                                    controller.searchController.clear();
+                                    controller.onSearchChanged('');
+                                  },
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: Colors.black54,
+                                  ),
+                                );
+                              }
+                              return GestureDetector(
+                                onTap: () => controller.onSubmitSearch(
+                                  controller.searchController.text,
                                 ),
-                              ),
-                            ),
+                                child: Center(
+                                  widthFactor: 1,
+                                  child: Image.asset(
+                                    "assets/icon/search.png",
+                                    width: 20,
+                                    height: 20,
+                                  ),
+                                ),
+                              );
+                            }),
                             filled: true,
                             fillColor: Colors.white,
                             contentPadding: const EdgeInsets.symmetric(
@@ -495,6 +514,10 @@ class PetabengkelView extends GetView<PetabengkelController> {
   }
 
   Widget _buildSearchContent(BuildContext context) {
+    if (controller.isSearchingSuggestions.value) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     if (controller.showSuggestions.value &&
         controller.searchSuggestions.isNotEmpty) {
       return ListView.separated(
@@ -526,9 +549,7 @@ class PetabengkelView extends GetView<PetabengkelController> {
           );
         },
       );
-    } else if (!controller.showSuggestions.value &&
-        controller.filteredWorkshops.isEmpty &&
-        controller.searchController.text.isNotEmpty) {
+    } else if (controller.searchController.text.trim().isNotEmpty) {
       final topInset = MediaQuery.of(context).padding.top + 90;
       return SizedBox.expand(
         child: Center(
@@ -573,7 +594,7 @@ class PetabengkelView extends GetView<PetabengkelController> {
         ),
       );
     }
-    return const SizedBox.shrink();
+    return const SizedBox.expand(child: ColoredBox(color: Colors.white));
   }
 
   Widget _workshopImage(String imageUrl, {required double height}) {
@@ -633,9 +654,7 @@ class PetabengkelView extends GetView<PetabengkelController> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                const Center(child: CircularProgressIndicator()),
                 const SizedBox(height: 40),
               ],
             );
@@ -681,13 +700,10 @@ class PetabengkelView extends GetView<PetabengkelController> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 8),
                     Text(
                       workshop.category,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                      ),
+                      style: const TextStyle(fontSize: 14, color: Colors.black),
                     ),
                     const SizedBox(height: 8),
                     Column(
@@ -695,11 +711,19 @@ class PetabengkelView extends GetView<PetabengkelController> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 18),
+                            const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 18,
+                            ),
                             const SizedBox(width: 4),
                             Text(
-                              workshop.rating.toStringAsFixed(1).replaceAll('.', ','),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              workshop.rating
+                                  .toStringAsFixed(1)
+                                  .replaceAll('.', ','),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             const SizedBox(width: 4),
                             Text("(${workshop.reviewCount} Ulasan)"),
@@ -764,7 +788,14 @@ class PetabengkelView extends GetView<PetabengkelController> {
                       ).copyWith(dividerColor: Colors.transparent),
                       child: ExpansionTile(
                         tilePadding: EdgeInsets.zero,
-                        childrenPadding: EdgeInsets.zero,
+                        // 1. Atur alignment keseluruhan children ke kiri
+                        expandedAlignment: Alignment.centerLeft,
+                        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                        // 2. Beri padding kiri (Lebar icon 22 + default gap title 16 = 38)
+                        childrenPadding: const EdgeInsets.only(
+                          left: 38,
+                          bottom: 10,
+                        ),
                         leading: Image.asset(
                           "assets/icon/jam.png",
                           width: 22,
@@ -775,23 +806,20 @@ class PetabengkelView extends GetView<PetabengkelController> {
                           style: const TextStyle(fontSize: 15),
                         ),
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: hoursList.skip(1).map((e) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Text(
-                                    e.trim(),
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 15,
-                                    ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: hoursList.skip(1).map((e) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 1),
+                                child: Text(
+                                  e.trim(),
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 15,
                                   ),
-                                );
-                              }).toList(),
-                            ),
+                                ),
+                              );
+                            }).toList(),
                           ),
                         ],
                       ),

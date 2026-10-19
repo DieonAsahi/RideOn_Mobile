@@ -326,7 +326,12 @@ class HomeController extends GetxController {
   }
 
   // Tambahkan fungsi ini di dalam HomeController
+  bool _isUpdatingOdometer = false;
+
   Future<bool> updateOdometerManual(int newOdometer) async {
+    if (_isUpdatingOdometer) return false;
+    _isUpdatingOdometer = true;
+
     try {
       final token = box.read("token");
       if (token == null) return false;
@@ -374,6 +379,8 @@ class HomeController extends GetxController {
         );
       }
       return false;
+    } finally {
+      _isUpdatingOdometer = false;
     }
   }
 

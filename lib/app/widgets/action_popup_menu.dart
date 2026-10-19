@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 const actionPopupMenuConstraints = BoxConstraints(
-  minWidth: 288,
-  maxWidth: 288,
+  minWidth: 140,
+  maxWidth: 180,
 );
 
 const actionPopupMenuShape = RoundedRectangleBorder(
-  borderRadius: BorderRadius.all(Radius.circular(28)),
+  borderRadius: BorderRadius.all(Radius.circular(12)),
 );
 
 PopupMenuItem<T> actionPopupMenuItem<T>({
@@ -17,27 +17,25 @@ PopupMenuItem<T> actionPopupMenuItem<T>({
 }) {
   return PopupMenuItem<T>(
     value: value,
-    height: 106,
-    padding: const EdgeInsets.symmetric(horizontal: 40),
-    child: SizedBox(
-      width: 208,
-      child: Row(
-        children: [
-          ColorFiltered(
-            colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-            child: Image.asset(iconAsset, width: 32, height: 32),
+    height: 44,
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ColorFiltered(
+          colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+          child: Image.asset(iconAsset, width: 20, height: 20),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: color,
+            fontWeight: FontWeight.w500,
           ),
-          const SizedBox(width: 28),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 26,
-              color: color,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 }

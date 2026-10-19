@@ -311,6 +311,7 @@ class RwttambahController extends GetxController {
   }
 
   Future<void> simpanRiwayat() async {
+    if (isLoading.value) return;
     if (!validateFields()) return;
 
     try {
@@ -390,6 +391,7 @@ class RwttambahController extends GetxController {
   }
 
   Future<void> updateRiwayat() async {
+    if (isLoading.value) return;
     if (!validateFields()) return;
 
     try {

@@ -53,12 +53,17 @@ class BengkelView extends GetView<BengkelController> {
           /// ==========================================
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 30, 16, 0),
+              padding: const EdgeInsets.fromLTRB(8, 16, 16, 0),
               child: Column(
                 children: [
                   Row(
                     children: [
                       IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints.tightFor(
+                          width: 36,
+                          height: 36,
+                        ),
                         onPressed: () => Get.back(),
                         icon: const Icon(Icons.arrow_back_ios),
                       ),
@@ -305,184 +310,195 @@ class BengkelView extends GetView<BengkelController> {
                                 itemBuilder: (context, index) {
                                   final item =
                                       controller.filteredBengkelList[index];
-                                  return Container(
-                                    margin: const EdgeInsets.only(bottom: 18),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(18),
-                                      border: Border.all(
-                                        color: const Color(0xFFE1E1E1),
-                                        width: 1,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 2),
+                                  return GestureDetector(
+                                    onTap: () {
+                                      Get.toNamed(
+                                        '/petabengkel',
+                                        arguments: {'workshop_id': item['id']},
+                                      );
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.only(bottom: 18),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(18),
+                                        border: Border.all(
+                                          color: const Color(0xFFE1E1E1),
+                                          width: 1,
                                         ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(18),
-                                            topRight: Radius.circular(18),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.05,
+                                            ),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
                                           ),
-                                          child:
-                                              (item['image'] == null ||
-                                                  item['image']
-                                                      .toString()
-                                                      .trim()
-                                                      .isEmpty)
-                                              ? Image.asset(
-                                                  'assets/image/placeholder.png',
-                                                  height: 150,
-                                                  width: double.infinity,
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : Image.network(
-                                                  item['image'],
-                                                  height: 150,
-                                                  width: double.infinity,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder:
-                                                      (
-                                                        context,
-                                                        error,
-                                                        stackTrace,
-                                                      ) {
-                                                        return Image.asset(
-                                                          'assets/image/placeholder.png',
-                                                          height: 150,
-                                                          width:
-                                                              double.infinity,
-                                                          fit: BoxFit.cover,
+                                        ],
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                                  topLeft: Radius.circular(18),
+                                                  topRight: Radius.circular(18),
+                                                ),
+                                            child:
+                                                (item['image'] == null ||
+                                                    item['image']
+                                                        .toString()
+                                                        .trim()
+                                                        .isEmpty)
+                                                ? Image.asset(
+                                                    'assets/image/placeholder.png',
+                                                    height: 150,
+                                                    width: double.infinity,
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : Image.network(
+                                                    item['image'],
+                                                    height: 150,
+                                                    width: double.infinity,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) {
+                                                          return Image.asset(
+                                                            'assets/image/placeholder.png',
+                                                            height: 150,
+                                                            width:
+                                                                double.infinity,
+                                                            fit: BoxFit.cover,
+                                                          );
+                                                        },
+                                                  ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(14),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            item['nama'] ?? '',
+                                                            style:
+                                                                const TextStyle(
+                                                                  fontSize: 14,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 3,
+                                                          ),
+                                                          Text(
+                                                            item['jenis'] ?? '',
+                                                            style:
+                                                                const TextStyle(
+                                                                  color: Colors
+                                                                      .black87,
+                                                                  fontSize: 12,
+                                                                ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    GestureDetector(
+                                                      onTap: () {
+                                                        Get.toNamed(
+                                                          '/rwttambah',
+                                                          arguments: {
+                                                            "nama_bengkel":
+                                                                item['nama'],
+                                                          },
                                                         );
                                                       },
-                                                ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(14),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Text(
-                                                          item['nama'] ?? '',
-                                                          style:
-                                                              const TextStyle(
-                                                                fontSize: 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                              ),
-                                                        ),
-                                                        const SizedBox(
-                                                          height: 3,
-                                                        ),
-                                                        Text(
-                                                          item['jenis'] ?? '',
-                                                          style:
-                                                              const TextStyle(
-                                                                color: Colors
-                                                                    .black87,
-                                                                fontSize: 12,
-                                                              ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  GestureDetector(
-                                                    onTap: () {
-                                                      Get.toNamed(
-                                                        '/rwttambah',
-                                                        arguments: {
-                                                          "nama_bengkel":
-                                                              item['nama'],
-                                                        },
-                                                      );
-                                                    },
-                                                    child: Container(
-                                                      width: 32,
-                                                      height: 32,
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                            7,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        color: AppColors
-                                                            .primaryBlue,
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              8,
+                                                      child: Container(
+                                                        width: 32,
+                                                        height: 32,
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              7,
                                                             ),
+                                                        decoration: BoxDecoration(
+                                                          color: AppColors
+                                                              .primaryBlue,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8,
+                                                              ),
+                                                        ),
+                                                        child: Image.asset(
+                                                          "assets/image/bagikan.png",
+                                                          width: 24,
+                                                          height: 24,
+                                                        ),
                                                       ),
-                                                      child: Image.asset(
-                                                        "assets/image/bagikan.png",
-                                                        width: 24,
-                                                        height: 24,
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      item['jarak'] ?? '',
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.w400,
                                                       ),
                                                     ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Row(
-                                                children: [
-                                                  Text(
-                                                    item['jarak'] ?? '',
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.w400,
+                                                    const SizedBox(width: 5),
+                                                    Text("|"),
+                                                    const SizedBox(width: 5),
+                                                    const Icon(
+                                                      Icons.star,
+                                                      color: Colors.amber,
+                                                      size: 18,
                                                     ),
-                                                  ),
-                                                  const SizedBox(width: 5),
-                                                  Text("|"),
-                                                  const SizedBox(width: 5),
-                                                  const Icon(
-                                                    Icons.star,
-                                                    color: Colors.amber,
-                                                    size: 18,
-                                                  ),
-                                                  const SizedBox(width: 3),
-                                                  Text(
-                                                    item['rating'] ?? '',
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.w400,
+                                                    const SizedBox(width: 3),
+                                                    Text(
+                                                      item['rating'] ?? '',
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                      ),
                                                     ),
-                                                  ),
-                                                  const SizedBox(width: 3),
-                                                  Text(
-                                                    item['ulasan'] ?? '',
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.w400,
+                                                    const SizedBox(width: 3),
+                                                    Text(
+                                                      item['ulasan'] ?? '',
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                      ),
                                                     ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   );
                                 },

@@ -30,7 +30,10 @@ class PluskendaraanController extends GetxController {
   var selectedYear = ''.obs;
 
   final List<String> brandOptions = ["Honda", "Yamaha", "Suzuki"];
-  final List<String> yearOptions = ["2024", "2025", "2026"];
+  final List<String> yearOptions = List.generate(
+    17,
+    (index) => (2010 + index).toString(),
+  );
 
   final Map<String, List<String>> vehicleData = {
     "Honda": ["Beat", "Vario 125", "Vario 160", "PCX", "Supra X"],
@@ -428,6 +431,9 @@ class PluskendaraanController extends GetxController {
       if (odo == null || odo < 0) {
         odometerError.value = "Angka odometer harus berupa angka valid";
         isValid = false;
+      } else if (odo > 999999) {
+        odometerError.value = "Odometer maksimal 999.999 km";
+        isValid = false;
       } else {
         odometerError.value = "";
       }
@@ -499,6 +505,7 @@ class PluskendaraanController extends GetxController {
 
   // ================= SIMPAN KENDARAAN (SUBMIT DATA) =================
   Future<void> saveVehicle() async {
+    if (isLoading.value) return;
     if (!validateStep3()) return;
 
     try {

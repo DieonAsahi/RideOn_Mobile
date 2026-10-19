@@ -19,6 +19,7 @@ class RwtservisController extends GetxController {
   final box = GetStorage();
   var riwayat = <Map<String, dynamic>>[].obs;
   var isLoading = false.obs;
+  bool _isMutatingHistory = false;
 
   List<Map<String, dynamic>> get filteredData {
     if (selectedFilter.value == 'Semua') {
@@ -101,6 +102,9 @@ class RwtservisController extends GetxController {
   }
 
   Future<void> cancelServiceHistory(int id) async {
+    if (_isMutatingHistory) return;
+    _isMutatingHistory = true;
+
     try {
       isLoading.value = true;
       final token = box.read("token");
@@ -145,11 +149,15 @@ class RwtservisController extends GetxController {
         );
       }
     } finally {
+      _isMutatingHistory = false;
       isLoading.value = false;
     }
   }
 
   Future<void> deleteServiceHistory(int id) async {
+    if (_isMutatingHistory) return;
+    _isMutatingHistory = true;
+
     try {
       isLoading.value = true;
 
@@ -192,6 +200,7 @@ class RwtservisController extends GetxController {
         );
       }
     } finally {
+      _isMutatingHistory = false;
       isLoading.value = false;
     }
   }

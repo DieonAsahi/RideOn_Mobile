@@ -27,10 +27,15 @@ class RwtservisView extends GetView<RwtservisController> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 30, 16, 24),
+              padding: const EdgeInsets.fromLTRB(8, 16, 16, 24),
               child: Row(
                 children: [
                   IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 36,
+                      height: 36,
+                    ),
                     onPressed: () => Get.offNamed('mainscreen', arguments: 2),
                     icon: const Icon(Icons.arrow_back_ios),
                   ),
@@ -139,6 +144,7 @@ class RwtservisView extends GetView<RwtservisController> {
                                                               milliseconds: 250,
                                                             ),
                                                         style: TextStyle(
+                                                          fontFamily: 'Poppins',
                                                           fontSize:
                                                               screenWidth < 360
                                                               ? 12

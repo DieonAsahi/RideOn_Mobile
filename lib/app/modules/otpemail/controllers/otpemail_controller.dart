@@ -18,6 +18,8 @@ class OtpemailController extends GetxController {
   var isOtpExpired = false.obs;
   var isCooldown = false.obs;
   var secondsRemaining = 0.obs;
+  final isVerifyingOtp = false.obs;
+  final isResendingOtp = false.obs;
 
   // State untuk menyimpan error text OTP
   var otpError = RxnString();
@@ -94,7 +96,9 @@ class OtpemailController extends GetxController {
   }
 
   void verifyOtp() async {
-    otpError.value = null; // Reset error
+    if (isVerifyingOtp.value || isResendingOtp.value) return;
+
+    otpError.value = null;
 
     if (fullOtp.length < 6) {
       otpError.value = "Kode OTP belum lengkap (6 digit)";
@@ -112,6 +116,7 @@ class OtpemailController extends GetxController {
       type = "recovery";
     }
 
+    isVerifyingOtp.value = true;
     try {
       final url = Uri.parse("$baseUrl/api/auth/verify-otp");
 
@@ -139,19 +144,33 @@ class OtpemailController extends GetxController {
           );
         }
       } else {
-        // Tampilkan error dari server di bawah kotak OTP
-        otpError.value =
-            data['message'] ?? data['error'] ?? 'Verifikasi gagal.';
+        // Ganti pesan error dari server dengan pesan kustom berbahasa Indonesia
+        String serverError = (data['message'] ?? data['error'] ?? '')
+            .toString()
+            .toLowerCase();
+
+        // Opsional: Cek jika error spesifik terkait expired/invalid
+        if (serverError.contains('expired') ||
+            serverError.contains('invalid')) {
+          otpError.value = 'Kode OTP salah atau sudah tidak berlaku.';
+        } else {
+          otpError.value =
+              'Verifikasi gagal. Silakan periksa kembali kode OTP Anda.';
+        }
       }
     } catch (e) {
       if (!ConnectivityService.handleNetworkError(e)) {
         otpError.value = 'Tidak bisa terhubung ke server. Silakan coba lagi.';
       }
+    } finally {
+      isVerifyingOtp.value = false;
     }
   }
 
   void resendOtp() async {
-    if (isCooldown.value) return;
+    if (isCooldown.value || isResendingOtp.value || isVerifyingOtp.value) {
+      return;
+    }
 
     if (email.isEmpty) {
       otpError.value = 'Email tidak tersedia. Kembali dan masukkan email Anda.';
@@ -163,6 +182,7 @@ class OtpemailController extends GetxController {
       type = "email";
     }
 
+    isResendingOtp.value = true;
     try {
       final url = Uri.parse("$baseUrl/api/auth/resend-otp");
 
@@ -201,6 +221,8 @@ class OtpemailController extends GetxController {
       if (!ConnectivityService.handleNetworkError(e)) {
         otpError.value = 'Gagal mengirim ulang OTP. Silakan coba lagi.';
       }
+    } finally {
+      isResendingOtp.value = false;
     }
   }
 

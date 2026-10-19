@@ -20,10 +20,15 @@ class EstimasiView extends GetView<EstimasiController> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 30, 16, 24),
+              padding: const EdgeInsets.fromLTRB(8, 16, 16, 24),
               child: Row(
                 children: [
                   IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 36,
+                      height: 36,
+                    ),
                     onPressed: () => Get.back(),
                     icon: const Icon(Icons.arrow_back_ios_new, size: 20),
                   ),
@@ -152,7 +157,7 @@ class EstimasiView extends GetView<EstimasiController> {
                 }
 
                 if (controller.filteredProducts.isEmpty) {
-                  return EmptyCostEstimate(onRetry: controller.getEstimasi);
+                  return _buildEmptyState();
                 }
 
                 return OrientationBuilder(
@@ -240,26 +245,39 @@ class EstimasiView extends GetView<EstimasiController> {
                 ),
               ),
               const SizedBox(width: 12),
+
+              // PERBAIKAN: Bungkus tombol dengan Obx dan buat kondisi disable
               SizedBox(
                 height: 42,
-                child: ElevatedButton(
-                  onPressed: () => _showRincianBottomSheet(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                child: Obx(() {
+                  // Cek apakah ada item yang dipilih
+                  final isDisabled = controller.totalSelected == 0;
+
+                  return ElevatedButton(
+                    // Set onPressed ke null jika disable agar tombol tidak bisa diklik
+                    onPressed: isDisabled
+                        ? null
+                        : () => _showRincianBottomSheet(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryBlue,
+                      // Warna background ketika tombol disable
+                      disabledBackgroundColor: Colors.grey.shade300,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
                     ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    "Lihat Rincian",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
+                    child: Text(
+                      "Lihat Rincian",
+                      style: TextStyle(
+                        // Sesuaikan warna teks berdasarkan state tombol
+                        color: isDisabled ? Colors.grey.shade500 : Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                }),
               ),
             ],
           ),

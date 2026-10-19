@@ -78,9 +78,7 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon_master.png"
-  adaptive_icon_background: "#2196F3"
-  adaptive_icon_foreground: "assets/icon_foreground.png"
+  image_path: "assets/logo/RideOn_app.png"
   remove_alpha_ios: true
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -95,72 +93,6 @@ flutter:
     - assets/icons/
     - assets/logos/
     - assets/logo/
-    # - assets/images/motor.png
-    # - assets/images/beat.png
-    # - assets/images/tormo.jpeg
-    # - assets/images/backlog.png
-    # - assets/images/google.png
-    # - assets/images/or.png
-    # - assets/images/kotak.png
-    # - assets/images/kerusakan.png
-    # - assets/images/bengkel1.png
-    # - assets/images/bengkel2.png
-    # - assets/images/bengkel3.png
-    # - assets/images/estimasi1.png
-    # - assets/images/estimasi2.png
-    # - assets/images/estimasi3.png
-    # - assets/images/estimasi4.png
-    # - assets/images/map.png
-    # - assets/images/bengkel.png
-    # - assets/images/profile.jpg
-
-    # - assets/icon/prev_blue.png
-    # - assets/icon/prev_grey.png
-    # - assets/icon/next_blue.png
-    # - assets/icon/next_grey.png
-    # - assets/icon/warning.png
-    # - assets/icon/danger.png
-    # - assets/icon/optimal.png
-    # - assets/icon/hapus.png
-    # - assets/icon/edit.png
-    # - assets/icon/filters.png
-    # - assets/icon/calender_grey.png
-    # - assets/icon/calender.png
-    # - assets/icon/odometer_grey.png
-    # - assets/icon/odometer.png
-    # - assets/icon/service_grey.png
-    # - assets/icon/bengkel_terdekat.png
-    # - assets/icon/riwayat_servis.png
-    # - assets/icon/estimasi_biaya.png
-    # - assets/icon/dashboard.png
-    # - assets/icon/kendaraan.png
-    # - assets/icon/service.png
-    # - assets/icon/edukasi.png
-    # - assets/icon/profil.png
-    # - assets/icon/bagikan.png
-    # - assets/icon/search.png
-    # - assets/icon/lokasi_saya.png
-    # - assets/icon/lokasi_bengkel.png
-    # - assets/icon/jam.png
-    # - assets/icon/phone.png
-    # - assets/icon/notif.png
-    # - assets/icon/logout.png
-    # - assets/icon/edit_profil.png
-    # - assets/icon/ganti_pass.png
-    # - assets/icon/ganti_foto.png
-
-    # - assets/icons/busi.png
-    # - assets/icons/cvt.png
-    # - assets/icons/filter_udara.png
-    # - assets/icons/kampas_rem.png
-    # - assets/icons/oli_gardan.png
-    # - assets/icons/oli_mesin.png
-
-    # - assets/logos/logo1.png
-    # - assets/logos/logo2.png
-    # - assets/logos/logo3.png
-    # - assets/logos/logo4.png
-    # - assets/logos/logo5.png
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
